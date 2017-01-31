@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import random
 import dataframeUtils as df
 from Evaluation import Evaluation
@@ -98,15 +99,18 @@ class ClassificationModel:
         else:
             self.classifier.fit(self.trainData[features].tolist(), self.trainTarget.tolist())
 
+    
     def predict(self, features):
-        self.predicted = self.classifier.predict(self.testData[features].tolist())
+        self.testData['predictedLabel'] = self.classifier.predict(self.testData[features].tolist())
         if self.classifier.predict_proba:
-            self.probabilities = self.classifier.predict_proba(self.testData[features].tolist())
+            probabilities = self.classifier.predict_proba(self.testData[features].tolist())
+            self.testData['probability'] = np.max(probabilities, axis=1)
 
 
     def evaluate(self):
-        self.evaluation = Evaluation(self.testTarget, self.predicted)
+        self.evaluation = Evaluation(self.testTarget, self.testData.predictedLabel.tolist())
         self.evaluation.setAllTags()
+        self.tagTestData()
 
         self.evaluation.accuracy()
         self.evaluation.recall()
@@ -116,9 +120,6 @@ class ClassificationModel:
         featureImportance = sorted(zip(map(lambda relevance: round(relevance,4), self.classifier.feature_importances_), self.data.columns), reverse=True)
         self.featureImportance = [(elem[1], elem[0]) for elem in featureImportance if elem[0]>0.0]
 
-    #def confusionMatrix(self):
-    #    matrix = metrics.confusion_matrix(self.testTarget, self.predicted)
-    #    self.confusionMatrix = pd.DataFrame(matrix)
 
     def dropNANRows(self):
         self.data = self.data.dropna()
@@ -127,15 +128,15 @@ class ClassificationModel:
         self.data = pd.merge(self.data, dataset2, on=['id'])
 
 
-    def getTaggedData(self, tag):
+    def addTag(self, tag):
         indices = getattr(self.evaluation, tag)
         tagIndices = [self.testIndices[position] for position in indices]
-        return [(self.orgData.loc[ind, 'File'], ind) for ind in tagIndices]
+        self.testData.loc[tagIndices,'tag'] = tag
 
-    def getTaggedDocs(self):
+    def tagTestData(self):
         tags = ['TP', 'FP', 'TN', 'FN']
         for tag in tags:
-            setattr(self, tag+'_docs', self.getTaggedData(tag))
+            self.addTag(tag)
 
     def oneHotEncoding(self, data):
         return pd.get_dummies(data)

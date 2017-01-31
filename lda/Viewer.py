@@ -48,11 +48,11 @@ class Viewer:
         self.listToHtmlTable(f, title + '- %d' % len(l), l)
         f.write("""</div>""")
     
-    def printLinkedDocuments(self, f, title, documentTuples, folder=0):
+    def printLinkedDocuments(self, f, title, data, folder=0):
         f.write("""<div>""")                                   
         f.write("""<h4>%s</h4><table>""" % title.encode('utf8'))
-        for doc in documentTuples:
-            f.write("""<tr><td><a href='%sDocuments/doc%02d.html'> %s </a></td></tr>""" % (folder*'../', doc[1], doc[0])) 
+        for ind, doc in data.iterrows():
+            f.write("""<tr><td><a href='%sDocuments/doc%02d.html'> %s </a></td></tr>""" % (folder*'../', doc.id, doc.title)) 
         f.write("""</table>""")
         f.write("""</div>""")
 
@@ -215,11 +215,7 @@ class Viewer:
         f.write("""<body><div style="width:100%;">""")
         f.write(""" <p><b> Classifier: </b> %s </p> """ % model.classifierType)
         f.write(""" <p><b> Size of Training Data: </b> %s </p> """ % len(model.trainData))
-        if model.binary:
-            f.write("""<p> <b> Balance of Training Data: </b> True 1 : %d False """ % model.factorFalseCases)
         f.write(""" <p><b> Size of Test Data: </b> %s </p>""" % len(model.testData))
-        #f.write(""" <p> <b> Features: </b> %s </p>""" % model.trainData.columns.tolist())
-        #f.write(""" <p> <b> Ignored Features: </b> %s </p>""" % model.droplist)
         
         f.write(""" <h3> Evaluation: </h3>""")
         f.write("""<table> """)
@@ -237,13 +233,10 @@ class Viewer:
 
         f.write("""</table></div>""")
         
-        if hasattr(model, 'TP_docs'):
-            f.write("""<style type="text/css"> body>div {width: 23%; float: left; border: 1px solid} </style></head>""") 
-            
-            self.printLinkedDocuments(f, 'True Positives', model.TP_docs, 2) 
-            self.printLinkedDocuments(f, 'False Positives', model.FP_docs, 2) 
-            self.printLinkedDocuments(f, 'True Negatives', model.TN_docs, 2) 
-            self.printLinkedDocuments(f, 'False Negatives', model.FN_docs, 2) 
+        f.write("""<style type="text/css"> body>div {width: 23%; float: left; border: 1px solid} </style></head>""") 
+        for tag in ['TP','FP','FN','TN']:
+            docs = model.testData[model.testData.tag==tag]
+            self.printLinkedDocuments(f, tag, docs, 2) 
         f.write("""</body></html>""")
         f.close()
         webbrowser.open_new_tab(pagename)

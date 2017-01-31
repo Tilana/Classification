@@ -1,4 +1,3 @@
-#from lda import ClassificationModel, Viewer, Info
 from lda import Viewer, ClassificationModel
 
 def buildClassificationModel():
@@ -23,11 +22,12 @@ def buildClassificationModel():
     model.vectorizeDocs()
     model.predict(selectedFeatures)
     model.evaluate()
+    model.evaluation.confusionMatrix()
 
     viewer = Viewer(classifierType)
    
-    features = ['Court', 'Year', 'Sexual.Assault.Manual', 'predictedLabel', 'probability']
-    viewer.printDocuments(testData,features)
+    features = ['Court', 'Year', 'Sexual.Assault.Manual', 'predictedLabel', 'tag']
+    viewer.printDocuments(model.testData,features)
     viewer.classificationResults(model)
 
 
