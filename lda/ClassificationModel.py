@@ -12,27 +12,17 @@ from sklearn.naive_bayes import MultinomialNB, BernoulliNB, GaussianNB
 
 class ClassificationModel:
 
-    def __init__(self, path=None, target=None, droplist=None, binary=True):
+    def __init__(self, path=None, target=None):
+        self.data = []
         if path != None:
-            try:
-                self.orgData = pd.read_csv(path)
-            except:
-                self.orgData = pd.read_pickle(path)
-        else:
-            self.orgData = []
-        self.data = self.orgData
+                self.data = pd.read_pickle(path)
         self.targetFeature = target
-        self.droplist = droplist
-        if droplist is None:
-            self.droplist = []
-        self.binary = binary
 
     
     def splitDataset(self, num, random=True):
+        self._generateHalfSplitIndices(num)
         if random:
             self._generateRandomIndices(num)
-        else:
-            self._generateHalfSplitIndices(num)
         self.split()
 
 
@@ -79,8 +69,7 @@ class ClassificationModel:
 
     def createTarget(self):
         self.target = self.data[self.targetFeature]
-        self.droplist = self.droplist + [self.targetFeature]
-    
+
     def toNumeric(self, column):
         self.data[column] = self.data[column].astype(int)
 
@@ -94,10 +83,7 @@ class ClassificationModel:
         self.data = self.data.drop(self.droplist, axis=1)
 
     def trainClassifier(self, features):
-        if self.classifierType=='NeuralNet':
-            self.classifier.train(self.trainData[features], self.trainTarget)
-        else:
-            self.classifier.fit(self.trainData[features].tolist(), self.trainTarget.tolist())
+        self.classifier.fit(self.trainData[features].tolist(), self.trainTarget.tolist())
 
     
     def predict(self, features):
@@ -141,22 +127,16 @@ class ClassificationModel:
     def oneHotEncoding(self, data):
         return pd.get_dummies(data)
 
-    def buildClassifier(self, classifierType):
+    def buildClassifier(self, classifierType, alpha=0.6):
         self.classifierType = classifierType
         if classifierType == 'DecisionTree':
             self.classifier = DecisionTreeClassifier()
         elif classifierType == 'MultinomialNB':
-            self.classifier = MultinomialNB()
+            self.classifier = MultinomialNB(alpha=alpha)
         elif classifierType == 'BernoulliNB':
-            self.classifier = BernoulliNB()
+            self.classifier = BernoulliNB(alpha=alpha)
         elif classifierType == 'RandomForest':
             self.classifier = RandomForestClassifier()
-        elif classifierType == 'NeuralNet':
-            self.trainTarget = self.oneHotEncoding(self.trainTarget)
-            numberFeatures = len(self.trainData.columns)
-            numberTargetCategories =  len(self.trainTarget.columns)
-            self.classifier = NeuralNet()
-            self.classifier.setup(numberFeatures, numberTargetCategories) 
 
     def getSelectedTopics(self, topicNr, selectedTopics=None):
         self.topicList = self.getTopicList(topicNr)
@@ -173,13 +153,11 @@ class ClassificationModel:
     def getRelevantWords(self, nrWords=3):
         return [('relevantWord%d' % docNr) for docNr in range(1, nrWords+1)] 
 
-    def addUnselectedTopicsToDroplist(self):
-        self.droplist.extend(set(self.topicList) - set(self.selectedTopics))
 
-    def buildVectorizer(self, vecType='tfIdf', min_df=10, max_df=0.8, stop_words='english', ngram_range = (1,2)):
-        self.vectorizer = TfidfVectorizer(min_df=min_df, max_df=max_df, stop_words=stop_words, ngram_range=ngram_range) 
+    def buildVectorizer(self, vecType='tfIdf', min_df=10, max_df=0.5, stop_words='english', ngram_range = (1,2), max_features=8000, token_pattern='[a-zA-Z]+'):
+        self.vectorizer = TfidfVectorizer(min_df=min_df, max_df=max_df, stop_words=stop_words, ngram_range=ngram_range, max_features=max_features, token_pattern=token_pattern) 
         if vecType=='tf':
-            self.vectorizer = CountVectorizer(min_df=min_df, max_df=max_df, stop_words=stop_words, ngram_range=ngram_range)
+            self.vectorizer = CountVectorizer(min_df=min_df, max_df=max_df, stop_words=stop_words, ngram_range=ngram_range, max_features = max_feature, token_pattern=token_pattern)
 
 
     def trainVectorizer(self, vecType='tfIdf'):

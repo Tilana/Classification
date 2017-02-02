@@ -8,10 +8,10 @@ def clustering_ICAAD():
 
     data = pd.read_pickle('Documents/ICAAD/ICAAD.pkl')
     texts = data['text'].get_values()
+    nrCluster = 12
 
     stopwords = set([x.strip() for x in open("stopwords/english.txt")])
-
-    vectorizer = TfidfVectorizer(analyzer='word', ngram_range=(1,2), token_pattern='[a-zA-Z]+', max_df=1200, min_df=8, stop_words=stopwords, max_features=8000)
+    vectorizer = TfidfVectorizer(analyzer='word', ngram_range=(1,2), token_pattern='[a-zA-Z]+', max_df=300, min_df=8, stop_words=stopwords, max_features=8000)
     
     
     word_counts = vectorizer.fit_transform(texts).toarray()
@@ -20,19 +20,18 @@ def clustering_ICAAD():
     vocabulary = vectorizer.get_feature_names()
     vocab_dict = dict(zip(range(0,len(vocabulary)), vocabulary))
 
-    model = KMeans(n_clusters=40, init='k-means++', max_iter=100)
+    model = KMeans(n_clusters=nrCluster, init='k-means++', max_iter=100)
     model.fit(word_counts)
 
     order_centroids = model.cluster_centers_.argsort()[:, ::-1]
-    for i in range(40):
+    for i in range(nrCluster):
         print("Cluster %d words:" % i)
         relevantWords = [vocab_dict[ind] for ind in order_centroids[i, :20]]
         print(relevantWords)
 
     data['cluster'] = model.labels_.tolist()
-
     SAcluster = data[data['Sexual.Assault.Manual']].cluster
-    np.histogram(SAcluster, bins=40)
+    print np.histogram(SAcluster, bins=nrCluster)
         
 
 
