@@ -1,0 +1,8 @@
+# ignore specific files
+*.pyc
+*.swp
+
+# ignore result folder
+results/**/*
+
+
