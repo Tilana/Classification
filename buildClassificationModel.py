@@ -5,22 +5,22 @@ def buildClassificationModel():
     path = 'Documents/ICAAD/ICAAD.pkl'
     target = 'Sexual.Assault.Manual'
     classifierTypes = ['DecisionTree', 'MultinomialNB', 'BernoulliNB', 'RandomForest']
-    classifierType = classifierTypes[3]
+    classifierType = classifierTypes[1]
     nrLabels = 5000
 
     model = ClassificationModel(path, target)
     model.createTarget()
     model.splitDataset(nrLabels, random=False)
 
-    model.buildVectorizer(ngram_range=(1,2), min_df=10, max_df=0.4, max_features=8000)
-    model.trainVectorizer()
-    print model.vectorizer.get_feature_names()
-
-    model.buildClassifier(classifierType, alpha=0.8)
+    model.buildPreprocessor(ngram_range=(1,2), min_df=10, max_df=0.5, max_features=8000)
+    model.trainPreprocessor()
+    
+    
+    model.buildClassifier(classifierType, alpha=0.7)
     selectedFeatures = 'tfIdf'
     model.trainClassifier(selectedFeatures)
 
-    model.vectorizeDocs()
+    model.preprocessTestData()
     model.predict(selectedFeatures)
     model.evaluate()
     model.evaluation.confusionMatrix()

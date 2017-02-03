@@ -3,11 +3,9 @@ import numpy as np
 import random
 import dataframeUtils as df
 from Evaluation import Evaluation
-from NeuralNet import NeuralNet
-from sklearn import metrics
+from Preprocessor import Preprocessor
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.naive_bayes import MultinomialNB, BernoulliNB, GaussianNB
 
 class ClassificationModel:
@@ -154,19 +152,16 @@ class ClassificationModel:
         return [('relevantWord%d' % docNr) for docNr in range(1, nrWords+1)] 
 
 
-    def buildVectorizer(self, vecType='tfIdf', min_df=10, max_df=0.5, stop_words='english', ngram_range = (1,2), max_features=8000, token_pattern='[a-zA-Z]+'):
-        self.vectorizer = TfidfVectorizer(min_df=min_df, max_df=max_df, stop_words=stop_words, ngram_range=ngram_range, max_features=max_features, token_pattern=token_pattern) 
-        if vecType=='tf':
-            self.vectorizer = CountVectorizer(min_df=min_df, max_df=max_df, stop_words=stop_words, ngram_range=ngram_range, max_features = max_feature, token_pattern=token_pattern)
+    def buildPreprocessor(self, vecType='tfIdf', min_df=10, max_df=0.5, stop_words='english', ngram_range = (1,2), max_features=8000, token_pattern='[a-zA-Z]+', vocabulary = None):
+        self.preprocessor = Preprocessor(processor=vecType, min_df=min_df, max_df=max_df, stop_words=stop_words, ngram_range=ngram_range, max_features=max_features, token_pattern=token_pattern, vocabulary = vocabulary) 
 
 
-    def trainVectorizer(self, vecType='tfIdf'):
+    def trainPreprocessor(self, vecType='tfIdf'):
         trainDocs = self.trainData.text.tolist()
-        wordCounts = self.vectorizer.fit_transform(trainDocs)
-        self.trainData[vecType] = [docVec for docVec in wordCounts.toarray()]
+        self.trainData[vecType] = self.preprocessor.trainVectorizer(trainDocs)
 
-    def vectorizeDocs(self, vecType='tfIdf'):
+
+    def preprocessTestData(self, vecType='tfIdf'):
         testDocs = self.testData.text.tolist()
-        wordCounts = self.vectorizer.transform(testDocs)
-        self.testData[vecType] = [docVec for docVec in wordCounts.toarray()]
-
+        self.testData[vecType] = self.preprocessor.vectorizeDocs(testDocs)
+        
