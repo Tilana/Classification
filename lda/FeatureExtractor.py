@@ -1,4 +1,5 @@
 import re
+import text2num
 
 class FeatureExtractor:
 
@@ -17,13 +18,27 @@ class FeatureExtractor:
     def extractCourt(self, title):
         regex = r'[A-Z]{4}'
         match = re.findall(regex, title)
-        return match
+        return match[0]
 
 
     def extractDigit(self, string):
         regex = r'\d+'
         match = re.search(regex, string)
         return int(match.group(0))
+
+    
+    def extractAge(self, text):
+        regex = r'\w+[-| ]*year\w*[-| ]*old|age of \w+|\w+ year\w* of age'
+        return re.findall(regex, text)
+
+    def extractMinor(self, text):
+        regex = r'under the age of \w+|younger than \w+'
+        return re.findall(regex,text)
+
+    def extracSentence(self, text):
+        regex = '\w+ year\w* imprisonment'
+        return re.findall(regex, text)
+
 
 
     

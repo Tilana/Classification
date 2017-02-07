@@ -20,13 +20,21 @@ class testFeatureExtractor(unittest.TestCase):
     def test_extractCourt(self):
         docTitle = self.testDoc.title
         court = self.testDoc.Court
-        print docTitle
-        print court
         self.assertEqual(self.FeatureExtractor.extractCourt(docTitle), court)
+
+
+    def test_extractAge(self):
+        testString = 'He was 17-years-old. He is twelve years old. At the age of 16 he started walking'
+        target = ['17-years-old', 'twelve years old', 'age of 16']
+        self.assertEqual(self.FeatureExtractor.extractAge(testString), target)
+
 
     def test_extractDigit(self):
         testString = '[2000]'
         self.assertEqual(self.FeatureExtractor.extractDigit(testString), 2000)
+
+    
+    
 
 
 if __name__ == '__main__':
