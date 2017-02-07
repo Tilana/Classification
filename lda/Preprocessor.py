@@ -4,12 +4,13 @@ from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 
 class Preprocessor:
 
-    def __init__(self, processor='tfIdf', min_df=10, max_df=0.5, stop_words='english', ngram_range=(1,2), max_features=8000, token_pattern='[a-zA-Z]+', vocabulary=None):
+    def __init__(self, processor='tfIdf', min_df=10, max_df=0.5, stop_words='english', ngram_range=(1,2), max_features=8000, token_pattern='^[a-zA-Z0-9]{2,}', vocabulary=None):
         self.vectorizer = TfidfVectorizer(min_df=min_df, max_df=max_df, stop_words=stop_words, ngram_range=ngram_range, max_features=max_features, token_pattern=token_pattern, vocabulary = vocabulary, tokenizer=self.tokenize) 
         if processor=='tf':
             self.vectorizer = CountVectorizer(min_df=min_df, max_df=max_df, stop_words=stop_words, ngram_range=ngram_range, max_features = max_feature, token_pattern=token_pattern, tokenizer=self.tokenize, vocabulary=vocabulary)
         self.WordNet = WordNetLemmatizer()
         self.token_pattern = token_pattern
+        print token_pattern
 
 
     def trainVectorizer(self, docs):

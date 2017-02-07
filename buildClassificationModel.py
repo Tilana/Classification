@@ -14,9 +14,10 @@ def buildClassificationModel():
 
     model.buildPreprocessor(ngram_range=(1,2), min_df=10, max_df=0.5, max_features=8000)
     model.trainPreprocessor()
+    print model.preprocessor.vocabulary
+    print model.preprocessor.vectorizer.get_stop_words()
     
-    
-    model.buildClassifier(classifierType, alpha=0.7)
+    model.buildClassifier(classifierType, alpha=0.2)
     selectedFeatures = 'tfIdf'
     model.trainClassifier(selectedFeatures)
 

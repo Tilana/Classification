@@ -152,7 +152,7 @@ class ClassificationModel:
         return [('relevantWord%d' % docNr) for docNr in range(1, nrWords+1)] 
 
 
-    def buildPreprocessor(self, vecType='tfIdf', min_df=10, max_df=0.5, stop_words='english', ngram_range = (1,2), max_features=8000, token_pattern='[a-zA-Z]+', vocabulary = None):
+    def buildPreprocessor(self, vecType='tfIdf', min_df=10, max_df=0.5, stop_words='english', ngram_range = (1,2), max_features=8000, token_pattern='(?u)\b\w\w+\b', vocabulary = None):
         self.preprocessor = Preprocessor(processor=vecType, min_df=min_df, max_df=max_df, stop_words=stop_words, ngram_range=ngram_range, max_features=max_features, token_pattern=token_pattern, vocabulary = vocabulary) 
 
 
