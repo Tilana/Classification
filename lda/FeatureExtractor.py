@@ -5,6 +5,7 @@ class FeatureExtractor:
 
     def __init__(self):
         print 'Build Feature Extractor'
+        
         pass
 
 
@@ -43,6 +44,13 @@ class FeatureExtractor:
         regex = r'RULING|JUDGEMENT|SUMMING UP|SENTENCE'
         return re.findall(regex, text)[0]
 
+    def victimRelated(self, text):
+        regex = r'[\w ]+complainant|victim|plaintiff be [\w ]*.'
+        return re.findall(regex, text)
+
+    def accusedRelated(self, text):
+        regex = r'[\w ]+accuse|you|perpetrator be [\w]*.'
+        return re.findall(regex, text)
 
 
     

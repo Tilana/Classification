@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 import random
+import pickle
+import os
 import dataframeUtils as df
 from Evaluation import Evaluation
 from Preprocessor import Preprocessor
@@ -8,7 +10,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.naive_bayes import MultinomialNB, BernoulliNB, GaussianNB
 
-class ClassificationModel:
+class ClassificationModel():
 
     def __init__(self, path=None, target=None):
         self.data = []
@@ -152,8 +154,8 @@ class ClassificationModel:
         return [('relevantWord%d' % docNr) for docNr in range(1, nrWords+1)] 
 
 
-    def buildPreprocessor(self, vecType='tfIdf', min_df=10, max_df=0.5, stop_words='english', ngram_range = (1,2), max_features=8000, token_pattern='(?u)\b\w\w+\b', vocabulary = None):
-        self.preprocessor = Preprocessor(processor=vecType, min_df=min_df, max_df=max_df, stop_words=stop_words, ngram_range=ngram_range, max_features=max_features, token_pattern=token_pattern, vocabulary = vocabulary) 
+    def buildPreprocessor(self, vecType='tfIdf', min_df=10, max_df=0.5, stop_words='english', ngram_range = (1,2), max_features=8000):
+        self.preprocessor = Preprocessor(processor=vecType, min_df=min_df, max_df=max_df, stop_words=stop_words, ngram_range=ngram_range, max_features=max_features) 
 
 
     def trainPreprocessor(self, vecType='tfIdf'):
@@ -164,4 +166,29 @@ class ClassificationModel:
     def preprocessTestData(self, vecType='tfIdf'):
         testDocs = self.testData.text.tolist()
         self.testData[vecType] = self.preprocessor.vectorizeDocs(testDocs)
+
+    def existsPreprocessedData(self, path):
+        return os.path.exists(path + '_train.pkl')
+
+
+    def saveTrainTestData(self, path):
+        self.saveData(path + '_train.pkl', self.trainData)
+        self.saveData(path + '_test.pkl', self.testData)
+        self.saveData(path + '_trainTarget.pkl', self.trainTarget)
+        self.saveData(path + '_testTarget.pkl', self.testTarget)
+
+    def loadTrainTestData(self, path):
+        self.trainData = self.loadData(path + '_train.pkl')
+        self.testData = self.loadData(path + '_test.pkl')
+        self.trainTarget = self.loadData(path + '_trainTarget.pkl')
+        self.testTarget = self.loadData(path + '_testTarget.pkl')
+
+
+    def saveData(self, path, data):
+        with open(path, 'wb') as f:
+            pickle.dump(data, f)
+
+    def loadData(self, path):
+        return pickle.load(open(path, 'rb'))
+
         

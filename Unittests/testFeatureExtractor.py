@@ -9,17 +9,18 @@ class testFeatureExtractor(unittest.TestCase):
     data = pd.read_pickle(path)
 
     def setUp(self):
-        self.testDoc = self.data.loc[1450]
+        self.testDoc1 = self.data.loc[1450]
+        self.testDoc2 = self.data.loc[37]
         
     
     def test_year(self):
-        docTitle = self.testDoc.title
-        year = self.testDoc.Year
+        docTitle = self.testDoc1.title
+        year = self.testDoc1.Year
         self.assertEqual(self.FeatureExtractor.year(docTitle), year)
 
     def test_court(self):
-        docTitle = self.testDoc.title
-        court = self.testDoc.Court
+        docTitle = self.testDoc1.title
+        court = self.testDoc1.Court
         self.assertEqual(self.FeatureExtractor.court(docTitle), court)
 
 
@@ -35,8 +36,8 @@ class testFeatureExtractor(unittest.TestCase):
 
 
     def test_caseType(self):
-        self.assertEqual(self.FeatureExtractor.caseType(self.testDoc.text), 'SENTENCE')
-        print 1
+        self.assertEqual(self.FeatureExtractor.caseType(self.testDoc1.text), 'SENTENCE')
+        self.assertEqual(self.FeatureExtractor.caseType(self.testDoc2.text), 'SUMMING UP')
     
 
 if __name__ == '__main__':
