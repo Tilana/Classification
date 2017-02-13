@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import random
-import pickle
+import cPickle as pickle
 import os
 import dataframeUtils as df
 from Evaluation import Evaluation
@@ -10,7 +10,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.naive_bayes import MultinomialNB, BernoulliNB, GaussianNB
 
-class ClassificationModel():
+class ClassificationModel:
 
     def __init__(self, path=None, target=None):
         self.data = []
@@ -171,24 +171,37 @@ class ClassificationModel():
         return os.path.exists(path + '_train.pkl')
 
 
-    def saveTrainTestData(self, path):
-        self.saveData(path + '_train.pkl', self.trainData)
-        self.saveData(path + '_test.pkl', self.testData)
-        self.saveData(path + '_trainTarget.pkl', self.trainTarget)
-        self.saveData(path + '_testTarget.pkl', self.testTarget)
+    #def saveTrainTestData(self, path):
+    #    self.saveData(path + '_train.pkl', self.trainData)
+    #    self.saveData(path + '_test.pkl', self.testData)
+    #    self.saveData(path + '_trainTarget.pkl', self.trainTarget)
+    #    self.saveData(path + '_testTarget.pkl', self.testTarget)
 
-    def loadTrainTestData(self, path):
-        self.trainData = self.loadData(path + '_train.pkl')
-        self.testData = self.loadData(path + '_test.pkl')
-        self.trainTarget = self.loadData(path + '_trainTarget.pkl')
-        self.testTarget = self.loadData(path + '_testTarget.pkl')
+    #def loadTrainTestData(self, path):
+    #    self.trainData = self.loadData(path + '_train.pkl')
+    #    self.testData = self.loadData(path + '_test.pkl')
+    #    self.trainTarget = self.loadData(path + '_trainTarget.pkl')
+    #    self.testTarget = self.loadData(path + '_testTarget.pkl')
 
 
-    def saveData(self, path, data):
-        with open(path, 'wb') as f:
-            pickle.dump(data, f)
+    def save(self, path):
+        self.savePreprocessor(path)
+        with open(path +'.pkl', 'wb') as f:
+            pickle.dump(self, f, -1)
 
-    def loadData(self, path):
-        return pickle.load(open(path, 'rb'))
+    
+    def load(self, path):
+        model = pickle.load(open(path+'.pkl', 'rb'))
+        model.loadPreprocessor(path)
+        return model
 
+    def savePreprocessor(self, path):
+        if hasattr(self, 'preprocessor'):
+            self.preprocessor.save(path)
+            del self.preprocessor
+
+
+    def loadPreprocessor(self, path):
+        preprocessor = Preprocessor()
+        self.preprocessor = preprocessor.load(path)
         

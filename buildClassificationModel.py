@@ -7,12 +7,16 @@ def buildClassificationModel():
     target = 'Sexual.Assault.Manual'
 
     modelPath = 'processedData/SA_5000'
+    modelPath = 'processedData/test'
 
     classifierTypes = ['DecisionTree', 'MultinomialNB', 'BernoulliNB', 'RandomForest']
     classifierType = classifierTypes[1]
     nrLabels = 5000
+    nrLabels = 50
 
     model = ClassificationModel(path, target)
+    testDoc = model.data.loc[1000]
+    model.data = model.data[0:100]
 
     if not model.existsPreprocessedData(modelPath):
         print 'Preprocess Data'
@@ -22,23 +26,21 @@ def buildClassificationModel():
         model.buildPreprocessor(ngram_range=(1,2), min_df=10, max_df=0.5, max_features=8000)
         model.trainPreprocessor()
         print model.preprocessor.vocabulary
-        print model.preprocessor.vectorizer.get_stop_words()
+        model.preprocessTestData()
+        
+        model.save(modelPath)
 
-        print dir(model)
-        model.saveTrainTestData(modelPath)
+    model2 = ClassificationModel(path,target)
+    model2 = model2.load(modelPath)
 
-    else:
-        print 'Load Preprocessed Data'
-        model.loadTrainTestData(modelPath)
+    print dir(model)
+    model2.preprocessTestData()
+    
     
     print 'Train Classifier' 
-    model.buildClassifier(classifierType, alpha=0.2)
+    model.buildClassifier(classifierType, alpha=0.8)
     selectedFeatures = 'tfIdf'
     model.trainClassifier(selectedFeatures)
-
-    print 'Preprocess Test Data'
-    model.preprocessTestData()
-    model.saveTrainTestData(modelPath)
 
     print 'Predict Labels'
     model.predict(selectedFeatures)

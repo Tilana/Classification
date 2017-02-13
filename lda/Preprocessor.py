@@ -1,4 +1,5 @@
 import re
+import cPickle as pickle
 from nltk.stem import WordNetLemmatizer
 from nltk import pos_tag
 from nltk.corpus import wordnet
@@ -66,4 +67,24 @@ class Preprocessor:
             return wordnet.ADV
         else:
             return ''
+
+    def save(self, path):
+        self.saveVectorizer(path)
+        with open(path+'_preprocessor.pkl', 'wb') as f:
+            pickle.dump(self, f, -1)
+
+    def load(self, path):
+        preprocessor = pickle.load(open(path+'_preprocessor.pkl', 'rb'))
+        preprocessor.vectorizer = preprocessor.loadVectorizer(path)
+        preprocessor.vectorizer.tokenizer = self.createPosLemmaTokens
+        return preprocessor
+
+    def saveVectorizer(self, path):
+        with open(path+'_vectorizer.pkl', 'wb') as f:
+            self.vectorizer.tokenizer = []
+            pickle.dump(self.vectorizer, f, -1)
+        del self.vectorizer
+
+    def loadVectorizer(self, path):
+        return pickle.load(open(path+'_vectorizer.pkl', 'rb'))
         
