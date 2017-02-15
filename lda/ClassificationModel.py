@@ -8,6 +8,8 @@ from Evaluation import Evaluation
 from Preprocessor import Preprocessor
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
+from sklearn import linear_model
+from sklearn import svm
 from sklearn.naive_bayes import MultinomialNB, BernoulliNB, GaussianNB
 
 class ClassificationModel:
@@ -137,6 +139,10 @@ class ClassificationModel:
             self.classifier = BernoulliNB(alpha=alpha)
         elif classifierType == 'RandomForest':
             self.classifier = RandomForestClassifier()
+        elif classifierType == 'SVM':
+            self.classifier = svm.SVC(probability=True)
+        elif classifierType == 'LogisticRegression':
+            self.classifier = linear_model.LogisticRegression()
 
     def getSelectedTopics(self, topicNr, selectedTopics=None):
         self.topicList = self.getTopicList(topicNr)
@@ -159,29 +165,16 @@ class ClassificationModel:
 
 
     def trainPreprocessor(self, vecType='tfIdf'):
-        trainDocs = self.trainData.text.tolist()
-        self.trainData[vecType] = self.preprocessor.trainVectorizer(trainDocs)
+        trainDocs = self.data.text.tolist()
+        self.data[vecType] = self.preprocessor.trainVectorizer(trainDocs)
 
 
     def preprocessTestData(self, vecType='tfIdf'):
         testDocs = self.testData.text.tolist()
         self.testData[vecType] = self.preprocessor.vectorizeDocs(testDocs)
 
-    def existsPreprocessedData(self, path):
-        return os.path.exists(path + '_train.pkl')
-
-
-    #def saveTrainTestData(self, path):
-    #    self.saveData(path + '_train.pkl', self.trainData)
-    #    self.saveData(path + '_test.pkl', self.testData)
-    #    self.saveData(path + '_trainTarget.pkl', self.trainTarget)
-    #    self.saveData(path + '_testTarget.pkl', self.testTarget)
-
-    #def loadTrainTestData(self, path):
-    #    self.trainData = self.loadData(path + '_train.pkl')
-    #    self.testData = self.loadData(path + '_test.pkl')
-    #    self.trainTarget = self.loadData(path + '_trainTarget.pkl')
-    #    self.testTarget = self.loadData(path + '_testTarget.pkl')
+    def existsProcessedData(self, path):
+        return os.path.exists(path + '.pkl')
 
 
     def save(self, path):

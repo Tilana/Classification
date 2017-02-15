@@ -1,4 +1,4 @@
-#from nltk.tag import StanfordNERTagger
+from nltk.tag import StanfordNERTagger
 from nltk.tokenize import word_tokenize
     
 def tagEntities(text):

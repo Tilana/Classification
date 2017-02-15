@@ -1,45 +1,41 @@
 from lda import Viewer, ClassificationModel
+import pdb
 
 def buildClassificationModel():
 
     path = 'Documents/ICAAD/ICAAD.pkl'
     target = ['Sexual.Assault.Manual', 'Domestic.Violence.Manual']
     target = 'Sexual.Assault.Manual'
+    target = 'Domestic.Violence.Manual'
 
     modelPath = 'processedData/SA_5000'
-    modelPath = 'processedData/test'
+    modelPath = 'processedData/processedData'
 
-    classifierTypes = ['DecisionTree', 'MultinomialNB', 'BernoulliNB', 'RandomForest']
-    classifierType = classifierTypes[1]
+    classifierTypes = ['DecisionTree', 'MultinomialNB', 'BernoulliNB', 'RandomForest', 'SVM', 'LogisticRegression']
+    classifierType = classifierTypes[2]
+    alpha = 0.4 
+    selectedFeatures = 'tfIdf'
     nrLabels = 5000
-    nrLabels = 50
+    displayFeatures = ['Court', 'Year', 'Sexual.Assault.Manual', 'predictedLabel', 'tag']
 
     model = ClassificationModel(path, target)
-    testDoc = model.data.loc[1000]
-    model.data = model.data[0:100]
+    #model.data = model.data[0:100]
 
-    if not model.existsPreprocessedData(modelPath):
+    if not model.existsProcessedData(modelPath):
         print 'Preprocess Data'
-        model.createTarget()
-        model.splitDataset(nrLabels, random=False)
-
         model.buildPreprocessor(ngram_range=(1,2), min_df=10, max_df=0.5, max_features=8000)
         model.trainPreprocessor()
         print model.preprocessor.vocabulary
-        model.preprocessTestData()
         
         model.save(modelPath)
 
-    model2 = ClassificationModel(path,target)
-    model2 = model2.load(modelPath)
-
-    print dir(model)
-    model2.preprocessTestData()
+    model = model.load(modelPath)
     
+    model.createTarget()
+    model.splitDataset(nrLabels, random=False)
     
     print 'Train Classifier' 
-    model.buildClassifier(classifierType, alpha=0.8)
-    selectedFeatures = 'tfIdf'
+    model.buildClassifier(classifierType, alpha=alpha)
     model.trainClassifier(selectedFeatures)
 
     print 'Predict Labels'
@@ -47,10 +43,9 @@ def buildClassificationModel():
     model.evaluate()
     model.evaluation.confusionMatrix()
 
+    print 'Display Results'
     viewer = Viewer(classifierType)
-   
-    features = ['Court', 'Year', 'Sexual.Assault.Manual', 'predictedLabel', 'tag']
-    viewer.printDocuments(model.testData,features)
+    viewer.printDocuments(model.testData, displayFeatures)
     viewer.classificationResults(model)
 
 
