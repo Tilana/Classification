@@ -57,5 +57,6 @@ class Evaluation:
         for tag in categories:
             self.setTag(tag)
             self.setTagLength(tag)
-
     
+    def toSeries(self, fields=['accuracy', 'precision', 'recall']):
+       return pd.Series([self.__dict__[field] for field in fields])

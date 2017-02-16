@@ -11,6 +11,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn import linear_model
 from sklearn import svm
 from sklearn.naive_bayes import MultinomialNB, BernoulliNB, GaussianNB
+from sklearn.cross_validation import KFold
 
 class ClassificationModel:
 
@@ -85,7 +86,9 @@ class ClassificationModel:
         self.data = self.data.drop(self.droplist, axis=1)
 
     def trainClassifier(self, features):
-        self.classifier.fit(self.trainData[features].tolist(), self.trainTarget.tolist())
+        trainData = self.trainData[features].tolist()
+        target = self.trainTarget.tolist()
+        self.classifier.fit(trainData, target)
 
     
     def predict(self, features):
@@ -197,4 +200,5 @@ class ClassificationModel:
     def loadPreprocessor(self, path):
         preprocessor = Preprocessor()
         self.preprocessor = preprocessor.load(path)
+
         

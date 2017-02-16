@@ -31,27 +31,15 @@ def FeatureExtraction_demo():
     data.set_value(ind, 'extAge', extractor.age(cleanText))
     data.set_value(ind, 'extSentences', extractor.sentence(cleanText))
     data.loc[ind,'extCaseType'] = extractor.caseType(text)
-    #pdb.set_trace()
-    print extractor.victimRelated(cleanText)
     data.set_value(ind,'victim', extractor.victimRelated(cleanText))
-    print extractor.accusedRelated(cleanText)
-    
-    print extractor.victimRelated(text)
-    print extractor.accusedRelated(text)
 
     entities = ner.getNamedEntities(text)
     for entity in entities:
         data.set_value(ind, entity[0], entity[1])
 
-    pdb.set_trace()
-
-
-
-    doc = data.loc[ind]
-
     viewer = Viewer('FeatureExtraction')
-    features = ['Court', 'Year', 'Age', 'extCourt', 'extYear', 'extCaseType', 'extAge', 'extSentences', 'victim']
-    viewer.printDocument(doc, features, False)
+    features = ['Court', 'Year', 'Age', 'extCourt', 'extYear', 'extCaseType', 'extAge', 'extSentences', 'victim', 'ORGANIZATION', 'LOCATION', 'PERSON']
+    viewer.printDocument(data.loc[ind], features, True)
 
 
 
