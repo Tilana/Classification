@@ -8,11 +8,12 @@ def buildClassificationModel():
     path = 'Documents/ICAAD/ICAAD.pkl'
     target = 'Sexual.Assault.Manual'
     target = 'Domestic.Violence.Manual'
+    target = 'Age'
     modelPath = 'processedData/processedData'
 
     classifierTypes = ['DecisionTree', 'MultinomialNB', 'BernoulliNB', 'RandomForest', 'SVM', 'LogisticRegression']
     classifierType = classifierTypes[1]
-    alpha = 0.1 
+    alpha = 0.8 
     selectedFeatures = 'tfIdf'
     displayFeatures = ['Court', 'Year', 'Sexual.Assault.Manual', 'Domestic.Violence.Manual', 'predictedLabel', 'tag']
 
@@ -38,6 +39,8 @@ def buildClassificationModel():
         model.testIndices = testInd
         model.split()
 
+        #pdb.set_trace() 
+
         print 'Train Classifier'
         model.buildClassifier(classifierType, alpha=alpha) 
         model.trainClassifier(selectedFeatures)
@@ -47,12 +50,15 @@ def buildClassificationModel():
         model.evaluate()
         model.evaluation.confusionMatrix()
 
+        #pdb.set_trace()
+
         results['Fold '+ str(foldNr)] = model.evaluation.toSeries()
         
     
     print 'Display Results'
     results.index=['accuracy','precision', 'recall']
     print results
+    #pdb.set_trace()
     
     viewer = Viewer(classifierType)
     viewer.printDocuments(model.testData, displayFeatures)

@@ -1,5 +1,5 @@
 from __future__ import division
-from sklearn import metrics
+from sklearn.metrics import accuracy_score, recall_score, precision_score, confusion_matrix
 import pandas as pd
 import numpy as np
 
@@ -12,18 +12,20 @@ class Evaluation:
         self.n = len(self.target)
 
     def accuracy(self):
-        self.accuracy = np.float64(self.n_TP + self.n_TN)/self.n
+        self.accuracy = accuracy_score(self.target, self.prediction)
                                                                     
     def recall(self):
-        self.recall = np.float64(self.n_TP)/(self.n_TP + self.n_FN)
+        self.recall = recall_score(self.target, self.prediction, average='macro')
                                                                     
     def precision(self):
-        self.precision = np.float64(self.n_TP)/(self.n_TP + self.n_FP)
+        self.precision = precision_score(self.target, self.prediction, average='macro')
+
 
     def confusionMatrix(self):
-        matrix = np.array([[self.n_TN, self.n_FP], [self.n_FN, self.n_TP]], dtype=int)
+        matrix = confusion_matrix(self.target, self.prediction)
         self.confusionMatrix = pd.DataFrame(matrix)
-        self.confusionMatrix = self.confusionMatrix.rename(index={0:'Target False', 1:'Target True'}, columns={0:'Predicted False', 1:'Predicted True'})
+        #self.confusionMatrix = self.confusionMatrix.rename(index={0:'Target False', 1:'Target True'}, columns={0:'Predicted False', 1:'Predicted True'})
+
 
     def checkLength(self):
         if len(self.target) != len(self.prediction):

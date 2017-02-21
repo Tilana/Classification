@@ -62,7 +62,7 @@ class ClassificationModel:
         for field in self.data.columns[self.data.dtypes==object]:
             self.data = self.data.drop(field, axis=1)
     
-    def createNumericFeature(self, column):
+    def object2CategoricalFeature(self, column):
         category = 0
         for value in self.data[column].unique():
             rowIndex = self.data[self.data[column]==value].index.tolist()
@@ -71,6 +71,8 @@ class ClassificationModel:
         self.toNumeric(column)
 
     def createTarget(self):
+        if self.isObject(self.targetFeature):
+            self.object2CategoricalFeature(self.targetFeature)
         self.target = self.data[self.targetFeature]
 
     def toNumeric(self, column):
@@ -78,6 +80,9 @@ class ClassificationModel:
 
     def toBoolean(self, column):
         self.data[column] = self.data[column].astype(bool)
+
+    def isObject(self, column):
+        return self.data[column].dtype == object
 
     def dropFeatures(self):
         if hasattr(self, 'keeplist'):
