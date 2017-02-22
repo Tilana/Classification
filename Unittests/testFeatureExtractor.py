@@ -38,6 +38,16 @@ class testFeatureExtractor(unittest.TestCase):
     def test_caseType(self):
         self.assertEqual(self.FeatureExtractor.caseType(self.testDoc1.text), 'SENTENCE')
         self.assertEqual(self.FeatureExtractor.caseType(self.testDoc2.text), 'SUMMING UP')
+
+
+    def test_unique(self):
+        testList = ['a', 'c', 'a', 'c', 'b', 'b']
+        target = ['a', 'c', 'b']
+        self.assertEqual(self.FeatureExtractor.unique(testList), target)
+
+    def test_getFirstElement(self):
+        self.assertEqual(self.FeatureExtractor.getFirstElement(['b', 'c', 'c']), 'b')
+        self.assertEqual(self.FeatureExtractor.getFirstElement([]), None)
     
 
 if __name__ == '__main__':
