@@ -50,6 +50,11 @@ class Preprocessor:
     def setVocabulary(self):
         self.vocabulary = self.vectorizer.get_feature_names()
 
+    def getVocabDict(self):
+        ids = self.vectorizer.vocabulary_.values()
+        words = self.vectorizer.vocabulary_.keys()
+        return dict(zip(ids,words))
+
     def posTagging(self, tokens):
         return pos_tag(tokens)
 

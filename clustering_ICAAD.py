@@ -3,34 +3,35 @@ import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.cluster import KMeans
+from lda import ClassificationModel
+import pdb
 
 def clustering_ICAAD():
 
-    data = pd.read_pickle('Documents/ICAAD/ICAAD.pkl')
-    texts = data['text'].get_values()
-    nrCluster = 12
+    modelPath = 'processedData/SADV_2gram'
+    #modelPath = 'processedData/SADV'
+    model = ClassificationModel()
+    model = model.load(modelPath)
 
-    stopwords = set([x.strip() for x in open("stopwords/english.txt")])
-    vectorizer = TfidfVectorizer(analyzer='word', ngram_range=(1,2), token_pattern='[a-zA-Z]+', max_df=300, min_df=8, stop_words=stopwords, max_features=8000)
+    nrCluster = 35 
+
+    features = model.data['tfIdf'].tolist()
+    vocabulary = model.preprocessor.getVocabDict()
+
     
-    
-    word_counts = vectorizer.fit_transform(texts).toarray()
-    #data['token'] = word_counts.tolist()
+    clf = KMeans(n_clusters=nrCluster, init='k-means++', max_iter=100)
+    clf.fit(features)
 
-    vocabulary = vectorizer.get_feature_names()
-    vocab_dict = dict(zip(range(0,len(vocabulary)), vocabulary))
-
-    model = KMeans(n_clusters=nrCluster, init='k-means++', max_iter=100)
-    model.fit(word_counts)
-
-    order_centroids = model.cluster_centers_.argsort()[:, ::-1]
+    order_centroids = clf.cluster_centers_.argsort()[:, ::-1]
     for i in range(nrCluster):
         print("Cluster %d words:" % i)
-        relevantWords = [vocab_dict[ind] for ind in order_centroids[i, :20]]
+        relevantWords = [vocabulary[ind] for ind in order_centroids[i, :20]]
         print(relevantWords)
 
-    data['cluster'] = model.labels_.tolist()
-    SAcluster = data[data['Sexual.Assault.Manual']].cluster
+    #pdb.set_trace()
+
+    model.data['cluster'] = clf.labels_.tolist()
+    SAcluster = model.data[model.data['Sexual.Assault.Manual']].cluster
     print np.histogram(SAcluster, bins=nrCluster)
         
 
