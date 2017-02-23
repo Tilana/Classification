@@ -1,8 +1,11 @@
 # ignore specific files
 *.pyc
 *.swp
+lda/*.pyc
 
 # ignore result folder
 results/**/*
-
+stanford-ner-2014-06-16/
+processedData/
+stopwords/
 
