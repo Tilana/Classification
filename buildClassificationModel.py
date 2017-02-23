@@ -9,25 +9,27 @@ def buildClassificationModel():
     target = 'Sexual.Assault.Manual'
     target = 'Domestic.Violence.Manual'
     target = 'Age'
-    modelPath = 'processedData/processedData'
+    target = 'Family.Member.Victim'
+    modelPath = 'processedData/SADV'
+    #modelPath = 'processedData/processedData'
 
     classifierTypes = ['DecisionTree', 'MultinomialNB', 'BernoulliNB', 'RandomForest', 'SVM', 'LogisticRegression']
-    classifierType = classifierTypes[1]
-    alpha = 0.8 
+    classifierType = classifierTypes[5]
+    alpha = 0.5 
     selectedFeatures = 'tfIdf'
-    displayFeatures = ['Court', 'Year', 'Sexual.Assault.Manual', 'Domestic.Violence.Manual', 'predictedLabel', 'tag']
+    displayFeatures = ['Court', 'Year', 'Sexual.Assault.Manual', 'Domestic.Violence.Manual', 'predictedLabel', 'tag', 'Family.Member.Victim']
 
     model = ClassificationModel(path, target)
-
+    model.data = model.data[model.data['Sexual.Assault.Manual'] | model.data['Domestic.Violence.Manual']]
+    
     if not model.existsProcessedData(modelPath):
         print 'Preprocess Data'
-        model.buildPreprocessor(ngram_range=(1,2), min_df=10, max_df=0.5, max_features=8000)
+        model.buildPreprocessor(ngram_range=(1,2), min_df=5, max_df=0.50, max_features=8000)
         model.trainPreprocessor()
+        model.data.reset_index(inplace=True)
         model.save(modelPath)
 
     model = model.load(modelPath)
-    model.data.reset_index(inplace=True)
-
     model.targetFeature = target
     model.createTarget()
     nrDocs = len(model.data)

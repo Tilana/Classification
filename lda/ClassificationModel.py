@@ -74,6 +74,7 @@ class ClassificationModel:
         if self.isObject(self.targetFeature):
             self.object2CategoricalFeature(self.targetFeature)
         self.target = self.data[self.targetFeature]
+        self.dropNANRows(self.targetFeature)
 
     def toNumeric(self, column):
         self.data[column] = self.data[column].astype(int)
@@ -117,8 +118,11 @@ class ClassificationModel:
         self.featureImportance = [(elem[1], elem[0]) for elem in featureImportance if elem[0]>0.0]
 
 
-    def dropNANRows(self):
-        self.data = self.data.dropna()
+    def dropNANRows(self, columns=None):
+        if columns:
+            self.data = self.data[pd.notnull(self.data[columns])]
+        else:
+            self.data = self.data.dropna()
 
     def mergeDataset(self, dataset2):
         self.data = pd.merge(self.data, dataset2, on=['id'])

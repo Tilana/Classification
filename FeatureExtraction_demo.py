@@ -11,46 +11,31 @@ def FeatureExtraction_demo():
     indexSA = data[data['Sexual.Assault.Manual']].index.tolist()
     
     ind = indexSA[35] 
-    title = data.loc[ind, 'title']
-    text = data.loc[ind, 'text']
+    doc = data.loc[ind]
 
+    preprocessor = Preprocessor()
+    cleanText = preprocessor.cleanText(doc.text)
+    cleanText = preprocessor.numbersInTextToDigits(cleanText)
+   
     extractor = FeatureExtractor()
-    processor = Preprocessor()
-    posTags = processor.posTagging(processor.wordTokenize(text.lower()))
-    lemmas = processor.posLemmatize(posTags)
-    cleanText =  ' '.join(lemmas)
-    
-    #print cleanText
-    #pdb.set_trace()
-    cleanText = processor.numbersInTextToDigits(cleanText)
-    #print cleanText
-    #pdb.set_trace()
-    
-    data.loc[ind,'extCourt']  = extractor.court(title)
-    data.loc[ind,'extYear'] = extractor.year(title)
+    doc.set_value('ext_Court', extractor.court(doc.title))
+    doc.set_value('ext_Year', extractor.year(doc.title))
 
-    data['extAge'] = 's'
-    data['extSentences'] = 's'
-    data['victim'] = 's'
-    data['ORGANIZATION'] = 's'
-    data['LOCATION'] = 's'
-    data['PERSON'] = 's'
-    data['extCaseType'] = 's'
-    data.set_value(ind, 'extAge', extractor.age(cleanText))
-    data.set_value(ind, 'extSentences', extractor.sentence(cleanText))
-    #pdb.set_trace()
-    data.set_value(ind,'extCaseType', extractor.caseType(text))
-    data.set_value(ind,'victim', extractor.victimRelated(cleanText))
-
-    entities = ner.getNamedEntities(text)
+    doc.set_value('ext_Age', extractor.age(cleanText))
+    doc.set_value('ext_Sentences', extractor.sentence(cleanText))
+    doc.set_value('ext_Victim', extractor.victimRelated(cleanText))
+    
+    doc.set_value('ext_CaseType', extractor.caseType(doc.text))
+    
+    entities = ner.getNamedEntities(doc.text)
     for entity in entities:
-        data.set_value(ind, entity[0], entity[1])
+        doc.set_value(entity[0], entity[1])
 
-    #pdb.set_trace()
+    pdb.set_trace()
 
     viewer = Viewer('FeatureExtraction')
-    features = ['Court', 'Year', 'Age', 'extCourt', 'extYear', 'extCaseType', 'extAge', 'extSentences', 'victim', 'ORGANIZATION', 'LOCATION', 'PERSON']
-    viewer.printDocument(data.loc[ind], features, True)
+    features = ['Court', 'Year', 'Age', 'ext_Court', 'ext_Year', 'ext_CaseType', 'ext_Age', 'ext_Sentences', 'ext_Victim', 'ORGANIZATION', 'LOCATION', 'PERSON']
+    viewer.printDocument(doc, features, True)
 
     pdb.set_trace()
 

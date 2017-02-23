@@ -28,10 +28,6 @@ class Preprocessor:
         return [docVec for docVec in wordCounts.toarray()]
 
 
-    # def lemmatize(self,tokens):
-    #     return [self.WordNet.lemmatize(self.WordNet.lemmatize(self.WordNet.lemmatize(token), 'v'), 'a') for token in tokens]
-
-
     def posLemmatize(self,tokens):
         lemmas = []
         for (token, tag) in tokens:
@@ -108,6 +104,10 @@ class Preprocessor:
             text = re.sub(word, digitNum, text)
         return text
 
-
+    def cleanText(self, text):
+        tokens = self.wordTokenize(text.lower())
+        posTags = self.posTagging(tokens)
+        lemmas = self.posLemmatize(posTags)
+        return ' '.join(lemmas)
 
         
