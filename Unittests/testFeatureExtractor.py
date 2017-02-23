@@ -25,9 +25,18 @@ class testFeatureExtractor(unittest.TestCase):
 
 
     def test_age(self):
-        testString = 'He was 17-years-old. He is twelve years old. At the age of 16 he started walking'
-        target = ['17-years-old', 'twelve years old', 'age of 16']
+        testString = 'He was 17-years-old. He is 12 years old. At the age of 16 he started walking'
+        target = ['17-years-old', '12 years old', 'age of 16']
         self.assertEqual(self.FeatureExtractor.age(testString), target)
+
+    #def test_ageRange(self):
+        #testString = 'she is above the age of 13 and under the age of 16'
+        #target = ['above the age of 13', 'under the age of 16']
+        #self.assertEqual(self.FeatureExtractor.ageRange(testString), target)
+
+        #testString = 'She is between the age of 17 and 19. He is between 12 and 14 years old'
+        #target = ['between the age of 17 and 19', 'between 12 and 14 years old']
+        #self.assertEqual(self.FeatureExtractor.ageRange(testString), target)
 
 
     def test_extractDigit(self):
@@ -48,6 +57,17 @@ class testFeatureExtractor(unittest.TestCase):
     def test_getFirstElement(self):
         self.assertEqual(self.FeatureExtractor.getFirstElement(['b', 'c', 'c']), 'b')
         self.assertEqual(self.FeatureExtractor.getFirstElement([]), None)
+
+    def test_findWordlistElem(self):
+        text = 'In the family the mother and father live together with their child'
+        target = ['family', 'mother', 'father', 'children']
+        self.assertEqual(self.FeatureExtractor.findWordlistElem(text, 'family'), target)
+
+
+    def test_groupTuples(self):
+        tupleList = [('group', 'together'), ('all', 'tuple', 'elements')]
+        target = ['group together', 'all tuple elements']
+        self.assertEqual(self.FeatureExtractor.groupTuples(tupleList), target)
     
 
 if __name__ == '__main__':

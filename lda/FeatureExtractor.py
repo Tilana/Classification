@@ -1,12 +1,11 @@
 import re
-import text2num
+import pandas as pd
 
 class FeatureExtractor:
 
     def __init__(self):
         print 'Build Feature Extractor'
-        pass
-
+        self.wordList = pd.read_csv('Documents/ICAAD/CategoryLists.csv')
 
     def year(self, title):
         regex = r'\[\d{4}\]'
@@ -28,8 +27,13 @@ class FeatureExtractor:
 
     
     def age(self, text):
-        regex = r'\w+[-| ]*year\w*[-| ]*old|age of \w+|\w+ year\w* of age'
+        regex = r'\d+[-| ]*year\w*[-| ]*old|age of \d+|\d+ year\w* of age'
         return re.findall(regex, text)
+
+    def ageRange(self, text):
+        regex = r'((above|under|up to|between)( the age of \d+ (and \d+)*|\d* (and \d+)* years old))'
+        results = re.findall(regex,text)
+        return [elem[0] for elem in results]
 
     def minor(self, text):
         regex = r'under the age of \w+|younger than \w+'
@@ -60,11 +64,12 @@ class FeatureExtractor:
             return l[0]
         return None
 
+    def findWordlistElem(self, text, col):
+        wordlist = self.wordList[col].tolist()
+        wordlist = [word for word in wordlist if type(word)==str]
+        return re.findall('|'.join(wordlist), text)
 
-    
+    def groupTuples(self, tupleList):
+        return [' '.join(elem) for elem in tupleList]
 
 
-
-
-
-        

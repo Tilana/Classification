@@ -15,10 +15,10 @@ class Evaluation:
         self.accuracy = accuracy_score(self.target, self.prediction)
                                                                     
     def recall(self):
-        self.recall = recall_score(self.target, self.prediction, average='macro')
+        self.recall = recall_score(self.target, self.prediction) #, average='macro')
                                                                     
     def precision(self):
-        self.precision = precision_score(self.target, self.prediction, average='macro')
+        self.precision = precision_score(self.target, self.prediction) #, average='macro')
 
 
     def confusionMatrix(self):

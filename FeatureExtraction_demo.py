@@ -1,7 +1,6 @@
 from lda import Viewer, FeatureExtractor, Preprocessor
 from lda import namedEntityRecognition as ner
 import pandas as pd
-import numpy as np
 import pdb
 
 def FeatureExtraction_demo():
@@ -22,19 +21,21 @@ def FeatureExtraction_demo():
     doc.set_value('ext_Year', extractor.year(doc.title))
 
     doc.set_value('ext_Age', extractor.age(cleanText))
+    doc.set_value('ext_AgeRange', extractor.ageRange(cleanText))
     doc.set_value('ext_Sentences', extractor.sentence(cleanText))
-    doc.set_value('ext_Victim', extractor.victimRelated(cleanText))
-    
+    #doc.set_value('ext_Victim', extractor.victimRelated(cleanText))
+    doc.set_value('ext_Reconciliation', extractor.findWordlistElem(cleanText, 'reconciliation'))
+    doc.set_value('ext_FamilyRelations', extractor.findWordlistElem(cleanText, 'family'))
+    doc.set_value('ext_sentencingType', extractor.findWordlistElem(cleanText, 'sentencing'))
+
     doc.set_value('ext_CaseType', extractor.caseType(doc.text))
     
     entities = ner.getNamedEntities(doc.text)
     for entity in entities:
         doc.set_value(entity[0], entity[1])
 
-    pdb.set_trace()
-
     viewer = Viewer('FeatureExtraction')
-    features = ['Court', 'Year', 'Age', 'ext_Court', 'ext_Year', 'ext_CaseType', 'ext_Age', 'ext_Sentences', 'ext_Victim', 'ORGANIZATION', 'LOCATION', 'PERSON']
+    features = ['Court', 'Year', 'Age', 'ext_Court', 'ext_Year', 'ext_CaseType', 'ext_Age', 'ext_AgeRange', 'ext_Sentences', 'ORGANIZATION', 'LOCATION', 'PERSON', 'ext_Reconciliation', 'ext_FamilyRelations', 'ext_sentencingType']
     viewer.printDocument(doc, features, True)
 
     pdb.set_trace()

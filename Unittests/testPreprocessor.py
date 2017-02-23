@@ -15,8 +15,9 @@ class testPreprocessor(unittest.TestCase):
         self.assertEqual(word2num('test'), None)
 
     def test_findNumbers(self):
-        text = 'She is four-years old and has nine brothers, he is eight and has four brothers.'
-        self.assertEqual(self.processor.findNumbers(text), set(['four', 'eight', 'nine']))
+        text = 'She is five-years old and has sixteen brothers and four sisters, he is eight and has four brothers.'
+        print self.processor.findNumbers(text)
+        self.assertEqual(self.processor.findNumbers(text), set(['four', 'eight', 'sixteen', 'five']))
 
 
     def test_numbersInTextToDigits(self):

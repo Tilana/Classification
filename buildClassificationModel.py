@@ -6,19 +6,17 @@ import pdb
 def buildClassificationModel():
 
     path = 'Documents/ICAAD/ICAAD.pkl'
-    target = 'Sexual.Assault.Manual'
-    target = 'Domestic.Violence.Manual'
-    target = 'Age'
-    target = 'Family.Member.Victim'
+    targets = ['Sexual.Assault.Manual', 'Domestic.Violence.Manual', 'Age', 'Family.Member.Victim']
+    target = targets[1]
     modelPath = 'processedData/SADV'
-    #modelPath = 'processedData/processedData'
+    modelPath = 'processedData/processedData'
 
     classifierTypes = ['DecisionTree', 'MultinomialNB', 'BernoulliNB', 'RandomForest', 'SVM', 'LogisticRegression']
-    classifierType = classifierTypes[5]
+    classifierType = classifierTypes[3]
     alpha = 0.5 
     selectedFeatures = 'tfIdf'
-    displayFeatures = ['Court', 'Year', 'Sexual.Assault.Manual', 'Domestic.Violence.Manual', 'predictedLabel', 'tag', 'Family.Member.Victim']
-
+    
+    
     model = ClassificationModel(path, target)
     model.data = model.data[model.data['Sexual.Assault.Manual'] | model.data['Domestic.Violence.Manual']]
     
@@ -36,12 +34,10 @@ def buildClassificationModel():
    
     results = pd.DataFrame()
 
-    for foldNr, (trainInd, testInd) in enumerate(KFold(nrDocs, n_folds=4, shuffle=True)):
+    for foldNr, (trainInd, testInd) in enumerate(KFold(nrDocs, n_folds=2, shuffle=True)):
         model.trainIndices = trainInd
         model.testIndices = testInd
         model.split()
-
-        #pdb.set_trace() 
 
         print 'Train Classifier'
         model.buildClassifier(classifierType, alpha=alpha) 
@@ -52,17 +48,15 @@ def buildClassificationModel():
         model.evaluate()
         model.evaluation.confusionMatrix()
 
-        #pdb.set_trace()
-
         results['Fold '+ str(foldNr)] = model.evaluation.toSeries()
         
     
     print 'Display Results'
     results.index=['accuracy','precision', 'recall']
     print results
-    #pdb.set_trace()
     
     viewer = Viewer(classifierType)
+    displayFeatures = ['Court', 'Year', 'Sexual.Assault.Manual', 'Domestic.Violence.Manual', 'predictedLabel', 'tag', 'Family.Member.Victim', 'probability']
     viewer.printDocuments(model.testData, displayFeatures)
     viewer.classificationResults(model)
 

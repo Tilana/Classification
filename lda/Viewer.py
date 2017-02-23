@@ -169,7 +169,8 @@ class Viewer:
         f.write("""<body><div style="width:100%;"><div style="float:right; width:40%;">""")
         f.write("<h4> Properties: </h4>")
         for elem in features:
-            f.write("{:25}: {:>40}<br>".format(elem, doc[elem]))
+            if hasattr(doc, elem):
+                f.write("{:25}: {:>40}<br><br>".format(elem, doc[elem]))
         f.write("""</div>""")
         f.write("""<div style="float:left; width:55%%;"><p>%s</p></div></div></body></html>""" % doc.text.encode('utf8'))
         f.close()
