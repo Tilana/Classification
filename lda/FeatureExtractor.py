@@ -44,7 +44,7 @@ class FeatureExtractor:
         return re.findall(regex, text)
 
     def caseType(self, text):
-        regex = r'RULING|JUDGEMENT|SUMMING UP|SENTENCE|JUDGMENT'
+        regex = r'RULING|JUDGEMENT|SUMMING UP|SENTENCE|JUDGMENT|DECISION|CHARGE|MINUTE|SENTENCING|REASONS|SUMMARY|APPEAL'
         result = re.findall(regex, text)
         return self.getFirstElement(result) 
 
