@@ -3,6 +3,7 @@ import numpy as np
 import random
 import cPickle as pickle
 import os
+from utils import sortTupleList
 import dataframeUtils as df
 from Evaluation import Evaluation
 from Preprocessor import Preprocessor
@@ -115,9 +116,13 @@ class ClassificationModel:
         self.evaluation.recall()
         self.evaluation.precision()
 
-    def computeFeatureImportance(self):
-        featureImportance = sorted(zip(map(lambda relevance: round(relevance,4), self.classifier.feature_importances_), self.data.columns), reverse=True)
-        self.featureImportance = [(elem[1], elem[0]) for elem in featureImportance if elem[0]>0.0]
+
+    def relevantFeatures(self):
+        featureRelevance = self.classifier.feature_importances_
+        indicesRelFeatures = np.where(featureRelevance>0)[0]
+        vocabulary = self.preprocessor.vocabulary
+        relFeatures = [(vocabulary[ind], featureRelevance[ind]) for ind in indicesRelFeatures]
+        self.featureImportance = sortTupleList(relFeatures)
 
 
     def dropNANRows(self, columns=None):
@@ -146,13 +151,13 @@ class ClassificationModel:
     def buildClassifier(self, classifierType, alpha=0.6):
         self.classifierType = classifierType
         if classifierType == 'DecisionTree':
-            self.classifier = DecisionTreeClassifier()
+            self.classifier = DecisionTreeClassifier(max_depth=7, min_samples_leaf=5)
         elif classifierType == 'MultinomialNB':
             self.classifier = MultinomialNB(alpha=alpha)
         elif classifierType == 'BernoulliNB':
             self.classifier = BernoulliNB(alpha=alpha)
         elif classifierType == 'RandomForest':
-            self.classifier = RandomForestClassifier()
+            self.classifier = RandomForestClassifier(n_estimators=30, max_depth=None, min_samples_split=1)
         elif classifierType == 'SVM':
             self.classifier = svm.SVC(probability=True)
         elif classifierType == 'LogisticRegression':
@@ -174,8 +179,8 @@ class ClassificationModel:
         return [('relevantWord%d' % docNr) for docNr in range(1, nrWords+1)] 
 
 
-    def buildPreprocessor(self, vecType='tfIdf', min_df=10, max_df=0.5, stop_words='english', ngram_range = (1,2), max_features=8000):
-        self.preprocessor = Preprocessor(processor=vecType, min_df=min_df, max_df=max_df, stop_words=stop_words, ngram_range=ngram_range, max_features=max_features) 
+    def buildPreprocessor(self, vecType='tfIdf', min_df=10, max_df=0.5, stop_words='english', ngram_range = (1,2), max_features=8000, vocabulary=None):
+        self.preprocessor = Preprocessor(processor=vecType, min_df=min_df, max_df=max_df, stop_words=stop_words, ngram_range=ngram_range, max_features=max_features, vocabulary=vocabulary) 
 
 
     def trainPreprocessor(self, vecType='tfIdf'):
