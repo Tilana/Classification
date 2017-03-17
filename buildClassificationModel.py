@@ -1,4 +1,4 @@
-from lda import Viewer, ClassificationModel
+from lda import Viewer, ClassificationModel, FeatureExtractor
 from sklearn.cross_validation import KFold
 import pandas as pd
 import pdb
@@ -7,13 +7,13 @@ def buildClassificationModel():
 
     path = 'Documents/ICAAD/ICAAD.pkl'
     targets = ['Sexual.Assault.Manual', 'Domestic.Violence.Manual', 'Age', 'Family.Member.Victim']
-    target = targets[1]
+    target = targets[0]
     modelPath = 'processedData/SADV'
     modelPath = 'processedData/processedData'
 
     classifierTypes = ['DecisionTree', 'MultinomialNB', 'BernoulliNB', 'RandomForest', 'SVM', 'LogisticRegression']
-    classifierType = classifierTypes[3]
-    alpha = 0.5 
+    classifierType = classifierTypes[1]
+    alpha = 0.01 
     selectedFeatures = 'tfIdf'
     
     
@@ -28,6 +28,14 @@ def buildClassificationModel():
         model.save(modelPath)
 
     model = model.load(modelPath)
+
+    #extractor = FeatureExtractor()
+    #model.data['Type'] = model.data.apply(lambda doc: extractor.caseType(doc.text), axis=1)
+    #model.data = model.data[model.data.Type=='SENTENCE']
+    #model.data.reset_index(inplace=True)
+
+    #pdb.set_trace()
+    
     model.targetFeature = target
     model.createTarget()
     nrDocs = len(model.data)

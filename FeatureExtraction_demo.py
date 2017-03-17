@@ -9,7 +9,7 @@ def FeatureExtraction_demo():
     data = pd.read_pickle(path)
     indexSA = data[data['Sexual.Assault.Manual']].index.tolist()
     
-    ind = indexSA[35] 
+    ind = indexSA[5] 
     doc = data.loc[ind]
 
     preprocessor = Preprocessor()
@@ -19,6 +19,8 @@ def FeatureExtraction_demo():
     extractor = FeatureExtractor()
     doc.set_value('ext_Court', extractor.court(doc.title))
     doc.set_value('ext_Year', extractor.year(doc.title))
+
+    ##pdb.set_trace()
 
     doc.set_value('ext_Age', extractor.age(cleanText))
     doc.set_value('ext_AgeRange', extractor.ageRange(cleanText))
