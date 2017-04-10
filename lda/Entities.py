@@ -1,5 +1,5 @@
 import namedEntityRecognition as ner
-import utils
+import listUtils as utils
 
 # stores named entities of a document sorted by its different tags, like location, person and organization
 class Entities:

@@ -60,7 +60,7 @@ class testFeatureExtractor(unittest.TestCase):
 
     def test_findWordlistElem(self):
         text = 'In the family the mother and father live together with their child'
-        target = ['family', 'mother', 'father', 'children']
+        target = ['family', 'mother', 'father', 'child']
         self.assertEqual(self.FeatureExtractor.findWordlistElem(text, 'family'), target)
 
 

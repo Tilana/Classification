@@ -1,4 +1,4 @@
-import utils
+import listUtils as utils
 import ImagePlotter 
 
 class Topic:

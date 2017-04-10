@@ -1,5 +1,5 @@
 from Entities import Entities
-import utils
+import listUtils as utils
 import nltk
 from nltk.stem import WordNetLemmatizer
 from nltk.collocations import *

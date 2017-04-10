@@ -1,6 +1,6 @@
 import unittest
 import os, sys
-from lda import utils
+from lda import listUtils as utils
 
 class testUtils(unittest.TestCase):
     
@@ -65,8 +65,8 @@ class testUtils(unittest.TestCase):
 
     def test_getBigramsFromList(self):
         l = ['no', 'bigram', 'a bigram', 'another one']
-        targetList = [('a bigram'), ('another one')]
-        self.assertEqual(targetList, utils.getBigramsFromList(l))
+        targetList = [('a','bigram'), ('another','one')]
+        self.assertEqual(targetList, utils.getBigrams(l))
 
 
 if __name__ =='__main__':

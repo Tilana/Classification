@@ -49,6 +49,7 @@ class Evaluation:
         indices = [ind for ind,value in enumerate(self.tags) if value==tag]
         setattr(self, tag, indices)
 
+
     def setTagLength(self, tag):
         setattr(self, 'n_'+tag, len(getattr(self, tag)))
 

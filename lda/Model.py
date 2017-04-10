@@ -1,7 +1,7 @@
 from Topic import Topic
 from Word2Vec import Word2Vec
 from gensim import models, similarities
-import utils
+import listUtils as utils
 import pickle
 import logging
 import os.path

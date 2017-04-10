@@ -14,6 +14,6 @@ from ClassificationModel import ClassificationModel
 from Preprocessor import Preprocessor
 from NeuralNet import NeuralNet
 from Info import Info
-import utils
+import listUtils
 import dataframeUtils
 import ImagePlotter

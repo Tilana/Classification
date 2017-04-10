@@ -1,6 +1,6 @@
 from gensim.models import word2vec 
 import os
-import utils
+import listUtils as utils
 
 class Word2Vec:
 

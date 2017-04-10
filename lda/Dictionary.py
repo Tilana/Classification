@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 from Entities import Entities
 import ImagePlotter
-import utils
+import listUtils as utils
 from nltk.stem import WordNetLemmatizer
 from gensim import corpora
 import matplotlib.pyplot as plt
