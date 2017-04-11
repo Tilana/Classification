@@ -1,12 +1,24 @@
-#lda
+## Classification
 
-lda provides a framework to analyse collections of documents:
+This module provides a framework to analyse collections of documents:
  * *topicModeling.py* - uses gensim to extract the most relevant topics
  * *frequencyAnalysis.py* - returns most frequent words based on the Stanford Named-Entity Recognizer
  * *classification.py* - analysis and classification of document features with scikit-learn
  
-##Dependencies
+## Install dependencies
+The code is based on different modules for machine learning and natural language processing, as well as other python libraries. To install them, make sure that you have [Python 2.7](https://www.python.org/download/releases/2.7/) and [pip](https://pip.pypa.io/en/stable/) installed.
 
+Upgrade pip:
+```
+pip install -U pip
+```
+
+Install the dependencies with:
+```
+pip install -r requirements.txt
+```
+
+## Detailed list of dependencies
 * [gensim - Topic Modeling for Humans](https://radimrehurek.com/gensim/install.html) <br />
 Gensim is a free Python library designed to automatically extract semantic topics from documents by implementing Latent Semantic Analysis, Latent Dirichlet Allocation and Term-Frequency Inverse-Document Frequency models.
 ```
@@ -77,10 +89,7 @@ The **classification** script by default loads a csv file.
 
 ## Testing
 The folder *Unittests* contains the tests corresponding to each module. [*nose*](http://nose.readthedocs.org/) provides an easy way to run all tests together. <br  />
-Install *nose* with:
-```
-pip install nose
-```
+
 Run the tests with:
 ```
 nosetests Unittests/
