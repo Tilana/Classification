@@ -7,18 +7,17 @@ def classificationDemo():
 
     path = 'Documents/ICAAD/ICAAD.pkl'
     targets = ['Sexual.Assault.Manual', 'Domestic.Violence.Manual', 'Age', 'Family.Member.Victim', 'SGBV']
-    target = targets[4]
-    modelPath = 'processedData/SADV'
+    target = targets[1]
+    #modelPath = 'processedData/SADV'
     modelPath = 'processedData/processedData'
 
     classifierTypes = ['DecisionTree', 'MultinomialNB', 'BernoulliNB', 'RandomForest', 'SVM', 'LogisticRegression']
-    classifierType = classifierTypes[3]
+    classifierType = classifierTypes[2]
     alpha = 0.01 
+    alphaRange = [0.0001, 0.01, 0.1, 0.3, 0.5, 0.9]
     selectedFeatures = 'tfIdf'
     
-    
     model = ClassificationModel(path, target)
-    #model.data = model.data[model.data['Sexual.Assault.Manual'] | model.data['Domestic.Violence.Manual']]
     
     if not model.existsProcessedData(modelPath):
         print 'Preprocess Data'
@@ -28,19 +27,31 @@ def classificationDemo():
         model.save(modelPath)
 
     model = model.load(modelPath)
-    model.data['SGBV'] = model.data['Sexual.Assault.Manual'] | model.data['Domestic.Violence.Manual']
     #pdb.set_trace()
 
     model.targetFeature = target
     model.createTarget()
-
-    model.splitDataset(5000, random=True)
+    
+    model.balanceDataset(factor=2)
+    model.splitDataset(4500, random=False)
+    model.validationSet()
     nrDocs = len(model.data)
-   
 
-    print 'Train Classifier'
-    model.buildClassifier(classifierType, alpha=alpha) 
-    model.trainClassifier(selectedFeatures)
+    for alpha in alphaRange:
+        print alpha
+
+        print 'Train Classifier'
+        model.buildClassifier(classifierType, alpha=alpha) 
+        model.trainClassifier(selectedFeatures)
+
+        print 'Validation'
+        model.validate(selectedFeatures)
+        print 'Accuraccy: {:f}'.format(model.validation.accuracy)
+        print 'Precision: {:f}'.format(model.validation.precision)
+        print 'Recall: {:f}'.format(model.validation.recall)
+    
+    
+    pdb.set_trace()
 
     print 'Evaluation'
     model.predict(selectedFeatures)

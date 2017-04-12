@@ -12,6 +12,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn import linear_model
 from sklearn import svm
 from sklearn.naive_bayes import MultinomialNB, BernoulliNB, GaussianNB
+from sklearn.metrics import accuracy_score, recall_score, precision_score
 from sklearn.cross_validation import KFold
 
 class ClassificationModel:
@@ -35,6 +36,14 @@ class ClassificationModel:
         self.trainTarget = self.target.loc[self.trainIndices]
         self.testData = self.data.loc[self.testIndices]
         self.testTarget = self.target.loc[self.testIndices]
+
+
+    def validationSet(self):
+        n = len(self.testData)/2
+        self.holdout = self.testData[:n]
+        self.holdoutTarget = self.testTarget[:n]
+        self.testData = self.testData[n:]
+        self.testTarget = self.testTarget[n:]
 
 
     def _generateRandomIndices(self, num):
@@ -73,11 +82,13 @@ class ClassificationModel:
             category += 1
         self.toNumeric(column)
 
+
     def createTarget(self):
         if self.isObject(self.targetFeature):
             self.object2CategoricalFeature(self.targetFeature)
         self.target = self.data[self.targetFeature]
         self.dropNANRows(self.targetFeature)
+
 
     def toNumeric(self, column):
         self.data[column] = self.data[column].astype(int)
@@ -94,10 +105,18 @@ class ClassificationModel:
             self.droplist = list(set(self.data.columns.tolist()) - set(keeplist))
         self.data = self.data.drop(self.droplist, axis=1)
 
+
     def trainClassifier(self, features):
         trainData = self.trainData[features].tolist()
         target = self.trainTarget.tolist()
         self.classifier.fit(trainData, target)
+
+    def validate(self, features):
+        self.holdout['predictedLabel'] = self.classifier.predict(self.holdout[features].tolist())
+        self.validation = Evaluation(self.holdoutTarget, self.holdout.predictedLabel.tolist())
+        self.validation.accuracy()
+        self.validation.recall()
+        self.validation.precision()
 
     
     def predict(self, features):
@@ -206,6 +225,7 @@ class ClassificationModel:
         model = pickle.load(open(path+'.pkl', 'rb'))
         model.loadPreprocessor(path)
         return model
+
 
     def savePreprocessor(self, path):
         if hasattr(self, 'preprocessor'):
