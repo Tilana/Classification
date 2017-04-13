@@ -11,8 +11,9 @@ def classificationDemo():
     #modelPath = 'processedData/SADV'
     modelPath = 'processedData/processedData'
 
-    classifierTypes = ['DecisionTree', 'MultinomialNB', 'BernoulliNB', 'RandomForest', 'SVM', 'LogisticRegression']
-    classifierType = classifierTypes[2]
+    classifierTypes = ['DecisionTree', 'MultinomialNB', 'BernoulliNB', 'RandomForest', 'SVM', 'LogisticRegression', 'kNN']
+    classifierTypes = ['DecisionTree']
+    #classifierType = classifierTypes[6]
     alpha = 0.01 
     alphaRange = [0.0001, 0.01, 0.1, 0.3, 0.5, 0.9]
     selectedFeatures = 'tfIdf'
@@ -32,19 +33,22 @@ def classificationDemo():
     model.targetFeature = target
     model.createTarget()
     
-    model.balanceDataset(factor=2)
+#    model.balanceDataset(factor=2)
     model.splitDataset(4500, random=False)
     model.validationSet()
     nrDocs = len(model.data)
 
-    for alpha in alphaRange:
-        print alpha
+    for classifierType in classifierTypes:
+    #for alpha in alphaRange:
+        #print alpha
+        print classifierType
 
-        print 'Train Classifier'
+        #print 'Train Classifier'
         model.buildClassifier(classifierType, alpha=alpha) 
+        #model.gridSearch(selectedFeatures)
         model.trainClassifier(selectedFeatures)
 
-        print 'Validation'
+        #print 'Validation'
         model.validate(selectedFeatures)
         print 'Accuraccy: {:f}'.format(model.validation.accuracy)
         print 'Precision: {:f}'.format(model.validation.precision)

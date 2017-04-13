@@ -9,11 +9,12 @@ from Evaluation import Evaluation
 from Preprocessor import Preprocessor
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
-from sklearn import linear_model
-from sklearn import svm
+from sklearn import svm, neighbors, linear_model
 from sklearn.naive_bayes import MultinomialNB, BernoulliNB, GaussianNB
 from sklearn.metrics import accuracy_score, recall_score, precision_score
 from sklearn.cross_validation import KFold
+#from sklearn import model_selection
+#from sklearn.model_selection import GridSearchCV
 
 class ClassificationModel:
 
@@ -43,6 +44,7 @@ class ClassificationModel:
         self.holdout = self.testData[:n]
         self.holdoutTarget = self.testTarget[:n]
         self.testData = self.testData[n:]
+        self.testIndices = self.testIndices[n:]
         self.testTarget = self.testTarget[n:]
 
 
@@ -105,6 +107,10 @@ class ClassificationModel:
             self.droplist = list(set(self.data.columns.tolist()) - set(keeplist))
         self.data = self.data.drop(self.droplist, axis=1)
 
+    def gridSearch(self, features):
+        trainData = self.trainData[features].tolist()
+        target = self.trainTarget.tolist()
+        clf = GridSearch(self.classifier, [{'n_neighbors': [2,5,10]}])
 
     def trainClassifier(self, features):
         trainData = self.trainData[features].tolist()
@@ -181,6 +187,9 @@ class ClassificationModel:
             self.classifier = svm.SVC(probability=True)
         elif classifierType == 'LogisticRegression':
             self.classifier = linear_model.LogisticRegression()
+        elif classifierType == 'kNN':
+            self.classifier = neighbors.KNeighborsClassifier(n_neighbors=15)
+
 
     def getSelectedTopics(self, topicNr, selectedTopics=None):
         self.topicList = self.getTopicList(topicNr)
