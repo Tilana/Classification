@@ -12,8 +12,6 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn import svm, neighbors, linear_model
 from sklearn.naive_bayes import MultinomialNB, BernoulliNB, GaussianNB
 from sklearn.metrics import accuracy_score, recall_score, precision_score
-from sklearn.cross_validation import KFold
-#from sklearn import model_selection
 from sklearn.model_selection import GridSearchCV
 
 class ClassificationModel:
@@ -110,7 +108,7 @@ class ClassificationModel:
     def gridSearch(self, features, scoring='f1'):
         trainData = self.trainData[features].tolist()
         target = self.trainTarget.tolist()
-        self.classifier= GridSearchCV(self.classifier, [{'min_samples_leaf': [2,5], 'max_depth':[3,5,7]}], scoring=scoring)
+        self.classifier= GridSearchCV(self.classifier, self.parameters, scoring=scoring)
         self.trainClassifier(features)
         print('Best score: %0.3f' % self.classifier.best_score_)
         print self.classifier.best_estimator_.get_params()
@@ -177,22 +175,29 @@ class ClassificationModel:
     def oneHotEncoding(self, data):
         return pd.get_dummies(data)
 
-    def buildClassifier(self, classifierType, alpha=0.6):
+    def buildClassifier(self, classifierType):
         self.classifierType = classifierType
         if classifierType == 'DecisionTree':
-            self.classifier = DecisionTreeClassifier(max_depth=7, min_samples_leaf=5)
+            self.classifier = DecisionTreeClassifier()
+            self.parameters = [{'min_samples_leaf': [2,5], 'max_depth':[3,5,7], 'criterion':['gini','entropy']}]
         elif classifierType == 'MultinomialNB':
-            self.classifier = MultinomialNB(alpha=alpha)
+            self.classifier = MultinomialNB()
+            self.parameters = [{'alpha':[0,0.01, 0.3, 0.6, 1], 'fit_prior':[True, False],}]
         elif classifierType == 'BernoulliNB':
-            self.classifier = BernoulliNB(alpha=alpha)
+            self.classifier = BernoulliNB()
+            self.parameters = [{'alpha':[0, 0.01, 0.3, 0.6, 1], 'binarize':[True, False], 'fit_prior':[True, False],}]
         elif classifierType == 'RandomForest':
-            self.classifier = RandomForestClassifier(n_estimators=30, max_depth=None, min_samples_split=1)
+            self.classifier = RandomForestClassifier()
+            self.parameters = [{'n_estimators':[5,10,30], 'min_samples_leaf': [2,5], 'max_depth':[None,3,5,7], 'criterion':['gini','entropy']}]
         elif classifierType == 'SVM':
             self.classifier = svm.SVC(probability=True)
+            self.parameters = [{'kernel':['rbf', 'poly'], 'gamma':['auto', 0.01, 0.3, 0.5, 0.9], 'C':[0.3,0.5,1]}]
         elif classifierType == 'LogisticRegression':
             self.classifier = linear_model.LogisticRegression()
+            self.parameters = [{'penalty':['l1','l2'], 'C':[0.3,0.5,1,10]}]
         elif classifierType == 'kNN':
             self.classifier = neighbors.KNeighborsClassifier(n_neighbors=15)
+            self.parameters = [{'n_neighbors':[3,5,15,30]}]
 
 
     def getSelectedTopics(self, topicNr, selectedTopics=None):

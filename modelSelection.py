@@ -1,5 +1,4 @@
 from lda import Viewer, ClassificationModel, FeatureExtractor
-from sklearn.model_selection import GridSearchCV 
 import pandas as pd
 import pdb
 
@@ -12,10 +11,6 @@ def modelSelection():
     modelPath = 'processedData/processedData'
 
     classifierTypes = ['DecisionTree', 'MultinomialNB', 'BernoulliNB', 'RandomForest', 'SVM', 'LogisticRegression', 'kNN']
-    classifierTypes = ['DecisionTree']
-    #classifierType = classifierTypes[6]
-    alpha = 0.01 
-    alphaRange = [0.0001, 0.01, 0.1, 0.3, 0.5, 0.9]
     selectedFeatures = 'tfIdf'
     
     model = ClassificationModel(path, target)
@@ -39,18 +34,11 @@ def modelSelection():
     nrDocs = len(model.data)
 
     for classifierType in classifierTypes:
-    #for alpha in alphaRange:
-        #print alpha
         print classifierType
 
-        #print 'Train Classifier'
-        model.buildClassifier(classifierType, alpha=alpha) 
+        model.buildClassifier(classifierType) 
         model.gridSearch(selectedFeatures, scoring='recall')
 
-        pdb.set_trace()
-        #model.trainClassifier(selectedFeatures)
-
-        #print 'Validation'
         model.validate(selectedFeatures)
         print 'Accuraccy: {:f}'.format(model.validation.accuracy)
         print 'Precision: {:f}'.format(model.validation.precision)
