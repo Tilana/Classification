@@ -40,7 +40,7 @@ def FeatureExtraction_demo():
     features = ['Court', 'Year', 'Age', 'ext_Court', 'ext_Year', 'ext_CaseType', 'ext_Age', 'ext_AgeRange', 'ext_Sentences', 'ORGANIZATION', 'LOCATION', 'PERSON', 'ext_Reconciliation', 'ext_FamilyRelations', 'ext_sentencingType']
     viewer.printDocument(doc, features, True)
 
-    pdb.set_trace()
+    #pdb.set_trace()
 
 
 

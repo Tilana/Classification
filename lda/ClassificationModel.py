@@ -14,7 +14,7 @@ from sklearn.naive_bayes import MultinomialNB, BernoulliNB, GaussianNB
 from sklearn.metrics import accuracy_score, recall_score, precision_score
 from sklearn.cross_validation import KFold
 #from sklearn import model_selection
-#from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import GridSearchCV
 
 class ClassificationModel:
 
@@ -107,10 +107,14 @@ class ClassificationModel:
             self.droplist = list(set(self.data.columns.tolist()) - set(keeplist))
         self.data = self.data.drop(self.droplist, axis=1)
 
-    def gridSearch(self, features):
+    def gridSearch(self, features, scoring='f1'):
         trainData = self.trainData[features].tolist()
         target = self.trainTarget.tolist()
-        clf = GridSearch(self.classifier, [{'n_neighbors': [2,5,10]}])
+        self.classifier= GridSearchCV(self.classifier, [{'min_samples_leaf': [2,5], 'max_depth':[3,5,7]}], scoring=scoring)
+        self.trainClassifier(features)
+        print('Best score: %0.3f' % self.classifier.best_score_)
+        print self.classifier.best_estimator_.get_params()
+
 
     def trainClassifier(self, features):
         trainData = self.trainData[features].tolist()

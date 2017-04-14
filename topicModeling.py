@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #-*- coding: utf-8 -*-
-from lda import Collection, Dictionary, Model, Info, Viewer, utils, ImagePlotter, Word2Vec, docLoader
+from lda import Collection, Dictionary, Model, Info, Viewer, listUtils, ImagePlotter, Word2Vec, docLoader
 from lda.docLoader import loadCategories
 from gensim.parsing.preprocessing import STOPWORDS
 import pandas as pd
@@ -28,7 +28,7 @@ def topicModeling():
 
     numbers = [str(nr) for nr in range(0,500)]
     info.whiteList= Word2Vec().net.vocab.keys() #+ numbers
-    info.stoplist = list(STOPWORDS) #+ utils.lowerList(names.words())
+    info.stoplist = list(STOPWORDS) #+ listUtils.lowerList(names.words())
     info.stoplist = [x.strip() for x in open('stopwords/english.txt')]
 
     # Dictionary #  

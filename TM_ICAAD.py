@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #-*- coding: utf-8 -*-
-from lda import Collection, Dictionary, Model, Info, Viewer, utils, Word2Vec, ImagePlotter
+from lda import Collection, Dictionary, Model, Info, Viewer, Word2Vec, ImagePlotter, listUtils
 from lda.docLoader import loadCategories
 from gensim.parsing.preprocessing import STOPWORDS
 from nltk.corpus import names
@@ -35,7 +35,7 @@ def TM_ICAAD():
 
     numbers = [str(nr) for nr in range(0,500)]
     info.whiteList= word2vec.net.vocab.keys() + numbers + keywords
-    info.stoplist = list(STOPWORDS) + utils.lowerList(names.words())
+    info.stoplist = list(STOPWORDS) + listUtils.lowerList(names.words())
     info.stoplist = [x.strip() for x in open('stopwords/english.txt')]
 
     info.removeNames = 1
@@ -139,7 +139,7 @@ def TM_ICAAD():
         for category in keywords_df.columns.tolist():
             wordsInCategory = df.getColumn(keywords_df, category) 
             keywordFrequency = document.countOccurance(wordsInCategory)
-            document.entities.addEntities(category, utils.sortTupleList(keywordFrequency))
+            document.entities.addEntities(category, listUtils.sortTupleList(keywordFrequency))
         document.mostFrequentEntities = document.entities.getMostFrequent(5)
 
     ImagePlotter.plotHistogram(maxTopicCoverage, 'Maximal Topic Coverage', 'html/' + info.data+'_'+info.identifier+'/Images/maxTopicCoverage.jpg', 'Maximal LDA Coverage', 'Number of Docs', log=1)

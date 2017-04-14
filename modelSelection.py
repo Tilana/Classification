@@ -1,9 +1,9 @@
 from lda import Viewer, ClassificationModel, FeatureExtractor
-from sklearn.cross_validation import KFold
+from sklearn.model_selection import GridSearchCV 
 import pandas as pd
 import pdb
 
-def classificationDemo():
+def modelSelection():
 
     path = 'Documents/ICAAD/ICAAD.pkl'
     targets = ['Sexual.Assault.Manual', 'Domestic.Violence.Manual', 'Age', 'Family.Member.Victim', 'SGBV']
@@ -45,8 +45,10 @@ def classificationDemo():
 
         #print 'Train Classifier'
         model.buildClassifier(classifierType, alpha=alpha) 
-        #model.gridSearch(selectedFeatures)
-        model.trainClassifier(selectedFeatures)
+        model.gridSearch(selectedFeatures, scoring='recall')
+
+        pdb.set_trace()
+        #model.trainClassifier(selectedFeatures)
 
         #print 'Validation'
         model.validate(selectedFeatures)
@@ -73,5 +75,5 @@ def classificationDemo():
 
 
 if __name__=='__main__':
-    classificationDemo()
+    modelSelection()
 
