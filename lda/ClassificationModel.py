@@ -11,8 +11,9 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn import svm, neighbors, linear_model
 from sklearn.naive_bayes import MultinomialNB, BernoulliNB, GaussianNB
-from sklearn.metrics import accuracy_score, recall_score, precision_score
+from sklearn.metrics import fbeta_score, make_scorer
 from sklearn.model_selection import GridSearchCV
+
 
 class ClassificationModel:
 
@@ -105,13 +106,16 @@ class ClassificationModel:
             self.droplist = list(set(self.data.columns.tolist()) - set(keeplist))
         self.data = self.data.drop(self.droplist, axis=1)
 
+    #def getDataAndLabels(self, features):
+        
+
     def gridSearch(self, features, scoring='f1'):
-        trainData = self.trainData[features].tolist()
-        target = self.trainTarget.tolist()
         self.classifier= GridSearchCV(self.classifier, self.parameters, scoring=scoring)
         self.trainClassifier(features)
-        print('Best score: %0.3f' % self.classifier.best_score_)
-        print self.classifier.best_estimator_.get_params()
+        bestScore = self.classifier.best_score_
+        self.classifier = self.classifier.best_estimator_
+        parameter = self.classifier.get_params()
+        return (bestScore, parameter)
 
 
     def trainClassifier(self, features):
@@ -214,6 +218,9 @@ class ClassificationModel:
 
     def getRelevantWords(self, nrWords=3):
         return [('relevantWord%d' % docNr) for docNr in range(1, nrWords+1)] 
+
+    def weightFScore(self, beta):
+        return make_scorer(fbeta_score, beta=beta)
 
 
     def buildPreprocessor(self, vecType='tfIdf', min_df=10, max_df=0.5, stop_words='english', ngram_range = (1,2), max_features=8000, vocabulary=None):

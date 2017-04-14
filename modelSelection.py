@@ -10,7 +10,7 @@ def modelSelection():
     #modelPath = 'processedData/SADV'
     modelPath = 'processedData/processedData'
 
-    classifierTypes = ['DecisionTree', 'MultinomialNB', 'BernoulliNB', 'RandomForest', 'SVM', 'LogisticRegression', 'kNN']
+    classifierTypes = ['MultinomialNB', 'BernoulliNB', 'RandomForest', 'SVM', 'LogisticRegression', 'kNN', 'DecisionTree']
     selectedFeatures = 'tfIdf'
     
     model = ClassificationModel(path, target)
@@ -22,33 +22,40 @@ def modelSelection():
         model.data.reset_index(inplace=True)
         model.save(modelPath)
 
-    model = model.load(modelPath)
-    #pdb.set_trace()
 
+    model = model.load(modelPath)
     model.targetFeature = target
     model.createTarget()
     
 #    model.balanceDataset(factor=2)
-    model.splitDataset(4500, random=False)
-    model.validationSet()
+    model.splitDataset(6000, random=True)
+    #model.validationSet()
     nrDocs = len(model.data)
+
+    #pdb.set_trace()
+
+    results = pd.DataFrame(classifierTypes)
 
     for classifierType in classifierTypes:
         print classifierType
 
         model.buildClassifier(classifierType) 
-        model.gridSearch(selectedFeatures, scoring='recall')
+        weightedFscore = model.weightFScore(2)
+        (bestScore, params) = model.gridSearch(selectedFeatures, scoring=weightedFscore)
+        print('Best score: %0.3f' % bestScore)
+        print params
 
-        model.validate(selectedFeatures)
-        print 'Accuraccy: {:f}'.format(model.validation.accuracy)
-        print 'Precision: {:f}'.format(model.validation.precision)
-        print 'Recall: {:f}'.format(model.validation.recall)
+        model.predict(selectedFeatures)
+        model.evaluate()
+        #model.validate(selectedFeatures)
+        print 'Accuraccy: {:f}'.format(model.evaluation.accuracy)
+        print 'Precision: {:f}'.format(model.evaluation.precision)
+        print 'Recall: {:f}'.format(model.evaluation.recall)
     
     
     pdb.set_trace()
 
     print 'Evaluation'
-    model.predict(selectedFeatures)
     model.evaluate()
     model.evaluation.confusionMatrix()
 
