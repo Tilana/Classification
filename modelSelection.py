@@ -6,14 +6,16 @@ def modelSelection():
 
     path = 'Documents/ICAAD/ICAAD.pkl'
     targets = ['Sexual.Assault.Manual', 'Domestic.Violence.Manual', 'Age', 'Family.Member.Victim', 'SGBV']
-    target = targets[1]
+    target = targets[0]
     #modelPath = 'processedData/SADV'
     modelPath = 'processedData/processedData'
+    resultPath = 'modelSelection/SA_3cv_6000docs.csv'
 
-    classifierTypes = ['MultinomialNB', 'BernoulliNB', 'RandomForest', 'SVM', 'LogisticRegression', 'kNN', 'DecisionTree']
+    classifierTypes = ['LogisticRegression', 'MultinomialNB', 'BernoulliNB', 'RandomForest', 'SVM', 'kNN', 'DecisionTree']
     selectedFeatures = 'tfIdf'
     
     model = ClassificationModel(path, target)
+    results = pd.DataFrame(columns=classifierTypes, index=['Best score', 'params', 'Test Accuracy', 'Test Precision', 'Test Recall'])
     
     if not model.existsProcessedData(modelPath):
         print 'Preprocess Data'
@@ -27,14 +29,8 @@ def modelSelection():
     model.targetFeature = target
     model.createTarget()
     
-#    model.balanceDataset(factor=2)
     model.splitDataset(6000, random=True)
-    #model.validationSet()
     nrDocs = len(model.data)
-
-    #pdb.set_trace()
-
-    results = pd.DataFrame(classifierTypes)
 
     for classifierType in classifierTypes:
         print classifierType
@@ -47,26 +43,27 @@ def modelSelection():
 
         model.predict(selectedFeatures)
         model.evaluate()
-        #model.validate(selectedFeatures)
         print 'Accuraccy: {:f}'.format(model.evaluation.accuracy)
         print 'Precision: {:f}'.format(model.evaluation.precision)
         print 'Recall: {:f}'.format(model.evaluation.recall)
+
+        results[classifierType] = [bestScore, params, model.evaluation.accuracy, model.evaluation.precision, model.evaluation.recall]
     
     
-    pdb.set_trace()
+    print results
+    results.to_csv(resultPath)
 
-    print 'Evaluation'
-    model.evaluate()
-    model.evaluation.confusionMatrix()
+    #print 'Evaluation'
+    #model.evaluate()
+    #model.evaluation.confusionMatrix()
 
-    model.relevantFeatures()
+    #model.relevantFeatures()
+
+    #viewer = Viewer(classifierType)
+    #displayFeatures = ['Court', 'Year', 'Sexual.Assault.Manual', 'Domestic.Violence.Manual', 'predictedLabel', 'tag', 'Family.Member.Victim', 'probability']
+    #viewer.printDocuments(model.testData, displayFeatures)
+    #viewer.classificationResults(model)
     #pdb.set_trace()
-
-    viewer = Viewer(classifierType)
-    displayFeatures = ['Court', 'Year', 'Sexual.Assault.Manual', 'Domestic.Violence.Manual', 'predictedLabel', 'tag', 'Family.Member.Victim', 'probability']
-    viewer.printDocuments(model.testData, displayFeatures)
-    viewer.classificationResults(model)
-    pdb.set_trace()
 
 
 if __name__=='__main__':
