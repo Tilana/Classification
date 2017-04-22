@@ -1,25 +1,28 @@
 from lda import Viewer, ClassificationModel, FeatureExtractor
+from lda.dataframeUtils import toCSV
 import pandas as pd
 import pdb
 
 def modelSelection():
 
     path = 'Documents/ICAAD/ICAAD.pkl'
-    targets = ['Sexual.Assault.Manual', 'Domestic.Violence.Manual', 'Age', 'Family.Member.Victim', 'SGBV']
+    targets = ['Sexual.Assault.Manual', 'Domestic.Violence.Manual', 'Age', 'Family.Member.Victim', 'SGBV', 'Rape', 'DV.Restraining.Order', 'Penal.Code', 'Defilement', 'Reconciliation', 'Incest']
     target = targets[0]
     #modelPath = 'processedData/SADV'
-    modelPath = 'processedData/processedData'
-    resultPath = 'modelSelection/SA_3cv_6000docs.csv'
+    modelPath = 'processedData/processedData_TF_binary'
+    resultPath = 'modelSelection/DV_3cv_6000docs_binary.csv'
+    #resultPath = 'modelSelection/' + target + '_SADV_3cv_400docs.csv'
 
-    classifierTypes = ['LogisticRegression', 'MultinomialNB', 'BernoulliNB', 'RandomForest', 'SVM', 'kNN', 'DecisionTree']
+    classifierTypes = ['LogisticRegression', 'MultinomialNB', 'BernoulliNB', 'RandomForest', 'DecisionTree', 'SVM', 'kNN']
     selectedFeatures = 'tfIdf'
+    nrTrainingDocs = 6000
     
     model = ClassificationModel(path, target)
     results = pd.DataFrame(columns=classifierTypes, index=['Best score', 'params', 'Test Accuracy', 'Test Precision', 'Test Recall'])
     
     if not model.existsProcessedData(modelPath):
         print 'Preprocess Data'
-        model.buildPreprocessor(ngram_range=(1,2), min_df=5, max_df=0.50, max_features=8000)
+        model.buildPreprocessor(vecType='tf', ngram_range=(1,2), min_df=5, max_df=0.50, max_features=8000, binary=True)
         model.trainPreprocessor()
         model.data.reset_index(inplace=True)
         model.save(modelPath)
@@ -28,8 +31,10 @@ def modelSelection():
     model = model.load(modelPath)
     model.targetFeature = target
     model.createTarget()
+
+    #pdb.set_trace()
     
-    model.splitDataset(6000, random=True)
+    model.splitDataset(nrTrainingDocs, random=True)
     nrDocs = len(model.data)
 
     for classifierType in classifierTypes:
@@ -51,7 +56,7 @@ def modelSelection():
     
     
     print results
-    results.to_csv(resultPath)
+    toCSV(results,resultPath)
 
     #print 'Evaluation'
     #model.evaluate()

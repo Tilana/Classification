@@ -1,3 +1,5 @@
+import os
+
 def getRow(df, colname, value, columns):
     return list(df.loc[df[colname]==value, columns].values[0])
 
@@ -46,4 +48,15 @@ def changeStringsInColumn(df, column, old, new):
 def save(df, path):
     df.to_pickle(path)
 
+def toCSV(df, path):
+    createDirectory(path)
+    df.to_csv(path)
+
+def createDirectory(path):
+    directories = path.split('/')
+    path = '/'.join(directories[0:len(directories)-1])
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+    
 

@@ -10,10 +10,10 @@ numberDict = {'zero': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5, '
 
 class Preprocessor:
 
-    def __init__(self, processor='tfIdf', min_df=10, max_df=0.5, stop_words='english', ngram_range=(1,2), max_features=8000, vocabulary=None, token_pattern=r'(?u)\b\w\w+\b'):
-        self.vectorizer = TfidfVectorizer(min_df=min_df, max_df=max_df, stop_words=stop_words, ngram_range=ngram_range, max_features=max_features, vocabulary = vocabulary, tokenizer=self.createPosLemmaTokens) 
+    def __init__(self, processor='tfIdf', min_df=10, max_df=0.5, stop_words='english', ngram_range=(1,2), max_features=8000, vocabulary=None, token_pattern=r'(?u)\b\w\w+\b', binary=False):
+        self.vectorizer = TfidfVectorizer(min_df=min_df, max_df=max_df, stop_words=stop_words, ngram_range=ngram_range, max_features=max_features, vocabulary = vocabulary, tokenizer=self.createPosLemmaTokens, binary=binary) 
         if processor=='tf':
-            self.vectorizer = CountVectorizer(min_df=min_df, max_df=max_df, stop_words=stop_words, ngram_range=ngram_range, max_features = max_feature, tokenizer=self.createPosLemmaTokens, vocabulary=vocabulary)
+            self.vectorizer = CountVectorizer(min_df=min_df, max_df=max_df, stop_words=stop_words, ngram_range=ngram_range, max_features = max_features, tokenizer=self.createPosLemmaTokens, vocabulary=vocabulary, binary=binary)
         self.WordNet = WordNetLemmatizer()
         self.token_pattern = token_pattern
 

@@ -195,13 +195,13 @@ class ClassificationModel:
             self.parameters = [{'n_estimators':[5,10,30], 'min_samples_leaf': [2,5], 'max_depth':[None,3,5,7], 'criterion':['gini','entropy']}]
         elif classifierType == 'SVM':
             self.classifier = svm.SVC(probability=True)
-            self.parameters = [{'kernel':['rbf', 'poly'], 'gamma':['auto', 0.01, 0.5, 0.9], 'C':[0.3, 0.5, 1]}]
+            self.parameters = [{'kernel':['rbf'], 'gamma':['auto', 0.5, 0.9], 'C':[0.5, 1]}]
         elif classifierType == 'LogisticRegression':
             self.classifier = linear_model.LogisticRegression()
             self.parameters = [{'penalty':['l1','l2'], 'C':[0.3,0.5,1,10]}]
         elif classifierType == 'kNN':
             self.classifier = neighbors.KNeighborsClassifier(n_neighbors=15)
-            self.parameters = [{'n_neighbors':[3,5,15,30]}]
+            self.parameters = [{'n_neighbors':[3,5]}]
 
 
     def getSelectedTopics(self, topicNr, selectedTopics=None):
@@ -223,8 +223,8 @@ class ClassificationModel:
         return make_scorer(fbeta_score, beta=beta)
 
 
-    def buildPreprocessor(self, vecType='tfIdf', min_df=10, max_df=0.5, stop_words='english', ngram_range = (1,2), max_features=8000, vocabulary=None):
-        self.preprocessor = Preprocessor(processor=vecType, min_df=min_df, max_df=max_df, stop_words=stop_words, ngram_range=ngram_range, max_features=max_features, vocabulary=vocabulary) 
+    def buildPreprocessor(self, vecType='tfIdf', min_df=10, max_df=0.5, stop_words='english', ngram_range = (1,2), max_features=8000, vocabulary=None, binary=False):
+        self.preprocessor = Preprocessor(processor=vecType, min_df=min_df, max_df=max_df, stop_words=stop_words, ngram_range=ngram_range, max_features=max_features, vocabulary=vocabulary, binary=binary)
 
 
     def trainPreprocessor(self, vecType='tfIdf'):
