@@ -260,6 +260,7 @@ class ClassificationModel:
 
     def loadPreprocessor(self, path):
         preprocessor = Preprocessor()
-        self.preprocessor = preprocessor.load(path)
+        if os.path.exists(path):
+            self.preprocessor = preprocessor.load(path)
 
         
