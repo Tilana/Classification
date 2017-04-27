@@ -7,14 +7,16 @@ def modelSelection():
 
     path = 'Documents/ICAAD/ICAAD.pkl'
     targets = ['Sexual.Assault.Manual', 'Domestic.Violence.Manual', 'Age', 'Family.Member.Victim', 'SGBV', 'Rape', 'DV.Restraining.Order', 'Penal.Code', 'Defilement', 'Reconciliation', 'Incest']
-    target = targets[0]
+    target = targets[1]
     #modelPath = 'processedData/SADV'
     modelPath = 'processedData/processedData_TF_binary'
-    resultPath = 'modelSelection/DV_3cv_6000docs_binary.csv'
+    modelPath = 'processedData/doc2vec'
+    resultPath = 'modelSelection/doc2vecTest.csv'
     #resultPath = 'modelSelection/' + target + '_SADV_3cv_400docs.csv'
 
     classifierTypes = ['LogisticRegression', 'MultinomialNB', 'BernoulliNB', 'RandomForest', 'DecisionTree', 'SVM', 'kNN']
     selectedFeatures = 'tfIdf'
+    selectedFeatures = 'docVec'
     nrTrainingDocs = 6000
     
     model = ClassificationModel(path, target)
