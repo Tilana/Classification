@@ -11,10 +11,11 @@ def modelSelection():
     #modelPath = 'processedData/SADV'
     modelPath = 'processedData/processedData_TF_binary'
     modelPath = 'processedData/doc2vec'
-    resultPath = 'modelSelection/doc2vecTest.csv'
+    resultPath = 'modelSelection/DV_doc2vec_PCA.csv'
     #resultPath = 'modelSelection/' + target + '_SADV_3cv_400docs.csv'
 
     classifierTypes = ['LogisticRegression', 'MultinomialNB', 'BernoulliNB', 'RandomForest', 'DecisionTree', 'SVM', 'kNN']
+    classifierTypes = ['LogisticRegression', 'BernoulliNB', 'RandomForest', 'DecisionTree', 'SVM', 'kNN']
     selectedFeatures = 'tfIdf'
     selectedFeatures = 'docVec'
     nrTrainingDocs = 6000
@@ -44,7 +45,7 @@ def modelSelection():
 
         model.buildClassifier(classifierType) 
         weightedFscore = model.weightFScore(2)
-        (bestScore, params) = model.gridSearch(selectedFeatures, scoring=weightedFscore)
+        (bestScore, params) = model.gridSearch(selectedFeatures, scoring=weightedFscore, scaling=False, pca=True, components=40)
         print('Best score: %0.3f' % bestScore)
         print params
 
@@ -55,10 +56,14 @@ def modelSelection():
         print 'Recall: {:f}'.format(model.evaluation.recall)
 
         results[classifierType] = [bestScore, params, model.evaluation.accuracy, model.evaluation.precision, model.evaluation.recall]
+
+        #pdb.set_trace()
     
-    
+     
     print results
     toCSV(results,resultPath)
+
+    pdb.set_trace()
 
     #print 'Evaluation'
     #model.evaluate()

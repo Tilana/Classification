@@ -13,7 +13,8 @@ from sklearn import svm, neighbors, linear_model
 from sklearn.naive_bayes import MultinomialNB, BernoulliNB, GaussianNB
 from sklearn.metrics import fbeta_score, make_scorer
 from sklearn.model_selection import GridSearchCV
-
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.decomposition import PCA
 
 class ClassificationModel:
 
@@ -106,20 +107,34 @@ class ClassificationModel:
             self.droplist = list(set(self.data.columns.tolist()) - set(keeplist))
         self.data = self.data.drop(self.droplist, axis=1)
 
-    #def getDataAndLabels(self, features):
-        
 
-    def gridSearch(self, features, scoring='f1'):
+    def gridSearch(self, features, scoring='f1', scaling='False', pca='False', components=10):
         self.classifier= GridSearchCV(self.classifier, self.parameters, scoring=scoring)
-        self.trainClassifier(features)
+        self.trainClassifier(features, scaling=scaling, pca=pca, components=components)
         bestScore = self.classifier.best_score_
         self.classifier = self.classifier.best_estimator_
         parameter = self.classifier.get_params()
         return (bestScore, parameter)
 
+    def scaleData(self, data):
+        scaler = MinMaxScaler()
+        return scaler.fit_transform(data)
 
-    def trainClassifier(self, features):
+
+    def PCA(self, data, components):
+        self.pca = PCA(components)
+        self.pca.fit(data)
+        return self.pca.transform(data)
+
+
+    def trainClassifier(self, features, scaling=False, pca=False, components=10):
+        self.scaling = scaling
         trainData = self.trainData[features].tolist()
+
+        if scaling:
+            trainData = self.scaleData(trainData)
+        if pca:
+            trainData = self.PCA(trainData, components)
         target = self.trainTarget.tolist()
         self.classifier.fit(trainData, target)
 
@@ -132,9 +147,14 @@ class ClassificationModel:
 
     
     def predict(self, features):
-        self.testData['predictedLabel'] = self.classifier.predict(self.testData[features].tolist())
+        testData = self.testData[features].tolist()
+        if self.scaling:
+            testData = self.scaleData(testData)
+        if self.pca:
+            testData = self.pca.transform(testData)
+        self.testData['predictedLabel'] = self.classifier.predict(testData)
         if self.classifier.predict_proba:
-            probabilities = self.classifier.predict_proba(self.testData[features].tolist())
+            probabilities = self.classifier.predict_proba(testData)
             self.testData['probability'] = np.max(probabilities, axis=1)
 
 

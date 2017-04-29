@@ -48,7 +48,7 @@ def buildClassificationModel():
         model.split()
 
         print 'Train Classifier'
-        model.buildClassifier(classifierType, alpha=alpha) 
+        model.buildClassifier(classifierType) 
         model.trainClassifier(selectedFeatures)
 
         print 'Evaluation'
