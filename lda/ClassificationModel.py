@@ -44,6 +44,7 @@ class ClassificationModel:
         self.holdout = self.testData[:n]
         self.holdoutTarget = self.testTarget[:n]
         self.testData = self.testData[n:]
+        self.assertEqual(self.evaluation.tags, result)
         self.testIndices = self.testIndices[n:]
         self.testTarget = self.testTarget[n:]
 
@@ -91,6 +92,14 @@ class ClassificationModel:
         self.target = self.data[self.targetFeature]
         self.dropNANRows(self.targetFeature)
 
+    def setClassificationType(self, target):
+        self.setTargetLabels(target)
+        self.classificationType = 'binary'
+        if len(self.targetLabels) > 2:
+            self.classificationType = 'multi'
+
+    def setTargetLabels(self, target):
+        self.targetLabels = list(self.data[target].unique())
 
     def toNumeric(self, column):
         self.data[column] = self.data[column].astype(int)
@@ -129,8 +138,8 @@ class ClassificationModel:
 
     def trainClassifier(self, features, scaling=False, pca=False, components=10):
         self.scaling = scaling
+        self.pca = pca
         trainData = self.trainData[features].tolist()
-
         if scaling:
             trainData = self.scaleData(trainData)
         if pca:
@@ -240,7 +249,7 @@ class ClassificationModel:
         return [('relevantWord%d' % docNr) for docNr in range(1, nrWords+1)] 
 
     def weightFScore(self, beta):
-        return make_scorer(fbeta_score, beta=beta)
+        return make_scorer(fbeta_score, beta=beta, average='macro')
 
 
     def buildPreprocessor(self, vecType='tfIdf', min_df=10, max_df=0.5, stop_words='english', ngram_range = (1,2), max_features=8000, vocabulary=None, binary=False):
@@ -270,6 +279,8 @@ class ClassificationModel:
         model = pickle.load(open(path+'.pkl', 'rb'))
         model.loadPreprocessor(path)
         return model
+
+    
 
 
     def savePreprocessor(self, path):
