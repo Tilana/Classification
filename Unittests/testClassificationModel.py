@@ -24,13 +24,38 @@ class testClassificationModel(unittest.TestCase):
 
         self.model.setClassificationType('Years')
         self.assertEqual(self.model.classificationType, 'multi')
-        
+
+    def test_createTarget_binary(self):
+        self.model.targetFeature = 'Binary'
+        self.model.createTarget()
+        self.assertEqual(self.model.classificationType, 'binary')
+        self.assertEqual(self.model.target.tolist(), [True, True, False, True])
+        self.assertEqual(self.model.targetLabels, [True, False])
+
+    def test_createTarget_multi(self):
+        self.model.targetFeature = 'Strings'
+        self.model.createTarget()
+        self.assertEqual(self.model.classificationType, 'multi')
+        self.assertEqual(self.model.target.tolist(), [0,1,2,3])
+        self.assertEqual(self.model.targetLabels, ['a', 'b', 'c', 'd'])
 
 
+    def test_setEvaluationAverage_binary(self):
+        self.model.classificationType = 'binary'
+        self.model.setEvaluationAverage()
+        self.model.evaluationAverage = 'binary'
 
-    def determineClassificationType(self):
-        return True
-        
+
+    def test_setEvaluationAverage_multiDefault(self):
+        self.model.classificationType = 'multi'       
+        self.model.setEvaluationAverage()
+        self.model.evaluationAverage = 'macro'
+
+    
+    def test_setEvaluationAverage_multiSelfSet(self):
+        self.model.classificationType = 'binary'
+        self.model.setEvaluationAverage('weighted')
+        self.model.evaluationAverage = 'weighted'
 
 
 if __name__ == '__main__':

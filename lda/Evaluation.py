@@ -5,7 +5,7 @@ import numpy as np
 
 class Evaluation:
 
-    def __init__(self, target, prediction):
+    def __init__(self, target, prediction, average='binary'):
         self.target= target
         self.prediction= prediction
         self.checkLength()

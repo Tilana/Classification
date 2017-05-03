@@ -87,6 +87,7 @@ class ClassificationModel:
 
 
     def createTarget(self):
+        self.setClassificationType(self.targetFeature)
         if self.isObject(self.targetFeature):
             self.object2CategoricalFeature(self.targetFeature)
         self.target = self.data[self.targetFeature]
@@ -175,6 +176,11 @@ class ClassificationModel:
         self.evaluation.accuracy()
         self.evaluation.recall()
         self.evaluation.precision()
+
+    def setEvaluationAverage(self, avgType='macro'):
+        self.evaluationAverage = avgType
+        if self.classificationType:
+            self.evaluationAverage = 'binary'
 
 
     def relevantFeatures(self):
