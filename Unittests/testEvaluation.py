@@ -1,39 +1,62 @@
 import unittest
 from lda import Evaluation
+import pandas as pd 
+from pandas.util.testing import assert_frame_equal
 
 class testEvaluation(unittest.TestCase):
 
     def setUp(self):
-        target =     [0,1,1,0,1,0,0,0,1,1]
-        prediction = [0,1,0,0,1,0,0,1,1,1]
-        self.evaluation = Evaluation(target, prediction)
+        binaryTarget =     [0,1,1,0,1,0,0,0,1,1]
+        binaryPrediction = [0,1,0,0,1,0,0,1,1,1]
+        self.bin_evaluation = Evaluation(binaryTarget, binaryPrediction, 'binary')
+
+        multiTarget = [1,3,3,2,1,1,2,1]
+        multiPrediction = [1,2,3,2,2,3,2,3]
+        self.multi_evaluation = Evaluation(multiTarget, multiPrediction, 'macro')
 
     def test_createTags(self):
-        self.evaluation.createTags()
-        result = ['TN','TP','FN','TN','TP','TN', 'TN', 'FP', 'TP','TP']
-        self.assertEqual(self.evaluation.tags, result)
+        self.bin_evaluation.createTags()
+        bin_tags= ['TN','TP','FN','TN','TP','TN', 'TN', 'FP', 'TP','TP']
+        self.assertEqual(self.bin_evaluation.tags, bin_tags)
+
+        self.multi_evaluation.createTags()
+        multi_tags = ['T','F','T','T','F','F','T','F']
+        self.assertEqual(self.multi_evaluation.tags, multi_tags)
 
     def test_setTag(self):
-        self.evaluation.tags = ['TN', 'TP', 'FN', 'TN', 'TP']
+        self.bin_evaluation.tags = ['TN', 'TP', 'FN', 'TN', 'TP']
         
-        self.evaluation.setTag('TP')
-        self.assertEqual(self.evaluation.TP, [1,4])
+        self.bin_evaluation.setTag('TP')
+        self.assertEqual(self.bin_evaluation.TP, [1,4])
 
-        self.evaluation.setTag('FP')
-        self.assertEqual(self.evaluation.FP, [])
+        self.bin_evaluation.setTag('FP')
+        self.assertEqual(self.bin_evaluation.FP, [])
 
     def test_accuracy(self):
-        self.evaluation.accuracy()
-        self.assertEqual(self.evaluation.accuracy, 0.8)
+        self.bin_evaluation.accuracy()
+        self.assertEqual(self.bin_evaluation.accuracy, 0.8)
+
+        self.multi_evaluation.accuracy()
+        self.assertEqual(self.multi_evaluation.accuracy, 0.5)
 
     def test_recall(self):
-        self.evaluation.recall()
-        self.assertEqual(self.evaluation.recall, 0.8)
+        self.bin_evaluation.recall()
+        self.assertEqual(self.bin_evaluation.recall, 0.8)
 
 
     def test_precision(self):
-        self.evaluation.precision()
-        self.assertEqual(self.evaluation.precision, 0.8)
+        self.bin_evaluation.precision()
+        self.assertEqual(self.bin_evaluation.precision, 0.8)
+
+
+    def test_confusionMatrix(self):
+        self.bin_evaluation.confusionMatrix()
+        bin_confusionMatrix = pd.DataFrame([[4,1],[1,4]])
+        assert_frame_equal(self.bin_evaluation.confusionMatrix, bin_confusionMatrix)
+
+        self.multi_evaluation.confusionMatrix()
+        multi_confusionMatrix = pd.DataFrame([[1,1,2],[0,2,0],[0,1,1]])
+        assert_frame_equal(self.multi_evaluation.confusionMatrix, multi_confusionMatrix)
 
 
 

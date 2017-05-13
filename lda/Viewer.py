@@ -233,11 +233,16 @@ class Viewer:
             self.printTupleList(f, 'Feature Importance', model.featureImportance, format='float')
 
         f.write("""</table></div>""")
-        
+
         f.write("""<style type="text/css"> body>div {width: 23%; float: left; border: 1px solid} </style></head>""") 
-        for tag in ['TP','FP','FN','TN']:
-            docs = model.testData[model.testData.tag==tag]
-            self.printLinkedDocuments(f, tag, docs, 2) 
+        if model.classificationType =='binary':
+            for tag in ['TP','FP','FN','TN']:
+                docs = model.testData[model.testData.tag==tag]
+                self.printLinkedDocuments(f, tag, docs, 2) 
+        else:
+            for tag in ['T', 'F']:
+                docs = model.testData[model.testData.tag==tag]
+                self.printLinkedDocuments(f, tag, docs, 2) 
         f.write("""</body></html>""")
         f.close()
         webbrowser.open_new_tab(pagename)

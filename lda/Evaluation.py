@@ -10,15 +10,16 @@ class Evaluation:
         self.prediction= prediction
         self.checkLength()
         self.n = len(self.target)
+        self.average = average
 
     def accuracy(self):
         self.accuracy = accuracy_score(self.target, self.prediction)
                                                                     
     def recall(self):
-        self.recall = recall_score(self.target, self.prediction, average='macro')
+        self.recall = recall_score(self.target, self.prediction, average=self.average)
                                                                     
     def precision(self):
-        self.precision = precision_score(self.target, self.prediction, average='macro')
+        self.precision = precision_score(self.target, self.prediction, average=self.average)
 
 
     def confusionMatrix(self):
@@ -31,8 +32,24 @@ class Evaluation:
         if len(self.target) != len(self.prediction):
             print 'WARNING: Evaluation - length of target and prediction list is unequal'
 
+
     def createTags(self):
         self.tags = []
+        if self.average =='binary':
+            self.binaryTags()
+        else:
+            self.multiTags()
+
+
+    def multiTags(self):
+        for predValue, targetValue in zip(self.prediction, self.target):
+           if predValue == targetValue:
+               self.tags.append('T')
+           else:
+               self.tags.append('F')
+
+
+    def binaryTags(self):
         for predValue, targetValue in zip(self.prediction, self.target):
             if predValue == True:
                 if predValue == targetValue:
@@ -56,7 +73,7 @@ class Evaluation:
 
     def setAllTags(self):
         self.createTags()
-        categories = ['TP', 'FP', 'TN', 'FN']
+        categories = ['T','F','TP', 'FP', 'TN', 'FN']
         for tag in categories:
             self.setTag(tag)
             self.setTagLength(tag)

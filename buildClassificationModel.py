@@ -7,7 +7,7 @@ def buildClassificationModel():
 
     path = 'Documents/ICAAD/ICAAD.pkl'
     targets = ['Sexual.Assault.Manual', 'Domestic.Violence.Manual', 'Age', 'Family.Member.Victim']
-    target = targets[0]
+    target = targets[2]
     modelPath = 'processedData/SADV'
     modelPath = 'processedData/processedData'
 
@@ -18,7 +18,7 @@ def buildClassificationModel():
     
     
     model = ClassificationModel(path, target)
-    model.data = model.data[model.data['Sexual.Assault.Manual'] | model.data['Domestic.Violence.Manual']]
+    #model.data = model.data[model.data['Sexual.Assault.Manual'] | model.data['Domestic.Violence.Manual']]
     
     if not model.existsProcessedData(modelPath):
         print 'Preprocess Data'
@@ -55,6 +55,7 @@ def buildClassificationModel():
         model.predict(selectedFeatures)
         model.evaluate()
         model.evaluation.confusionMatrix()
+        #pdb.set_trace()
 
         results['Fold '+ str(foldNr)] = model.evaluation.toSeries()
         

@@ -168,8 +168,9 @@ class ClassificationModel:
             self.testData['probability'] = np.max(probabilities, axis=1)
 
 
-    def evaluate(self):
-        self.evaluation = Evaluation(self.testTarget, self.testData.predictedLabel.tolist())
+    def evaluate(self, avgType='macro'):
+        self.setEvaluationAverage(avgType)
+        self.evaluation = Evaluation(self.testTarget, self.testData.predictedLabel.tolist(),self.evaluationAverage)
         self.evaluation.setAllTags()
         self.tagTestData()
 
@@ -179,7 +180,7 @@ class ClassificationModel:
 
     def setEvaluationAverage(self, avgType='macro'):
         self.evaluationAverage = avgType
-        if self.classificationType:
+        if self.classificationType=='binary':
             self.evaluationAverage = 'binary'
 
 
@@ -207,7 +208,9 @@ class ClassificationModel:
         self.testData.loc[tagIndices,'tag'] = tag
 
     def tagTestData(self):
-        tags = ['TP', 'FP', 'TN', 'FN']
+        tags = ['T','F']
+        if self.classificationType=='binary':
+            tags = ['TP', 'FP', 'TN', 'FN']
         for tag in tags:
             self.addTag(tag)
 
