@@ -72,7 +72,7 @@ def buildClassificationModel():
     viewer = Viewer(classifierType)
     displayFeatures = ['Court', 'Year', 'Sexual.Assault.Manual', 'Domestic.Violence.Manual', 'predictedLabel', 'tag', 'Family.Member.Victim', 'probability', 'Age']
     viewer.printDocuments(model.testData, displayFeatures)
-    viewer.classificationResults(model)
+    viewer.classificationResults(model, normalized=False)
 
 
 if __name__=='__main__':

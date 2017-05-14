@@ -205,7 +205,7 @@ class Viewer:
                 webbrowser.open_new_tab(pagename)
 
 
-    def classificationResults(self, model):
+    def classificationResults(self, model, normalized=False):
         self.createFolder(self.path + '/Classification')
         self.createFolder(self.path + '/Classification/%s' % model.classifierType)
         pagename = self.path + '/Classification/%s/%s.html' % (model.classifierType, model.targetFeature)
@@ -227,7 +227,10 @@ class Viewer:
 
         f.write(""" <h3> Confusion Matrix: </h3>""")
         f.write("""<table><tr><td> </td><td>Predicted Labels</td></tr><tr><td> True Labels </td><td>""")
-        confusionMatrix = model.evaluation.confusionMatrix.to_html()
+        if normalized:
+            confusionMatrix = model.evaluation.normConfusionMatrix.to_html()
+        else:
+            confusionMatrix = model.evaluation.confusionMatrix.to_html()
         f.write(confusionMatrix)
         f.write(""" </td></tr>  </table>""")
 

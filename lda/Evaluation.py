@@ -28,6 +28,10 @@ class Evaluation:
         if labels:
             self.confusionMatrix.columns = labels
             self.confusionMatrix.index = labels
+        self.normalizeMatrix()
+
+    def normalizeMatrix(self):
+        self.normConfusionMatrix = self.confusionMatrix.div(self.confusionMatrix.sum(axis=1), axis=0)
 
 
     def checkLength(self):

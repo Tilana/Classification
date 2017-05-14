@@ -58,6 +58,13 @@ class testEvaluation(unittest.TestCase):
         multi_confusionMatrix = pd.DataFrame([[1,1,2],[0,2,0],[0,1,1]])
         assert_frame_equal(self.multi_evaluation.confusionMatrix, multi_confusionMatrix)
 
+    def test_normalizeMatrix(self):
+        self.bin_evaluation.confusionMatrix = pd.DataFrame([[2,8],[9,3]])
+        normalizedMatrix = pd.DataFrame([[0.2, 0.8],[0.75, 0.25]])
+        self.bin_evaluation.normalizeMatrix()
+        assert_frame_equal(self.bin_evaluation.normConfusionMatrix, normalizedMatrix)
+        
+
 
 
 
