@@ -22,10 +22,12 @@ class Evaluation:
         self.precision = precision_score(self.target, self.prediction, average=self.average)
 
 
-    def confusionMatrix(self):
+    def confusionMatrix(self, labels=None):
         matrix = confusion_matrix(self.target, self.prediction)
         self.confusionMatrix = pd.DataFrame(matrix)
-        #self.confusionMatrix = self.confusionMatrix.rename(index={0:'Target False', 1:'Target True'}, columns={0:'Predicted False', 1:'Predicted True'})
+        if labels:
+            self.confusionMatrix.columns = labels
+            self.confusionMatrix.index = labels
 
 
     def checkLength(self):

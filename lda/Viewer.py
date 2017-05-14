@@ -226,8 +226,10 @@ class Viewer:
         f.write("""</table>""")
 
         f.write(""" <h3> Confusion Matrix: </h3>""")
+        f.write("""<table><tr><td> </td><td>Predicted Labels</td></tr><tr><td> True Labels </td><td>""")
         confusionMatrix = model.evaluation.confusionMatrix.to_html()
         f.write(confusionMatrix)
+        f.write(""" </td></tr>  </table>""")
 
         if hasattr(model, 'featureImportance'):
             self.printTupleList(f, 'Feature Importance', model.featureImportance, format='float')

@@ -7,18 +7,22 @@ def buildClassificationModel():
 
     path = 'Documents/ICAAD/ICAAD.pkl'
     targets = ['Sexual.Assault.Manual', 'Domestic.Violence.Manual', 'Age', 'Family.Member.Victim']
-    target = targets[2]
+    target = targets[0]
     modelPath = 'processedData/SADV'
     modelPath = 'processedData/processedData'
 
     classifierTypes = ['DecisionTree', 'MultinomialNB', 'BernoulliNB', 'RandomForest', 'SVM', 'LogisticRegression']
-    classifierType = classifierTypes[1]
+    classifierType = classifierTypes[-1]
     alpha = 0.01 
     selectedFeatures = 'tfIdf'
     
     
     model = ClassificationModel(path, target)
-    #model.data = model.data[model.data['Sexual.Assault.Manual'] | model.data['Domestic.Violence.Manual']]
+    SAcases = model.data['Sexual.Assault.Manual']
+    DVcases = model.data['Domestic.Violence.Manual']
+    SADVcases = model.data[SAcases | DVcases]
+
+    model.data = model.data[model.data['Sexual.Assault.Manual'] | model.data['Domestic.Violence.Manual']]
     
     if not model.existsProcessedData(modelPath):
         print 'Preprocess Data'
@@ -50,11 +54,12 @@ def buildClassificationModel():
         print 'Train Classifier'
         model.buildClassifier(classifierType) 
         model.trainClassifier(selectedFeatures)
+        #pdb.set_trace()
 
         print 'Evaluation'
         model.predict(selectedFeatures)
         model.evaluate()
-        model.evaluation.confusionMatrix()
+        model.evaluation.confusionMatrix(model.targetLabels)
         #pdb.set_trace()
 
         results['Fold '+ str(foldNr)] = model.evaluation.toSeries()
@@ -65,7 +70,7 @@ def buildClassificationModel():
     print results
     
     viewer = Viewer(classifierType)
-    displayFeatures = ['Court', 'Year', 'Sexual.Assault.Manual', 'Domestic.Violence.Manual', 'predictedLabel', 'tag', 'Family.Member.Victim', 'probability']
+    displayFeatures = ['Court', 'Year', 'Sexual.Assault.Manual', 'Domestic.Violence.Manual', 'predictedLabel', 'tag', 'Family.Member.Victim', 'probability', 'Age']
     viewer.printDocuments(model.testData, displayFeatures)
     viewer.classificationResults(model)
 
