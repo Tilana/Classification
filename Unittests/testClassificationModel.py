@@ -57,6 +57,10 @@ class testClassificationModel(unittest.TestCase):
         self.model.setEvaluationAverage('weighted')
         self.model.evaluationAverage = 'weighted'
 
+        
+        
+        
+
 
 if __name__ == '__main__':
     unittest.main()

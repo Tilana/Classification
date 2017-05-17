@@ -1,4 +1,5 @@
 import os
+import pandas as pd
 
 def getRow(df, colname, value, columns):
     return list(df.loc[df[colname]==value, columns].values[0])
@@ -57,6 +58,27 @@ def createDirectory(path):
     path = '/'.join(directories[0:len(directories)-1])
     if not os.path.exists(path):
         os.makedirs(path)
+
+def arrayColumnToDataframe(column):
+    return pd.DataFrame([elem for elem in column])
+
+def flattenDataframe(dataframe):
+    flatDF = pd.DataFrame(dataframe)
+    arrayColumns = getArrayColumns(dataframe)
+    for col in arrayColumns:
+        #print dataframe[col]
+        flatCol = arrayColumnToDataframe(dataframe[col])
+        flatDF.drop(col, axis=1, inplace=True)
+        flatDF = pd.concat([flatDF,flatCol], axis=1)
+    return flatDF 
+
+def getArrayColumns(data):
+    arrayColumns = []
+    for col in data.columns:
+        columnList = data[col].tolist()
+        if type(columnList[0])==list: 
+            arrayColumns.append(col)
+    return arrayColumns
 
     
 
