@@ -154,7 +154,8 @@ class ClassificationModel:
 
 
     def validate(self, features):
-        self.holdout['predictedLabel'] = self.classifier.predict(self.holdout[features].tolist())
+        features = self.getFeatureList(self.holdout, features)
+        self.holdout['predictedLabel'] = self.classifier.predict(features)
         self.validation = Evaluation(self.holdoutTarget, self.holdout.predictedLabel.tolist())
         self.validation.accuracy()
         self.validation.recall()
