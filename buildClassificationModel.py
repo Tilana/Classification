@@ -7,15 +7,15 @@ def buildClassificationModel():
 
     path = 'Documents/ICAAD/ICAAD.pkl'
     targets = ['Sexual.Assault.Manual', 'Domestic.Violence.Manual', 'Age', 'Family.Member.Victim']
-    target = targets[3]
+    target = targets[0]
     modelPath = 'processedData/SADV'
-    #modelPath = 'processedData/processedData'
+    modelPath = 'processedData/processedData'
 
     classifierTypes = ['DecisionTree', 'MultinomialNB', 'BernoulliNB', 'RandomForest', 'SVM', 'LogisticRegression']
     classifierType = classifierTypes[-1]
     alpha = 0.01 
-    selectedFeatures = ['tfIdf', 'Sexual.Assault']
-    selectedFeatures = 'tfIdf'
+    #selectedFeatures = ['tfIdf', 'Sexual.Assault.Manual']
+    selectedFeatures = ['tfIdf']
     
     
     model = ClassificationModel(path, target)
@@ -53,6 +53,7 @@ def buildClassificationModel():
         model.split()
 
         print 'Train Classifier'
+        #pdb.set_trace()
         model.buildClassifier(classifierType) 
         model.trainClassifier(selectedFeatures)
         #pdb.set_trace()
@@ -61,7 +62,7 @@ def buildClassificationModel():
         model.predict(selectedFeatures)
         model.evaluate()
         model.evaluation.confusionMatrix(model.targetLabels)
-        pdb.set_trace()
+        #pdb.set_trace()
 
         results['Fold '+ str(foldNr)] = model.evaluation.toSeries()
         

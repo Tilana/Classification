@@ -1,12 +1,24 @@
 import unittest
 from lda import ClassificationModel
 import pandas as pd
+import numpy as np
+from numpy.testing import assert_array_equal
 
 class testClassificationModel(unittest.TestCase):
 
     def setUp(self):
         self.model = ClassificationModel()
-        self.model.data = pd.DataFrame({'Binary': [True, True, False, True], 'Years': [2010,2011,2010,2013], 'Strings':['a','b','c','d']})
+        self.model.data = pd.DataFrame({'Binary': [True, True, False, True], 'Years': [2010,2011,2010,2013], 'Strings':['a','b','c','d'], 'Arrays':[[1,2],[5,1],[3,2],[4,1]]})
+
+    def test_getFeatureList(self):
+        properties = ['Binary']
+        features = [[True], [True], [False], [True]]
+        assert_array_equal(self.model.getFeatureList(self.model.data, properties), features)
+
+        properties = ['Binary', 'Arrays']
+        features = [[True, 1, 2], [True,5,1], [False,3,2], [True,4,1]]
+        self.model.getFeatureList(self.model.data, properties)
+        assert_array_equal(self.model.getFeatureList(self.model.data, properties), features)
 
     def test_setTargetLabels(self):
         self.model.setTargetLabels('Binary') 

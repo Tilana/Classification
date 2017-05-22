@@ -1,4 +1,5 @@
 import pandas as pd
+import pdb
 import numpy as np
 import random
 import cPickle as pickle
@@ -62,7 +63,6 @@ class ClassificationModel:
         trueCases = df.getIndex(df.filterData(self.data, self.targetFeature))
         negativeCases = list(set(df.getIndex(self.data)) - set(trueCases))
         numberSamples = factor * len(trueCases)
-        print numberSamples
         if numberSamples + len(trueCases) >= len(self.data):
             numberSamples = len(negativeCases)
         selectedNegativeCases = self.getRandomSample(negativeCases, numberSamples)
@@ -140,13 +140,18 @@ class ClassificationModel:
     def trainClassifier(self, features, scaling=False, pca=False, components=10):
         self.scaling = scaling
         self.pca = pca
-        trainData = self.trainData[features].tolist()
+        trainData = self.getFeatureList(self.trainData,features)
         if scaling:
             trainData = self.scaleData(trainData)
         if pca:
             trainData = self.PCA(trainData, components)
         target = self.trainTarget.tolist()
         self.classifier.fit(trainData, target)
+
+    def getFeatureList(self, data, features):
+        featureList = df.combineColumnValues(data, features)
+        return featureList
+
 
     def validate(self, features):
         self.holdout['predictedLabel'] = self.classifier.predict(self.holdout[features].tolist())
@@ -157,7 +162,7 @@ class ClassificationModel:
 
     
     def predict(self, features):
-        testData = self.testData[features].tolist()
+        testData = self.getFeatureList(self.testData,features)
         if self.scaling:
             testData = self.scaleData(testData)
         if self.pca:
@@ -288,8 +293,6 @@ class ClassificationModel:
         model = pickle.load(open(path+'.pkl', 'rb'))
         model.loadPreprocessor(path)
         return model
-
-    
 
 
     def savePreprocessor(self, path):

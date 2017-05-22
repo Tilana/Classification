@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+import numpy as np
 
 def getRow(df, colname, value, columns):
     return list(df.loc[df[colname]==value, columns].values[0])
@@ -59,15 +60,22 @@ def createDirectory(path):
     if not os.path.exists(path):
         os.makedirs(path)
 
-def arrayColumnToDataframe(column):
-    return pd.DataFrame([elem for elem in column])
+def arrayColumnToDataframe(dataframe, col):
+    data = dataframe[col]
+    columnNames = createColumnNames(col, len(data[0]))
+    test = pd.DataFrame([elem for elem in data], columns=columnNames)
+    return test
+
+
+def createColumnNames(name, n):
+    return [name+str(number) for number in range(n)]
+
 
 def flattenDataframe(dataframe):
     flatDF = pd.DataFrame(dataframe)
     arrayColumns = getArrayColumns(dataframe)
     for col in arrayColumns:
-        #print dataframe[col]
-        flatCol = arrayColumnToDataframe(dataframe[col])
+        flatCol = arrayColumnToDataframe(dataframe, col)
         flatDF.drop(col, axis=1, inplace=True)
         flatDF = pd.concat([flatDF,flatCol], axis=1)
     return flatDF 
@@ -79,6 +87,21 @@ def getArrayColumns(data):
         if type(columnList[0])==list: 
             arrayColumns.append(col)
     return arrayColumns
+
+def combineColumnValues(dataframe, columns):
+    values = dataframe[columns].as_matrix()
+    valueList = [flattenArray(array) for array in values]
+    return valueList 
+
+def flattenArray(array):
+    flatArray = []
+    for elem in array:
+        if type(elem) in (list,tuple,np.ndarray):
+            [flatArray.append(value) for value in elem]
+        else:
+            flatArray.append(elem)
+    return flatArray 
+
 
     
 
