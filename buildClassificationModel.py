@@ -1,5 +1,5 @@
 from lda import Viewer, ClassificationModel, FeatureExtractor
-from sklearn.cross_validation import KFold
+from sklearn.model_selection import KFold
 import pandas as pd
 import pdb
 
@@ -47,7 +47,10 @@ def buildClassificationModel():
    
     results = pd.DataFrame()
 
-    for foldNr, (trainInd, testInd) in enumerate(KFold(nrDocs, n_folds=2, shuffle=True)):
+    kFold = KFold(n_splits=2, shuffle=True)
+    kFold.get_n_splits(model.data)
+
+    for foldNr, (trainInd, testInd) in enumerate(kFold.split(model.data)):
         model.trainIndices = trainInd
         model.testIndices = testInd
         model.split()
