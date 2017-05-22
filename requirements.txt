@@ -6,3 +6,4 @@ nltk==3.2.2
 gensim==0.13.3
 nose==1.3.1
 scikit_learn==0.18
+Pattern==2.6
