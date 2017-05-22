@@ -1,5 +1,5 @@
 from __future__ import division
-from sklearn.metrics import accuracy_score, recall_score, precision_score, confusion_matrix
+from sklearn.metrics import accuracy_score, recall_score, precision_score, confusion_matrix, classification_report
 import pandas as pd
 import numpy as np
 
@@ -32,6 +32,9 @@ class Evaluation:
 
     def normalizeMatrix(self):
         self.normConfusionMatrix = self.confusionMatrix.div(self.confusionMatrix.sum(axis=1), axis=0)
+
+    def classificationReport(self, labels=None):
+        self.report = classification_report(self.target.tolist(), self.prediction, target_names=labels)
 
 
     def checkLength(self):

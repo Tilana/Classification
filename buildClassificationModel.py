@@ -7,7 +7,7 @@ def buildClassificationModel():
 
     path = 'Documents/ICAAD/ICAAD.pkl'
     targets = ['Sexual.Assault.Manual', 'Domestic.Violence.Manual', 'Age', 'Family.Member.Victim']
-    target = targets[0]
+    target = targets[2]
     modelPath = 'processedData/SADV'
     modelPath = 'processedData/processedData'
 
@@ -62,7 +62,7 @@ def buildClassificationModel():
         model.predict(selectedFeatures)
         model.evaluate()
         model.evaluation.confusionMatrix(model.targetLabels)
-        #pdb.set_trace()
+        model.evaluation.classificationReport(model.targetLabels)
 
         results['Fold '+ str(foldNr)] = model.evaluation.toSeries()
         
@@ -70,6 +70,7 @@ def buildClassificationModel():
     print 'Display Results'
     results.index=['accuracy','precision', 'recall']
     print results
+    #pdb.set_trace()
     
     viewer = Viewer(classifierType)
     displayFeatures = ['Court', 'Year', 'Sexual.Assault.Manual', 'Domestic.Violence.Manual', 'predictedLabel', 'tag', 'Family.Member.Victim', 'probability', 'Age']

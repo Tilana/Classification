@@ -258,7 +258,7 @@ class ClassificationModel:
         return [('Topic%d' % topic) for topic in range(0, topicNr)] 
 
     def getSimilarDocs(self, nrDocs=5):
-        return [('similarDocs%d' % docNr) for docNr in range(1, nrDocs+1)] 
+        return [('similarDocs%d' % docNr) for docNr in range(1, nrDocs+1)]
 
     def getRelevantWords(self, nrWords=3):
         return [('relevantWord%d' % docNr) for docNr in range(1, nrWords+1)] 

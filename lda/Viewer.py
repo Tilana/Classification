@@ -205,6 +205,24 @@ class Viewer:
                 webbrowser.open_new_tab(pagename)
 
 
+    def printClassificationReport(self, report, f):
+        f.write("""<h4>Classification Report</h4><table>""")
+        f.write("""<tr><td></td><td>Precision</td><td>Recall</td><td>F1-score</td><td>Support</td></tr>""")
+        rows = report.split('\n')
+        for row in rows[2:len(rows)-2]:
+            values = row.strip().split()
+            f.write("""<tr>""")
+            for value in values:
+                f.write("""<td>%s</td>""" % value)
+            f.write("""</tr>""") 
+        f.write("""</table>""")
+        f.write("""</div>""")
+
+
+
+        
+
+
     def classificationResults(self, model, normalized=False):
         self.createFolder(self.path + '/Classification')
         self.createFolder(self.path + '/Classification/%s' % model.classifierType)
@@ -233,6 +251,10 @@ class Viewer:
             confusionMatrix = model.evaluation.confusionMatrix.to_html()
         f.write(confusionMatrix)
         f.write(""" </td></tr>  </table>""")
+        if hasattr(model.evaluation, 'report'):
+            f.write("""<h3> Classification Report: </h3>""")
+            self.printClassificationReport(model.evaluation.report, f)
+            f.write(model.evaluation.report)
 
         if hasattr(model, 'featureImportance'):
             self.printTupleList(f, 'Feature Importance', model.featureImportance, format='float')
