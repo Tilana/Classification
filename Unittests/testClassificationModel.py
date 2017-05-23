@@ -1,5 +1,7 @@
 import unittest
 from lda import ClassificationModel
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.naive_bayes import MultinomialNB
 import pandas as pd
 import numpy as np
 from numpy.testing import assert_array_equal
@@ -69,6 +71,24 @@ class testClassificationModel(unittest.TestCase):
         self.model.setEvaluationAverage('weighted')
         self.model.evaluationAverage = 'weighted'
 
-        
+    def test_buildClassifier(self):
+        self.model.buildClassifier('DecisionTree')
+        self.assertDictEqual(self.model.classifier.__dict__, DecisionTreeClassifier().__dict__)
+        params = {'min_samples_leaf': [2,5], 'max_depth':[3,5,7], 'criterion':['gini','entropy']}
+        self.assertEqual(self.model.parameters, params) 
+
+        self.model.buildClassifier('MultinomialNB')
+        self.assertDictEqual(self.model.classifier.__dict__, MultinomialNB().__dict__)
+        params = {'alpha':[0,0.01, 0.3, 0.6, 1], 'fit_prior':[True, False]}
+        self.assertEqual(self.model.parameters, params)
+
+    def test_buildParamClassifier(self):
+        classifierType = 'kNN'
+        params = {'n_neigbors': 5, 'algorithm': 'auto', 'leaf_size':30}
+        self.model.buildParamClassifier(classifierType, params)
+        #self.assertEqual(self.model.classifierType, classifierType)
+        #self.assertDictEqual(self.model.classifier.get_params, target.get_params())
+       
+
 if __name__ == '__main__':
     unittest.main()

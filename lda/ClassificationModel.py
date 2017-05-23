@@ -17,6 +17,12 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.decomposition import PCA
 
+
+classifierFunctions = {'DecisionTree': DecisionTreeClassifier(), 'MultinomialNB': MultinomialNB(), 'BernoulliNB': BernoulliNB(), 'RandomForest': RandomForestClassifier(), 'SVM': svm.SVC(probability=True), 'LogisticRegression': linear_model.LogisticRegression(), 'kNN':  neighbors.KNeighborsClassifier(n_neighbors=15)}
+
+classifierParams = {'DecisionTree': {'min_samples_leaf': [2,5], 'max_depth':[3,5,7], 'criterion':['gini','entropy']}, 'SVM': {'kernel':['rbf'], 'gamma':['auto', 0.5, 0.9], 'C':[0.5, 1]}, 'LogisticRegression': {'penalty':['l1','l2'], 'C':[0.3,0.5,1,10]}, 'kNN': {'n_neighbors':[3,5]}, 'MultinomialNB': {'alpha':[0,0.01, 0.3, 0.6, 1], 'fit_prior':[True, False]}, 'BernoulliNB': {'alpha':[0, 0.01, 0.3, 0.6, 1], 'binarize':[True, False], 'fit_prior':[True, False]}, 'RandomForest': {'n_estimators':[5,10,30], 'min_samples_leaf': [2,5], 'max_depth':[None,3,5,7], 'criterion':['gini','entropy']}}
+
+
 class ClassificationModel:
 
     def __init__(self, path=None, target=None):
@@ -225,27 +231,22 @@ class ClassificationModel:
 
     def buildClassifier(self, classifierType):
         self.classifierType = classifierType
-        if classifierType == 'DecisionTree':
-            self.classifier = DecisionTreeClassifier()
-            self.parameters = [{'min_samples_leaf': [2,5], 'max_depth':[3,5,7], 'criterion':['gini','entropy']}]
-        elif classifierType == 'MultinomialNB':
-            self.classifier = MultinomialNB()
-            self.parameters = [{'alpha':[0,0.01, 0.3, 0.6, 1], 'fit_prior':[True, False],}]
-        elif classifierType == 'BernoulliNB':
-            self.classifier = BernoulliNB()
-            self.parameters = [{'alpha':[0, 0.01, 0.3, 0.6, 1], 'binarize':[True, False], 'fit_prior':[True, False],}]
-        elif classifierType == 'RandomForest':
-            self.classifier = RandomForestClassifier()
-            self.parameters = [{'n_estimators':[5,10,30], 'min_samples_leaf': [2,5], 'max_depth':[None,3,5,7], 'criterion':['gini','entropy']}]
-        elif classifierType == 'SVM':
-            self.classifier = svm.SVC(probability=True)
-            self.parameters = [{'kernel':['rbf'], 'gamma':['auto', 0.5, 0.9], 'C':[0.5, 1]}]
-        elif classifierType == 'LogisticRegression':
-            self.classifier = linear_model.LogisticRegression()
-            self.parameters = [{'penalty':['l1','l2'], 'C':[0.3,0.5,1,10]}]
-        elif classifierType == 'kNN':
-            self.classifier = neighbors.KNeighborsClassifier(n_neighbors=15)
-            self.parameters = [{'n_neighbors':[3,5]}]
+        self.classifier = classifierFunctions[classifierType]
+        self.parameters = classifierParams[classifierType]
+
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+
+    def buildParamClassifier(self, classifierType, params):
+        self.classifier = True
 
 
     def getSelectedTopics(self, topicNr, selectedTopics=None):
