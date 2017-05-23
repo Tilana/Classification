@@ -83,11 +83,11 @@ class testClassificationModel(unittest.TestCase):
         self.assertEqual(self.model.parameters, params)
 
     def test_buildParamClassifier(self):
-        classifierType = 'kNN'
-        params = {'n_neigbors': 5, 'algorithm': 'auto', 'leaf_size':30}
+        classifierType = 'MultinomialNB'
+        params = {'alpha':0.01, 'fit_prior':False}
         self.model.buildParamClassifier(classifierType, params)
-        #self.assertEqual(self.model.classifierType, classifierType)
-        #self.assertDictEqual(self.model.classifier.get_params, target.get_params())
+        self.assertEqual(self.model.classifierType, classifierType)
+        self.assertDictContainsSubset(params, self.model.classifier.get_params())
        
 
 if __name__ == '__main__':

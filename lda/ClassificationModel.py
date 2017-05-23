@@ -234,19 +234,10 @@ class ClassificationModel:
         self.classifier = classifierFunctions[classifierType]
         self.parameters = classifierParams[classifierType]
 
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-
     def buildParamClassifier(self, classifierType, params):
-        self.classifier = True
+        self.buildClassifier(classifierType)
+        for param in params:
+            setattr(self.classifier, param, params[param])
 
 
     def getSelectedTopics(self, topicNr, selectedTopics=None):
