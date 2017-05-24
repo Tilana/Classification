@@ -67,6 +67,8 @@ def buildClassificationModel():
         model.evaluation.confusionMatrix(model.targetLabels)
         model.evaluation.classificationReport(model.targetLabels)
 
+        pdb.set_trace()
+
         results['Fold '+ str(foldNr)] = model.evaluation.toSeries()
         
     
