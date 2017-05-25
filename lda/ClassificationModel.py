@@ -229,13 +229,14 @@ class ClassificationModel:
     def oneHotEncoding(self, data):
         return pd.get_dummies(data)
 
-    def buildClassifier(self, classifierType):
+    def buildClassifier(self, classifierType, params=None):
         self.classifierType = classifierType
         self.classifier = classifierFunctions[classifierType]
+        if params:
+            self.buildParamClassifier(params)
         self.parameters = classifierParams[classifierType]
 
-    def buildParamClassifier(self, classifierType, params):
-        self.buildClassifier(classifierType)
+    def buildParamClassifier(self, params):
         for param in params:
             setattr(self.classifier, param, params[param])
 

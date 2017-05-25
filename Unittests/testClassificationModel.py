@@ -85,8 +85,8 @@ class testClassificationModel(unittest.TestCase):
     def test_buildParamClassifier(self):
         classifierType = 'MultinomialNB'
         params = {'alpha':0.01, 'fit_prior':False}
-        self.model.buildParamClassifier(classifierType, params)
-        self.assertEqual(self.model.classifierType, classifierType)
+        self.model.classifier = MultinomialNB()
+        self.model.buildParamClassifier(params)
         self.assertDictContainsSubset(params, self.model.classifier.get_params())
        
 

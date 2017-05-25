@@ -3,6 +3,12 @@ from lda.dataframeUtils import toCSV
 import pandas as pd
 import pdb
 
+
+classifierTypes = ['LogisticRegression', 'MultinomialNB', 'BernoulliNB', 'RandomForest', 'DecisionTree', 'SVM', 'kNN']
+classifierTypes = ['LogisticRegression', 'BernoulliNB', 'RandomForest', 'DecisionTree', 'SVM', 'kNN']
+classifierTypes = ['kNN', 'DecisionTree']
+
+
 def createResultPath(dataPath, target,  **args):
     path = 'modelSelection/'
     dataPath = dataPath.split('/')[1]
@@ -13,28 +19,30 @@ def createResultPath(dataPath, target,  **args):
     return path
 
 
-def modelSelection(modelPath, target, features):
+def modelSelection(modelPath, target, features, nrTrainingDocs=None):
 
     pca=False
     pcaComponents = 130 
     resultPath = createResultPath(modelPath, target)
 
-    classifierTypes = ['LogisticRegression', 'MultinomialNB', 'BernoulliNB', 'RandomForest', 'DecisionTree', 'SVM', 'kNN']
-    classifierTypes = ['LogisticRegression', 'BernoulliNB', 'RandomForest', 'DecisionTree', 'SVM', 'kNN']
-    classifierTypes = ['kNN', 'DecisionTree', 'RandomForest']
     #features = ['tfIdf']
     #features = ['docVec']
-    nrTrainingDocs = 100 
+    #pdb.set_trace()
+    #nrTrainingDocs = 100 
 
     #pdb.set_trace()
     
     model = ClassificationModel()
     model = model.load(modelPath)
+
+    nrTrainingDocs = nrTrainingDocs
+    if not nrTrainingDocs:
+        nrTrainingDocs = len(model.data)/100*70
     
     results = pd.DataFrame(columns=classifierTypes, index=['Best score', 'params', 'Test Accuracy', 'Test Precision', 'Test Recall'])
     
-    #model.data = model.data[model.data['Sexual.Assault.Manual'] | model.data['Domestic.Violence.Manual']]
     model.targetFeature = target
+    model.features = features
     model.createTarget()
 
     model.splitDataset(nrTrainingDocs, random=True)
@@ -60,16 +68,17 @@ def modelSelection(modelPath, target, features):
         results[classifierType] = [score, params, model.evaluation.accuracy, model.evaluation.precision, model.evaluation.recall]
 
         if score > bestScore:
-            bestClassifer = classifierType
-            print bestClassifier
+            print 'CL'
+            print classifierType
+            bestClassifier = classifierType
             bestScore=score
             bestParams = params
 
-    pdb.set_trace()
-    toCSV(results,resultPath)
-    
+    bestModel = model
+    bestModel.buildClassifier(bestClassifier, bestParams)
+    #toCSV(results,resultPath)
 
-    return (bestClassifier, bestParams, bestScore)
+    return bestModel 
 
 
 if __name__=='__main__':
