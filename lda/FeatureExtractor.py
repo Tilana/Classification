@@ -4,7 +4,6 @@ import pandas as pd
 class FeatureExtractor:
 
     def __init__(self):
-        print 'Build Feature Extractor'
         self.wordList = pd.read_csv('Documents/ICAAD/CategoryLists.csv')
 
     def year(self, title):
