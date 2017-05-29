@@ -1,5 +1,6 @@
 import re
 import pandas as pd
+from lda import namedEntityRecognition as ner
 
 class FeatureExtractor:
 
@@ -70,5 +71,9 @@ class FeatureExtractor:
 
     def groupTuples(self, tupleList):
         return [' '.join(elem) for elem in tupleList]
+
+    
+    def entities(self, text):
+        return ner.getNamedEntities(text)
 
 

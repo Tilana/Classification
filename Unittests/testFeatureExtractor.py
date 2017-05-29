@@ -2,6 +2,7 @@ import unittest
 import pandas as pd
 from lda import FeatureExtractor
 
+
 class testFeatureExtractor(unittest.TestCase):
 
     FeatureExtractor = FeatureExtractor()

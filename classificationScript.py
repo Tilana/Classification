@@ -2,6 +2,7 @@ from modelSelection import modelSelection
 from preprocessing import preprocessing
 from buildClassificationModel import buildClassificationModel
 from FeatureExtraction import FeatureExtraction
+from FeatureAnalysis import FeatureAnalysis
 import pandas as pd
 import pdb
 
@@ -19,8 +20,11 @@ def classificationScript():
     modelPath = 'processedData/SADV'
 
     data = pd.read_pickle(dataPath)
+    data = FeatureExtraction(data[:10])
 
-    data = FeatureExtraction(data)
+    pdb.set_trace()
+
+    FeatureAnalysis(data)
     pdb.set_trace()
 
     preprocessing(dataPath, modelPath)

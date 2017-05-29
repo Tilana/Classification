@@ -3,10 +3,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import pdb
 
-def FeatureAnalysis():
+def FeatureAnalysis(data):
 
-    path = 'Documents/ICAAD/ICAAD.pkl'
-    data = pd.read_pickle(path)
     targets = ['Domestic.Violence.Manual', 'Sexual.Assault.Manual']
     target = targets[1] 
     
