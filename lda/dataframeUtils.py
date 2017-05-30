@@ -40,6 +40,7 @@ def createNumericFeature(df, column):
 def toNumeric(df, column):
     df[column] = df[column].astype(int)
 
+
 def changeStringsInColumn(df, column, old, new):
     oldValues = df[column].tolist()
     newValues = [string.replace(old, new) for string in oldValues]

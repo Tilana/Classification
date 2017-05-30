@@ -22,8 +22,6 @@ def classificationScript():
     data = pd.read_pickle(dataPath)
     data = FeatureExtraction(data[:10])
 
-    pdb.set_trace()
-
     FeatureAnalysis(data)
     pdb.set_trace()
 

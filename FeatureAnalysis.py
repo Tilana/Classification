@@ -3,24 +3,33 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import pdb
 
+def plotFrequency(data, colName):
+    try:
+        plt.clf()
+        plt.subplot(1,1,1)
+        data[colName].hist()
+        plt.title('Histogram of '+ colname + '   N:' + str(len(data)))
+        plt.ylabel('Frequency in Number of Documents')
+        plt.xlabel(colName)
+        plt.savefig('Plots/'+colName + '.jpg')
+        plt.clf()
+    except:
+        pass
+
+
+
 def FeatureAnalysis(data):
 
-    targets = ['Domestic.Violence.Manual', 'Sexual.Assault.Manual']
-    target = targets[1] 
-    
-    indexSA = data[data[target]].index.tolist()
-    SAcases = data.loc[indexSA]
+    for col in data.columns:
+        plotFrequency(data, col)
 
-    extractor = FeatureExtractor()
-    #SAcases['Type'] = SAcases.apply(lambda doc: extractor.caseType(doc.text), axis=1)
-    data['Type'] = data.apply(lambda doc: extractor.caseType(doc.text), axis=1)
-
-    plt.figure()
-    #caseType = SAcases.Type.value_counts(sort=False, dropna=False)
-    caseType = data.Type.value_counts(sort=False, dropna=False)
-    ax = caseType.plot.barh(title=target + '  N: '+str(len(SAcases)))
+    pdb.set_trace()
+    caseType = data.ext_CaseType.value_counts(sort=False, dropna=False)
+    ax = caseType.plot.barh(title='Document Type  N: '+str(len(data)))
     ax.set_xlabel('Number of Documents')
     plt.show()
+    
+    pdb.set_trace()
 
     nones = SAcases[SAcases.Type.isnull()]
     viewer = Viewer('FeatureExtraction')

@@ -35,6 +35,7 @@ class testDataframeUtils(unittest.TestCase):
         result = df.combineColumnValues(self.df2, ['Array', 'Strings'])
         self.assertEqual(result, target)
 
+
     def test_flattenArray(self):
         array = [False, 1, np.array([2,3,4]),'b', [5,6,'a']]
         target = [False,1,2,3,4,'b',5,6,'a']
