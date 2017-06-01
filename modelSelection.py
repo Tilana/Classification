@@ -25,13 +25,6 @@ def modelSelection(modelPath, target, features, nrTrainingDocs=None):
     pcaComponents = 130 
     resultPath = createResultPath(modelPath, target)
 
-    #features = ['tfIdf']
-    #features = ['docVec']
-    #pdb.set_trace()
-    #nrTrainingDocs = 100 
-
-    #pdb.set_trace()
-    
     model = ClassificationModel()
     model = model.load(modelPath)
 
@@ -68,15 +61,13 @@ def modelSelection(modelPath, target, features, nrTrainingDocs=None):
         results[classifierType] = [score, params, model.evaluation.accuracy, model.evaluation.precision, model.evaluation.recall]
 
         if score > bestScore:
-            print 'CL'
-            print classifierType
             bestClassifier = classifierType
             bestScore=score
             bestParams = params
 
     bestModel = model
     bestModel.buildClassifier(bestClassifier, bestParams)
-    #toCSV(results,resultPath)
+    #toCSV(results, resultPath)
 
     return bestModel 
 

@@ -11,7 +11,7 @@ targets = ['Sexual.Assault.Manual', 'Domestic.Violence.Manual', 'Age', 'Family.M
 def classificationScript():
 
     target = targets[1]
-    features = ['tfIdf', 'Rape']
+    features = ['tfIdf'] #, 'Rape']
 
     dataPath = 'Documents/ICAAD/ICAAD.pkl'
     modelPath = 'processedData/processedData_TF_binary'
@@ -23,11 +23,12 @@ def classificationScript():
     data = FeatureExtraction(data[:10])
 
     FeatureAnalysis(data)
-    pdb.set_trace()
 
     preprocessing(dataPath, modelPath)
  
     model  = modelSelection(modelPath, target, features)
+
+    validateModel(model) 
 
     
     pdb.set_trace()

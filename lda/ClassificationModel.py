@@ -16,6 +16,7 @@ from sklearn.metrics import fbeta_score, make_scorer
 from sklearn.model_selection import GridSearchCV
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.decomposition import PCA
+from sklearn.feature_selection import SelectKBest, chi2
 
 
 classifierFunctions = {'DecisionTree': DecisionTreeClassifier(), 'MultinomialNB': MultinomialNB(), 'BernoulliNB': BernoulliNB(), 'RandomForest': RandomForestClassifier(), 'SVM': svm.SVC(probability=True), 'LogisticRegression': linear_model.LogisticRegression(), 'kNN':  neighbors.KNeighborsClassifier(n_neighbors=15)}
@@ -142,16 +143,23 @@ class ClassificationModel:
         self.pca.fit(data)
         return self.pca.transform(data)
 
+    def FeatureSelection(self, X, y):
+        self.FeatureSelector = SelectKBest(chi2, k=200)
+        return self.FeatureSelector.fit_transform(X,y)
+
 
     def trainClassifier(self, features, scaling=False, pca=False, components=10):
         self.scaling = scaling
         self.pca = pca
+        self.selectFeatures = False 
+        target = self.trainTarget.tolist()
         trainData = self.getFeatureList(self.trainData,features)
         if scaling:
             trainData = self.scaleData(trainData)
         if pca:
             trainData = self.PCA(trainData, components)
-        target = self.trainTarget.tolist()
+        if self.selectFeatures:
+            trainData = self.FeatureSelection(trainData, target)
         self.classifier.fit(trainData, target)
 
     def getFeatureList(self, data, features):
@@ -174,6 +182,8 @@ class ClassificationModel:
             testData = self.scaleData(testData)
         if self.pca:
             testData = self.pca.transform(testData)
+        if self.selectFeatures:
+            testData = self.FeatureSelector.transform(testData)
         self.testData['predictedLabel'] = self.classifier.predict(testData)
         if self.classifier.predict_proba:
             probabilities = self.classifier.predict_proba(testData)
