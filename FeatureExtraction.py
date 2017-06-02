@@ -1,6 +1,4 @@
 from lda import FeatureExtractor, Preprocessor
-from lda import namedEntityRecognition as ner
-import pandas as pd
 import pdb
 
 def applyToRows(data, field, fun, name, args=None):

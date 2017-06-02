@@ -17,7 +17,7 @@ def validateModel(model, features):
     model.predict(features)
     model.evaluate()
     model.evaluation.confusionMatrix(model.targetLabels)
-    #model.evaluation.classificationReport(model.targetLabels)
+    model.evaluation.classificationReport(model.targetLabels)
 
     print 'Display Results'
     viewer = Viewer(model.classifierType)

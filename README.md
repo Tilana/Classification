@@ -1,16 +1,38 @@
 ## Classification
 
-This module provides a framework to analyse collections of documents:
- * *topicModeling.py* - uses gensim to extract the most relevant topics
- * *frequencyAnalysis.py* - returns most frequent words based on the Stanford Named-Entity Recognizer
- * *classification.py* - analysis and classification of document features with scikit-learn
+This module provides a framework to analyse collections of documents.
+
+The *classificationScript.py* shows a sample pipeline that includes:
+ * *preprocessing.py* - normalizes text documents and computes the term relevancy (tf-idf) 
+ * *FeatureExtraction.py* - extracts text properties based on named-entity recognition, regular expressions and wordlists  
+ * *FeatureAnalysis.py* - analyzes which features are could indicators regarding a supervised classification task
+ * *modelSelection.py* - determines best classifier and parameters for supervised classification
+ * *validateModel.py* - re-trains and tests the best classifier anddisplays the accuracy measures as well as correctly and incorrectly identified documents with their extracted properties
+
+Unsupervised classification with K-Means clustering is implemented in *clustering_ICAAD.py*. The number of clusters is variable. 
  
+## Scripts
+Use the following command to run the scripts:
+```
+python classificationScript.py
+python clustering_ICAAD.py
+```
+
+
+## Testing
+The folder *Unittests* contains the tests corresponding to each module. [*nose*](http://nose.readthedocs.org/) provides an easy way to run all tests together. <br  />
+
+Run the tests with:
+```
+nosetests Unittests/
+```
+
 ## Install dependencies
-The code is based on different modules for machine learning and natural language processing, as well as other python libraries. To install them, make sure that you have [Python 2.7](https://www.python.org/download/releases/2.7/) and [pip](https://pip.pypa.io/en/stable/) installed.
+The code is based on different modules for machine learning and natural language processing, as well as other python libraries. To install them make sure you have [Python 2.7](https://www.python.org/download/releases/2.7/) and [pip](https://pip.pypa.io/en/stable/) installed.
 
 Upgrade pip:
 ```
-pip install -U pip
+pip install -U
 ```
 
 Install the dependencies with:
@@ -50,47 +72,3 @@ pip install xlrd
 Stanford Named Entity Recognizer labels sequences of words in a text which represent proper names for persons, locations and organizations. The Stanford NER is included in this repository.
 
 
-## Scripts
-Use the following command to run the scripts:
-```
-python topicModeling.py
-python frequencyAnalysis.py
-python classification.py
-```
-In the **TopicModeling** and **frequencyAnalysis** files the following parameters can be adapted and are stored as an *info* object:
-* *data* - specifies the name of the collection. At different collections are available: *ICAAD*, *NIPS*, *scifibooks*
-* *preprocess* - flag for preprocessing: * 0 - loads preprocessed documents if found * 1 - runs preprocessing and saves documents
-* *startDoc* - index of document to start upload
-* *numberDoc* - number of documents for the preprocessing. Default is *None* to load all documents
-* *specialChars* - remove these characters from text
-* *includeEntities* - when set to 1 the Stanford named-entity recognizer extracts the names, organizations and locations from the documents
-* *lowerfilter* - removes all words from dictionary which appear in less than *n* (int) documents
-* *uperfilter* - removes all words from dictionary which appear in more than *x* (float) per cent of the documents
-* *modelType* - *LDA* for Latent Dirichlet Allocation or *LSI* for Latent Semantic Indexing
-* *numberTopics* - specify how many topics are extracted
-* *tfidf* - use term-frequency inverse-document frequency weighting to train the model
-* *passes* - indicates how often the algorithm is trained
-* *iterations* - maximal number of iterations in each step of the LDA, less iterations are done when the parameter rho is exceeded
-* *online* - splits data into chunks for faster convergence
-* *chunksize* - size of chunks for online training
-* *multicore* - use multi core processing to speed up training
-
-
-* *whiteList* - use only the words in the white list to build the dictionary 
-* *analyseDictionary* - displays document frequency of words
-* *categories* - list of category words to describe the topics
-
-
-The **classification** script by default loads a csv file.
-* *path* - specifies the location and name of the file
-* *predictColumn* - determines which column is selected to be classified
-* *dropList* - contains all columns that are ignored in the classification
-
-
-## Testing
-The folder *Unittests* contains the tests corresponding to each module. [*nose*](http://nose.readthedocs.org/) provides an easy way to run all tests together. <br  />
-
-Run the tests with:
-```
-nosetests Unittests/
-```

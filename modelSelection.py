@@ -28,6 +28,8 @@ def modelSelection(modelPath, target, features, nrTrainingDocs=None):
     model = ClassificationModel()
     model = model.load(modelPath)
 
+    pdb.set_trace()
+
     nrTrainingDocs = nrTrainingDocs
     if not nrTrainingDocs:
         nrTrainingDocs = len(model.data)/100*70
@@ -54,6 +56,7 @@ def modelSelection(modelPath, target, features, nrTrainingDocs=None):
         print('Best score: %0.3f' % score)
         model.predict(features)
         model.evaluate()
+        pdb.set_trace()
         print 'Accuraccy: {:f}'.format(model.evaluation.accuracy)
         print 'Precision: {:f}'.format(model.evaluation.precision)
         print 'Recall: {:f}'.format(model.evaluation.recall)

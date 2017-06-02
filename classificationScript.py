@@ -18,17 +18,15 @@ def classificationScript():
     dataPath = 'Documents/ICAAD/ICAAD.pkl'
     modelPath = 'processedData/processedData_TF_binary'
     modelPath = 'processedData/processedData'
-    #modelPath = 'processedData/doc2vec'
+    modelPath = 'processedData/doc2vec'
     modelPath = 'processedData/SADV'
 
     data = pd.read_pickle(dataPath)
     preprocessing(data, modelPath)
     
-    #data = FeatureExtraction(data[:10])
+    data = FeatureExtraction(data[:10])
 
-    #FeatureAnalysis(data)
-
-    #pdb.set_trace()
+    FeatureAnalysis(data)
 
     model  = modelSelection(modelPath, target, features)
 

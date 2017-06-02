@@ -28,13 +28,10 @@ def clustering_ICAAD():
         relevantWords = [vocabulary[ind] for ind in order_centroids[i, :20]]
         print(relevantWords)
 
-    #pdb.set_trace()
-
     model.data['cluster'] = clf.labels_.tolist()
     SAcluster = model.data[model.data['Sexual.Assault.Manual']].cluster
     print np.histogram(SAcluster, bins=nrCluster)
         
-
 
 
 if __name__ == "__main__":
