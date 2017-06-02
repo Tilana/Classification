@@ -26,10 +26,12 @@ classifierParams = {'DecisionTree': {'min_samples_leaf': [2,5], 'max_depth':[3,5
 
 class ClassificationModel:
 
-    def __init__(self, path=None, target=None):
+    def __init__(self, path=None, target=None, data=None):
         self.data = []
-        if path != None:
-                self.data = pd.read_pickle(path)
+        if path:
+            self.data = pd.read_pickle(path)
+        if data is not None:
+            self.data = data
         self.targetFeature = target
 
     
@@ -277,7 +279,6 @@ class ClassificationModel:
         trainDocs = self.data.text.tolist()
         self.data[vecType] = self.preprocessor.trainVectorizer(trainDocs)
 
-
     def preprocessTestData(self, vecType='tfIdf'):
         testDocs = self.testData.text.tolist()
         self.testData[vecType] = self.preprocessor.vectorizeDocs(testDocs)
@@ -306,7 +307,7 @@ class ClassificationModel:
 
     def loadPreprocessor(self, path):
         preprocessor = Preprocessor()
-        if os.path.exists(path):
+        if os.path.exists(path+'.pkl'):
             self.preprocessor = preprocessor.load(path)
 
         

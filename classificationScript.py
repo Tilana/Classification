@@ -7,7 +7,8 @@ from validateModel import validateModel
 import pandas as pd
 import pdb
 
-targets = ['Sexual.Assault.Manual', 'Domestic.Violence.Manual', 'Age', 'Family.Member.Victim', 'SGBV', 'Rape', 'DV.Restraining.Order', 'Penal.Code', 'Defilement', 'Reconciliation', 'Incest', 'Year'] 
+targets = ['Sexual.Assault.Manual', 'Domestic.Violence.Manual', 'Age', 'Family.Member.Victim', 'SGBV', 'Rape', 'DV.Restraining.Order', 'Penal.Code', 'Defilement', 'Reconciliation', 'Incest', 'Year']
+
 
 def classificationScript():
 
@@ -18,15 +19,17 @@ def classificationScript():
     modelPath = 'processedData/processedData_TF_binary'
     modelPath = 'processedData/processedData'
     #modelPath = 'processedData/doc2vec'
-    #modelPath = 'processedData/SADV'
+    modelPath = 'processedData/SADV'
 
     data = pd.read_pickle(dataPath)
+    preprocessing(data, modelPath)
+    
     #data = FeatureExtraction(data[:10])
 
     #FeatureAnalysis(data)
 
-    #preprocessing(dataPath, modelPath)
- 
+    #pdb.set_trace()
+
     model  = modelSelection(modelPath, target, features)
 
     validateModel(model, features) 
