@@ -3,6 +3,7 @@ from preprocessing import preprocessing
 from buildClassificationModel import buildClassificationModel
 from FeatureExtraction import FeatureExtraction
 from FeatureAnalysis import FeatureAnalysis
+from validateModel import validateModel
 import pandas as pd
 import pdb
 
@@ -16,19 +17,19 @@ def classificationScript():
     dataPath = 'Documents/ICAAD/ICAAD.pkl'
     modelPath = 'processedData/processedData_TF_binary'
     modelPath = 'processedData/processedData'
-    modelPath = 'processedData/doc2vec'
-    modelPath = 'processedData/SADV'
+    #modelPath = 'processedData/doc2vec'
+    #modelPath = 'processedData/SADV'
 
     data = pd.read_pickle(dataPath)
-    data = FeatureExtraction(data[:10])
+    #data = FeatureExtraction(data[:10])
 
-    FeatureAnalysis(data)
+    #FeatureAnalysis(data)
 
-    preprocessing(dataPath, modelPath)
+    #preprocessing(dataPath, modelPath)
  
     model  = modelSelection(modelPath, target, features)
 
-    validateModel(model) 
+    validateModel(model, features) 
 
     
     pdb.set_trace()

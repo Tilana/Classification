@@ -52,7 +52,6 @@ class ClassificationModel:
         self.holdout = self.testData[:n]
         self.holdoutTarget = self.testTarget[:n]
         self.testData = self.testData[n:]
-        self.assertEqual(self.evaluation.tags, result)
         self.testIndices = self.testIndices[n:]
         self.testTarget = self.testTarget[n:]
 
@@ -144,14 +143,14 @@ class ClassificationModel:
         return self.pca.transform(data)
 
     def FeatureSelection(self, X, y):
-        self.FeatureSelector = SelectKBest(chi2, k=200)
+        self.FeatureSelector = SelectKBest(chi2, k=300)
         return self.FeatureSelector.fit_transform(X,y)
 
 
     def trainClassifier(self, features, scaling=False, pca=False, components=10):
         self.scaling = scaling
         self.pca = pca
-        self.selectFeatures = False 
+        self.selectFeatures = True 
         target = self.trainTarget.tolist()
         trainData = self.getFeatureList(self.trainData,features)
         if scaling:

@@ -6,7 +6,7 @@ import pdb
 
 classifierTypes = ['LogisticRegression', 'MultinomialNB', 'BernoulliNB', 'RandomForest', 'DecisionTree', 'SVM', 'kNN']
 classifierTypes = ['LogisticRegression', 'BernoulliNB', 'RandomForest', 'DecisionTree', 'SVM', 'kNN']
-classifierTypes = ['kNN', 'DecisionTree']
+#classifierTypes = ['kNN', 'DecisionTree']
 
 
 def createResultPath(dataPath, target,  **args):
