@@ -3,10 +3,9 @@ from lda.dataframeUtils import toCSV
 import pandas as pd
 import pdb
 
-
-classifierTypes = ['LogisticRegression', 'MultinomialNB', 'BernoulliNB', 'RandomForest', 'DecisionTree', 'SVM', 'kNN']
-#classifierTypes = ['LogisticRegression', 'BernoulliNB', 'RandomForest', 'DecisionTree'] #, 'SVM', 'kNN']
-classifierTypes = ['kNN', 'DecisionTree']
+classifierTypes = ['LogisticRegression', 'BernoulliNB', 'RandomForest', 'DecisionTree'] #, 'SVM', 'kNN']
+#classifierTypes = ['kNN', 'DecisionTree']
+classifierTypes = ['DecisionTree']
 
 
 def createResultPath(dataPath, target,  **args):
@@ -15,7 +14,7 @@ def createResultPath(dataPath, target,  **args):
     target = target.replace('.','')
     #if pca:
     #    path = path + 'pca' + str(pcaComponents)+'.csv'    
-    path = path+dataPath+'_'+target+'.csv'
+    path = path+dataPath+'_'+target+'_whitelist_50median.csv'
     return path
 
 
@@ -37,6 +36,7 @@ def modelSelection(modelPath, target, features, nrTrainingDocs=None, whitelist=N
     
     model.targetFeature = target
     model.features = features
+    model.whitelist = whitelist
     model.createTarget()
 
     model.splitDataset(nrTrainingDocs, random=False)
@@ -51,7 +51,7 @@ def modelSelection(modelPath, target, features, nrTrainingDocs=None, whitelist=N
 
         model.buildClassifier(classifierType) 
         weightedFscore = model.weightFScore(2)
-        (score, params) = model.gridSearch(features, scoring=weightedFscore, scaling=False, pca=pca, components=pcaComponents, whitelist=whitelist)
+        (score, params) = model.gridSearch(features, scoring=weightedFscore, scaling=False, pca=pca, components=pcaComponents)
         print('Best score: %0.3f' % score)
         model.predict(features)
         model.evaluate()

@@ -219,10 +219,7 @@ class Viewer:
         f.write("""</div>""")
 
 
-
-        
-
-
+    
     def classificationResults(self, model, normalized=False):
         self.createFolder(self.path + '/Classification')
         self.createFolder(self.path + '/Classification/%s' % model.classifierType)
@@ -254,7 +251,10 @@ class Viewer:
         if hasattr(model.evaluation, 'report'):
             f.write("""<h3> Classification Report: </h3>""")
             self.printClassificationReport(model.evaluation.report, f)
-            f.write(model.evaluation.report)
+            #f.write(model.evaluation.report)
+
+        if hasattr(model, 'whitelist'):
+            f.write(""" <p><b> Whitelist: </b> %s </p>""" % str(model.whitelist))
 
         if hasattr(model, 'featureImportance'):
             self.printTupleList(f, 'Feature Importance', model.featureImportance, format='float')

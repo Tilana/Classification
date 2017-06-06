@@ -126,9 +126,9 @@ class ClassificationModel:
         self.data = self.data.drop(self.droplist, axis=1)
 
 
-    def gridSearch(self, features, scoring='f1', scaling='False', pca='False', components=10, whitelist=None):
+    def gridSearch(self, features, scoring='f1', scaling='False', pca='False', components=10):
         self.classifier= GridSearchCV(self.classifier, self.parameters, scoring=scoring)
-        self.trainClassifier(features, scaling=scaling, pca=pca, components=components, whitelist=whitelist)
+        self.trainClassifier(features, scaling=scaling, pca=pca, components=components)
         bestScore = self.classifier.best_score_
         self.classifier = self.classifier.best_estimator_
         parameter = self.classifier.get_params()
@@ -149,15 +149,15 @@ class ClassificationModel:
         return self.FeatureSelector.fit_transform(X,y)
 
 
-    def trainClassifier(self, features, scaling=False, pca=False, components=10, selectFeatures=False, whitelist=None):
+    def trainClassifier(self, features, scaling=False, pca=False, components=10, selectFeatures=False):
         self.scaling = scaling
         self.pca = pca
         self.selectFeatures = selectFeatures 
-        self.whitelist = whitelist
         target = self.trainTarget.tolist()
+        if self.whitelist:
+            print 'Increase weights of Whitelist'
+            self.increaseWeights('tfIdf', self.whitelist)
         trainData = self.getFeatureList(self.trainData,features)
-        if whitelist:
-            self.increaseWeights('tfIdf', whitelist)
         if scaling:
             trainData = self.scaleData(trainData)
         if pca:
@@ -181,6 +181,9 @@ class ClassificationModel:
 
     
     def predict(self, features):
+        if self.whitelist:
+            print 'Increase weights of Whitelist'
+            self.increaseWeights('tfIdf', self.whitelist)
         testData = self.getFeatureList(self.testData,features)
         if self.scaling:
             testData = self.scaleData(testData)
@@ -221,7 +224,7 @@ class ClassificationModel:
 
     def proportionalValue(self, weights):
         median = np.median(weights, axis=1)
-        return  median/100*20
+        return  median/100*150
 
     def getWordIndex(self, word):
         if word in self.vocabulary:

@@ -6,8 +6,7 @@ import pdb
 def validateModel(model, features):
 
     nrDocs = len(model.data)
-
-    model.splitDataset(2*nrDocs/3)
+    model.splitDataset(2*nrDocs/3, random=False)
     #model.validationSet()
 
     print 'Train Classifier'
@@ -17,7 +16,13 @@ def validateModel(model, features):
     model.predict(features)
     model.evaluate()
     model.evaluation.confusionMatrix(model.targetLabels)
-    model.evaluation.classificationReport(model.targetLabels)
+    #model.evaluation.classificationReport(model.targetLabels)
+    try:
+        model.relevantFeatures()
+    except:
+        pass
+
+    print model.whitelist 
 
     print 'Display Results'
     viewer = Viewer(model.classifierType)

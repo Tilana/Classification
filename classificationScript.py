@@ -9,13 +9,13 @@ import pdb
 
 targets = ['Sexual.Assault.Manual', 'Domestic.Violence.Manual', 'Age', 'Family.Member.Victim', 'SGBV', 'Rape', 'DV.Restraining.Order', 'Penal.Code', 'Defilement', 'Reconciliation', 'Incest', 'Year']
 
-whitelist = ['domestic violence', 'grievous harm', 'domestic', 'wife', 'wounding', 'bodily harm', 'batter', 'aggression', 'attack', 'protection order']
-whitelist = None
+whitelist = ['domestic violence', 'grievous harm', 'domestic', 'wife', 'wounding', 'bodily harm', 'batter', 'aggression', 'attack', 'protection order', 'woman']
+#whitelist = None
 
 def classificationScript():
 
     target = targets[1]
-    features = ['tfIdf', 'Rape']
+    features = ['tfIdf']
 
     dataPath = 'Documents/ICAAD/ICAAD.pkl'
     modelPath = 'processedData/processedData_TF_binary'
@@ -23,15 +23,15 @@ def classificationScript():
     modelPath = 'processedData/doc2vec'
     modelPath = 'processedData/SADV'
 
-    data = pd.read_pickle(dataPath)
-    preprocessing(data, modelPath)
+    #data = pd.read_pickle(dataPath)
+    #preprocessing(data, modelPath)
     
-    data = FeatureExtraction(data[:10])
+    #data = FeatureExtraction(data[:10])
 
-    FeatureAnalysis(data)
+    #FeatureAnalysis(data)
 
     model  = modelSelection(modelPath, target, features, whitelist=whitelist)
-
+    
     validateModel(model, features) 
 
     pdb.set_trace()
