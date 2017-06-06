@@ -5,8 +5,8 @@ import pdb
 
 
 classifierTypes = ['LogisticRegression', 'MultinomialNB', 'BernoulliNB', 'RandomForest', 'DecisionTree', 'SVM', 'kNN']
-classifierTypes = ['LogisticRegression', 'BernoulliNB', 'RandomForest', 'DecisionTree', 'SVM', 'kNN']
-#classifierTypes = ['kNN', 'DecisionTree']
+#classifierTypes = ['LogisticRegression', 'BernoulliNB', 'RandomForest', 'DecisionTree'] #, 'SVM', 'kNN']
+classifierTypes = ['kNN', 'DecisionTree']
 
 
 def createResultPath(dataPath, target,  **args):
@@ -19,16 +19,15 @@ def createResultPath(dataPath, target,  **args):
     return path
 
 
-def modelSelection(modelPath, target, features, nrTrainingDocs=None):
+def modelSelection(modelPath, target, features, nrTrainingDocs=None, whitelist=None):
 
     pca=False
+    
     pcaComponents = 130 
     resultPath = createResultPath(modelPath, target)
 
     model = ClassificationModel()
     model = model.load(modelPath)
-
-    pdb.set_trace()
 
     nrTrainingDocs = nrTrainingDocs
     if not nrTrainingDocs:
@@ -40,7 +39,7 @@ def modelSelection(modelPath, target, features, nrTrainingDocs=None):
     model.features = features
     model.createTarget()
 
-    model.splitDataset(nrTrainingDocs, random=True)
+    model.splitDataset(nrTrainingDocs, random=False)
     nrDocs = len(model.data)
 
     bestClassifier = None
@@ -52,11 +51,11 @@ def modelSelection(modelPath, target, features, nrTrainingDocs=None):
 
         model.buildClassifier(classifierType) 
         weightedFscore = model.weightFScore(2)
-        (score, params) = model.gridSearch(features, scoring=weightedFscore, scaling=False, pca=pca, components=pcaComponents)
+        (score, params) = model.gridSearch(features, scoring=weightedFscore, scaling=False, pca=pca, components=pcaComponents, whitelist=whitelist)
         print('Best score: %0.3f' % score)
         model.predict(features)
         model.evaluate()
-        pdb.set_trace()
+        #pdb.set_trace()
         print 'Accuraccy: {:f}'.format(model.evaluation.accuracy)
         print 'Precision: {:f}'.format(model.evaluation.precision)
         print 'Recall: {:f}'.format(model.evaluation.recall)

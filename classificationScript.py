@@ -9,11 +9,13 @@ import pdb
 
 targets = ['Sexual.Assault.Manual', 'Domestic.Violence.Manual', 'Age', 'Family.Member.Victim', 'SGBV', 'Rape', 'DV.Restraining.Order', 'Penal.Code', 'Defilement', 'Reconciliation', 'Incest', 'Year']
 
+whitelist = ['domestic violence', 'grievous harm', 'domestic', 'wife', 'wounding', 'bodily harm', 'batter', 'aggression', 'attack', 'protection order']
+whitelist = None
 
 def classificationScript():
 
     target = targets[1]
-    features = ['tfIdf'] #, 'Rape']
+    features = ['tfIdf', 'Rape']
 
     dataPath = 'Documents/ICAAD/ICAAD.pkl'
     modelPath = 'processedData/processedData_TF_binary'
@@ -28,11 +30,10 @@ def classificationScript():
 
     FeatureAnalysis(data)
 
-    model  = modelSelection(modelPath, target, features)
+    model  = modelSelection(modelPath, target, features, whitelist=whitelist)
 
     validateModel(model, features) 
 
-    
     pdb.set_trace()
 
 

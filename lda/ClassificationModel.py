@@ -126,9 +126,9 @@ class ClassificationModel:
         self.data = self.data.drop(self.droplist, axis=1)
 
 
-    def gridSearch(self, features, scoring='f1', scaling='False', pca='False', components=10):
+    def gridSearch(self, features, scoring='f1', scaling='False', pca='False', components=10, whitelist=None):
         self.classifier= GridSearchCV(self.classifier, self.parameters, scoring=scoring)
-        self.trainClassifier(features, scaling=scaling, pca=pca, components=components)
+        self.trainClassifier(features, scaling=scaling, pca=pca, components=components, whitelist=whitelist)
         bestScore = self.classifier.best_score_
         self.classifier = self.classifier.best_estimator_
         parameter = self.classifier.get_params()
@@ -149,12 +149,15 @@ class ClassificationModel:
         return self.FeatureSelector.fit_transform(X,y)
 
 
-    def trainClassifier(self, features, scaling=False, pca=False, components=10):
+    def trainClassifier(self, features, scaling=False, pca=False, components=10, selectFeatures=False, whitelist=None):
         self.scaling = scaling
         self.pca = pca
-        self.selectFeatures = True 
+        self.selectFeatures = selectFeatures 
+        self.whitelist = whitelist
         target = self.trainTarget.tolist()
         trainData = self.getFeatureList(self.trainData,features)
+        if whitelist:
+            self.increaseWeights('tfIdf', whitelist)
         if scaling:
             trainData = self.scaleData(trainData)
         if pca:
@@ -206,12 +209,28 @@ class ClassificationModel:
         if self.classificationType=='binary':
             self.evaluationAverage = 'binary'
 
+    def increaseWeights(self, col, whitelist):
+        wordIndices = [self.getWordIndex(word) for word in whitelist if self.getWordIndex(word)!=None]
+        weights = df.combineColumnValues(self.data, col)
+        addValue = self.proportionalValue(weights)
+        weightsDF = pd.DataFrame(weights)
+        for index in wordIndices:
+            weightsDF[index] = weightsDF[index].add(addValue)
+        self.data[col] = pd.Series(df.combineColumnValues(weightsDF, range(0,weightsDF.shape[1])))
+
+
+    def proportionalValue(self, weights):
+        median = np.median(weights, axis=1)
+        return  median/100*20
+
+    def getWordIndex(self, word):
+        if word in self.vocabulary:
+            return self.vocabulary.index(word)
 
     def relevantFeatures(self):
         featureRelevance = self.classifier.feature_importances_
         indicesRelFeatures = np.where(featureRelevance>0)[0]
-        vocabulary = self.preprocessor.vocabulary
-        relFeatures = [(vocabulary[ind], featureRelevance[ind]) for ind in indicesRelFeatures]
+        relFeatures = [(self.vocabulary[ind], featureRelevance[ind]) for ind in indicesRelFeatures]
         self.featureImportance = sortTupleList(relFeatures)
 
 
@@ -273,6 +292,7 @@ class ClassificationModel:
 
     def buildPreprocessor(self, vecType='tfIdf', min_df=10, max_df=0.5, stop_words='english', ngram_range = (1,2), max_features=8000, vocabulary=None, binary=False):
         self.preprocessor = Preprocessor(processor=vecType, min_df=min_df, max_df=max_df, stop_words=stop_words, ngram_range=ngram_range, max_features=max_features, vocabulary=vocabulary, binary=binary)
+        self.vocabulary = self.preprocessor.vocabulary
 
 
     def trainPreprocessor(self, vecType='tfIdf'):
@@ -309,5 +329,6 @@ class ClassificationModel:
         preprocessor = Preprocessor()
         if os.path.exists(path+'.pkl'):
             self.preprocessor = preprocessor.load(path)
+            self.vocabulary = self.preprocessor.vocabulary
 
         

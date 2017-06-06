@@ -88,7 +88,35 @@ class testClassificationModel(unittest.TestCase):
         self.model.classifier = MultinomialNB()
         self.model.buildParamClassifier(params)
         self.assertDictContainsSubset(params, self.model.classifier.get_params())
-       
+
+    def test_getWordIndex(self):
+        self.model.vocabulary = ['word', 'word pair', 'new word']
+        self.assertEqual(self.model.getWordIndex('new word'), 2)
+        self.assertEqual(self.model.getWordIndex('not in vocab'), None)
+        
+
+    def test_increaseWeights(self):
+        self.model.vocabulary = ['word', 'word pair', 'new word']
+        vocabLength = len(self.model.vocabulary)
+        nrRows = self.model.data.shape[0]
+        originalWeights = np.random.rand(nrRows, vocabLength)
+        self.model.data['tfIdf'] = list(originalWeights)
+        whiteList = ['word pair', 'word', 'not in vocab']
+        self.model.increaseWeights('tfIdf', whiteList)
+        
+        for index, newWeights in self.model.data['tfIdf'].iteritems():
+            self.assertGreater(newWeights[0], originalWeights[index,0])
+            self.assertGreater(newWeights[1], originalWeights[index,1]) 
+            self.assertEqual(newWeights[2], originalWeights[index,2]) 
+
+
+    def test_proportionalValue(self):
+        w1 = np.random.uniform(1,2,[1,5])
+        w2 = np.random.uniform(0,1,[1,5])
+        weights = np.vstack([w1,w2])
+        addValue = self.model.proportionalValue(weights)
+        self.assertGreater(addValue[0], addValue[1])
+        self.assertEqual(addValue.shape, (2,))
 
 if __name__ == '__main__':
     unittest.main()
