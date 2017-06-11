@@ -102,7 +102,7 @@ class testClassificationModel(unittest.TestCase):
         originalWeights = np.random.rand(nrRows, vocabLength)
         self.model.data['tfIdf'] = list(originalWeights)
         whiteList = ['word pair', 'word', 'not in vocab']
-        self.model.increaseWeights('tfIdf', whiteList)
+        self.model.increaseWeights(self.model.data, 'tfIdf', whiteList)
         
         for index, newWeights in self.model.data['tfIdf'].iteritems():
             self.assertGreater(newWeights[0], originalWeights[index,0])
