@@ -6,6 +6,7 @@ import cPickle as pickle
 import os
 from listUtils import sortTupleList
 import dataframeUtils as df
+from ImagePlotter import plotHistogram, boxplot
 from Evaluation import Evaluation
 from Preprocessor import Preprocessor
 from sklearn.tree import DecisionTreeClassifier
@@ -154,9 +155,10 @@ class ClassificationModel:
         self.pca = pca
         self.selectFeatures = selectFeatures 
         target = self.trainTarget.tolist()
+        plotHistogram(df.flattenArray(self.trainData['tfIdf']), log=True, open=0) 
         if self.whitelist:
-            print 'Increase weights of Whitelist'
-            self.increaseWeights('tfIdf', self.whitelist)
+            self.increaseWeights(self.trainData, 'tfIdf', self.whitelist)
+            plotHistogram(df.flattenArray(self.trainData['tfIdf']), log=True, open=0) 
         trainData = self.getFeatureList(self.trainData,features)
         if scaling:
             trainData = self.scaleData(trainData)
@@ -182,8 +184,7 @@ class ClassificationModel:
     
     def predict(self, features):
         if self.whitelist:
-            print 'Increase weights of Whitelist'
-            self.increaseWeights('tfIdf', self.whitelist)
+            self.increaseWeights(self.testData, 'tfIdf', self.whitelist)
         testData = self.getFeatureList(self.testData,features)
         if self.scaling:
             testData = self.scaleData(testData)
@@ -212,14 +213,15 @@ class ClassificationModel:
         if self.classificationType=='binary':
             self.evaluationAverage = 'binary'
 
-    def increaseWeights(self, col, whitelist):
+    def increaseWeights(self, data, col, whitelist):
         wordIndices = [self.getWordIndex(word) for word in whitelist if self.getWordIndex(word)!=None]
-        weights = df.combineColumnValues(self.data, col)
+        weights = df.combineColumnValues(data, col)
         addValue = self.proportionalValue(weights)
+        addValue = np.ones(len(addValue))*0.8
         weightsDF = pd.DataFrame(weights)
         for index in wordIndices:
             weightsDF[index] = weightsDF[index].add(addValue)
-        self.data[col] = pd.Series(df.combineColumnValues(weightsDF, range(0,weightsDF.shape[1])))
+        data[col] = df.combineColumnValues(weightsDF, range(0,weightsDF.shape[1]))
 
 
     def proportionalValue(self, weights):

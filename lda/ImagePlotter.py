@@ -1,9 +1,7 @@
 import matplotlib.pyplot as plt
 
-def plotHistogram(data, title, path, xlabel, ylabel, log, start=None, end=None, bins=None, open=0):
+def plotHistogram(data, title='', path=None, xlabel='', ylabel='', log=False, start=None, end=None, bins=10, open=False):
     if data != []:
-        if bins == None:
-            bins = 10
         if start == None:
             start = min(data)
         if end == None:
@@ -16,6 +14,13 @@ def plotHistogram(data, title, path, xlabel, ylabel, log, start=None, end=None, 
         if open:
             plt.show()
         plt.draw()
-        figure.savefig(path)
+        if path:
+            figure.savefig(path)
         plt.clf()
+
+
+def boxplot(data):
+    figure = plt.gcf()
+    plt.boxplot(data)
+    plt.show()
 
