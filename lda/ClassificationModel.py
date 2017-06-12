@@ -297,12 +297,13 @@ class ClassificationModel:
 
     def buildPreprocessor(self, vecType='tfIdf', min_df=10, max_df=0.5, stop_words='english', ngram_range = (1,2), max_features=8000, vocabulary=None, binary=False):
         self.preprocessor = Preprocessor(processor=vecType, min_df=min_df, max_df=max_df, stop_words=stop_words, ngram_range=ngram_range, max_features=max_features, vocabulary=vocabulary, binary=binary)
-        self.vocabulary = self.preprocessor.vocabulary
 
 
     def trainPreprocessor(self, vecType='tfIdf'):
         trainDocs = self.data.text.tolist()
         self.data[vecType] = self.preprocessor.trainVectorizer(trainDocs)
+        self.vocabulary = self.preprocessor.vocabulary
+
 
     def preprocessTestData(self, vecType='tfIdf'):
         testDocs = self.testData.text.tolist()

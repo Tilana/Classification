@@ -5,7 +5,7 @@ import pdb
 
 classifierTypes = ['LogisticRegression', 'BernoulliNB', 'RandomForest', 'DecisionTree'] #, 'SVM', 'kNN']
 #classifierTypes = ['kNN', 'DecisionTree']
-classifierTypes = ['LogisticRegression']
+classifierTypes = ['DecisionTree']
 
 
 def createResultPath(dataPath, target,  **args):
@@ -45,6 +45,8 @@ def modelSelection(modelPath, target, features, nrTrainingDocs=None, whitelist=N
     bestClassifier = None
     bestScore = 0
     bestParams = []
+
+    #pdb.set_trace()
 
     for classifierType in classifierTypes:
         print classifierType
