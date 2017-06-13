@@ -146,19 +146,19 @@ class ClassificationModel:
         return self.pca.transform(data)
 
     def FeatureSelection(self, X, y):
-        self.FeatureSelector = SelectKBest(chi2, k=300)
+        self.FeatureSelector = SelectKBest(chi2, k=5000)
         return self.FeatureSelector.fit_transform(X,y)
 
 
-    def trainClassifier(self, features, scaling=False, pca=False, components=10, selectFeatures=False):
+    def trainClassifier(self, features, scaling=False, pca=False, components=10, selectFeatures=True):
         self.scaling = scaling
         self.pca = pca
         self.selectFeatures = selectFeatures 
         target = self.trainTarget.tolist()
-        plotHistogram(df.flattenArray(self.trainData['tfIdf']), log=True, open=0) 
+        #plotHistogram(df.flattenArray(self.trainData['tfIdf']), log=True, open=1) 
         if self.whitelist:
-            self.increaseWeights(self.trainData, 'tfIdf', self.whitelist)
-            plotHistogram(df.flattenArray(self.trainData['tfIdf']), log=True, open=0) 
+            #self.increaseWeights(self.trainData, 'tfIdf', self.whitelist)
+            plotHistogram(df.flattenArray(self.trainData['tfIdf']), log=True, open=1) 
         trainData = self.getFeatureList(self.trainData,features)
         if scaling:
             trainData = self.scaleData(trainData)
@@ -166,6 +166,7 @@ class ClassificationModel:
             trainData = self.PCA(trainData, components)
         if self.selectFeatures:
             trainData = self.FeatureSelection(trainData, target)
+            pdb.set_trace()
         self.classifier.fit(trainData, target)
 
     def getFeatureList(self, data, features):
@@ -217,16 +218,17 @@ class ClassificationModel:
         wordIndices = [self.getWordIndex(word) for word in whitelist if self.getWordIndex(word)!=None]
         weights = df.combineColumnValues(data, col)
         addValue = self.proportionalValue(weights)
-        addValue = np.ones(len(addValue))*0.8
+        #addValue = np.ones(len(addValue))*0.8
         weightsDF = pd.DataFrame(weights)
         for index in wordIndices:
-            weightsDF[index] = weightsDF[index].add(addValue)
+            #weightsDF[index] = weightsDF[index].add(addValue)
+            weightsDF[index] = weightsDF[index].multiply(2) 
         data[col] = df.combineColumnValues(weightsDF, range(0,weightsDF.shape[1]))
 
 
     def proportionalValue(self, weights):
-        median = np.median(weights, axis=1)
-        return  median/100*150
+        maximum = np.max(weights, axis=1)
+        return  maximum/2
 
     def getWordIndex(self, word):
         if word in self.vocabulary:

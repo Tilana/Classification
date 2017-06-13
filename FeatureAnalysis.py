@@ -1,7 +1,9 @@
-from lda import Viewer, FeatureExtractor, Preprocessor
+from lda import Viewer, FeatureExtractor, Preprocessor, ClassificationModel
 import matplotlib.pyplot as plt
 import pandas as pd
 import pdb
+from lda import listUtils as utils
+from lda.ImagePlotter import barplot
 
 def plotFrequency(data, colName):
     try:
@@ -18,7 +20,27 @@ def plotFrequency(data, colName):
 
 
 
-def FeatureAnalysis(data):
+def FeatureAnalysis(data=None):
+
+    modelPath = 'processedData/SADV'
+
+    model = ClassificationModel()
+    model = model.load(modelPath)
+
+    target = 'Sexual.Assault.Manual'
+    targetData = model.data[target].tolist()
+    data = model.getFeatureList(model.data, 'tfIdf')
+
+    bestFeatures = model.FeatureSelection(data, targetData)
+    scores = zip(model.vocabulary, model.FeatureSelector.scores_)
+
+    sortedScores = utils.sortTupleList(scores)
+    words, scores = zip(*sortedScores)
+
+    n = 50
+    barplot(scores[:n], 'Domestic Violence - Chi-Square relevant words', 'Chi-Square score', words[:n])
+
+    pdb.set_trace()
 
     for col in data.columns:
         plotFrequency(data, col)

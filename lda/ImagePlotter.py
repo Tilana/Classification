@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import numpy as np
 
 def plotHistogram(data, title='', path=None, xlabel='', ylabel='', log=False, start=None, end=None, bins=10, open=False):
     if data != []:
@@ -22,5 +23,15 @@ def plotHistogram(data, title='', path=None, xlabel='', ylabel='', log=False, st
 def boxplot(data):
     figure = plt.gcf()
     plt.boxplot(data)
+    plt.show()
+
+
+def barplot(data, title='', xlabel='', ylabel=''):
+    figure = plt.gcf()
+    index = np.arange(len(data))
+    plt.barh(index, data, alpha=0.5)
+    plt.yticks(index, ylabel)
+    plt.xlabel(xlabel)
+    plt.title(title)
     plt.show()
 
