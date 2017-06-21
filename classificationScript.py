@@ -4,7 +4,7 @@ from buildClassificationModel import buildClassificationModel
 from FeatureExtraction import FeatureExtraction
 from FeatureAnalysis import FeatureAnalysis
 from validateModel import validateModel
-import pandas as pd
+from lda.docLoader import loadData
 import pdb
 
 targets = ['Sexual.Assault.Manual', 'Domestic.Violence.Manual', 'Age', 'Family.Member.Victim', 'SGBV', 'Rape', 'DV.Restraining.Order', 'Penal.Code', 'Defilement', 'Reconciliation', 'Incest', 'Year']
@@ -18,28 +18,24 @@ def classificationScript():
     features = ['tfIdf']
 
     dataPath = 'Documents/ICAAD/ICAAD.pkl'
-    modelPath = 'processedData/processedData_TF_binary'
-    modelPath = 'processedData/processedData'
+    #modelPath = 'processedData/processedData_TF_binary'
+    #modelPath = 'processedData/processedData'
     #modelPath = 'processedData/doc2vec'
-    modelPath = 'processedData/SADV'
     #modelPath = 'processedData/processedData_whitelist'
     #modelPath = 'processedData/SADV_whitelist'
+    modelPath = 'processedData/SADV'
 
-    data = pd.read_pickle(dataPath)
-    data = data[data['Sexual.Assault.Manual'] | data['Domestic.Violence.Manual']]
+    data = loadData(dataPath)
+    #data = data[data['Sexual.Assault.Manual'] | data['Domestic.Violence.Manual']]
+    pdb.set_trace()
     preprocessing(data, modelPath, whitelist)
     
-    #data = FeatureExtraction(data[:10])
+    data = FeatureExtraction(data[:2])
+    FeatureAnalysis(data)
 
-    #FeatureAnalysis(data)
+    model  = modelSelection(modelPath, target, features, whitelist=whitelist)
 
-    model  = modelSelection(modelPath, target, features, whitelist=None)
-
-    #pdb.set_trace()
-    
     validateModel(model, features) 
-
-    #pdb.set_trace()
 
 
 if __name__=='__main__':

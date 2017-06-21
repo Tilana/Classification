@@ -5,6 +5,7 @@ import pdb
 from lda import listUtils as utils
 from lda.ImagePlotter import barplot
 
+
 def plotFrequency(data, colName):
     try:
         plt.clf()
@@ -27,7 +28,7 @@ def FeatureAnalysis(data=None):
     model = ClassificationModel()
     model = model.load(modelPath)
 
-    target = 'Sexual.Assault.Manual'
+    target = 'Domestic.Violence.Manual'
     targetData = model.data[target].tolist()
     data = model.getFeatureList(model.data, 'tfIdf')
 

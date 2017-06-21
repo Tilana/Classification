@@ -2,10 +2,17 @@ import json
 import urllib
 import pickle
 import os
-import pandas
+import pandas as pd
 
 
-def loadCouchdb(path):
+def loadData(path):
+    fileFunctionMatch = {'csv': loadCSV, 'pkl': loadPickle}
+    fileEnding = path.split('.')[-1]
+    loadFunction = fileFunctionMatch[fileEnding]
+    return loadFunction(path)
+    
+
+def loadCouchDB(path):
     dat = json.load(urllib.urlopen(path))
     rows = dat['rows']
     docs = list(map((lambda doc: doc['value']['Text']),rows))
@@ -13,10 +20,11 @@ def loadCouchdb(path):
     return (titles, docs)
 
 
-def loadTxtFiles(path):
+def loadTXTFolder(path):
     titles = [txtfile for txtfile in os.listdir(path)]
     docs = [open(path+'/'+txtfile).read() for txtfile in os.listdir(path)]
     return (titles, docs)
+
 
 def loadEncodedFiles(path):
     titles, texts = loadTxtFiles(path)
@@ -25,15 +33,12 @@ def loadEncodedFiles(path):
     return (titles, texts)
 
 
+def loadCSV(path):
+    return pd.read_csv(path)
 
-def loadCsvFile(path):
-    data = pandas.read_csv(path) #, encoding='utf8')
-    titles = list(data['Title'])
-#    docs = list(data['Abstract'])
-    docs = list(data['PaperText'])
-    titles = [removeSpecialChars(title) for title in titles]
-    docs = [removeSpecialChars(text) for text in docs]
-    return (titles, docs)
+
+def loadPickle(path):
+    return pd.read_pickle(path)
 
 
 def loadCategories(path):
@@ -43,7 +48,6 @@ def loadCategories(path):
     return [wordlist.split() for wordlist in categories]
 
 
-    
 def removeSpecialChars(text, verbosity=0):
     encodedText = []
     for word in text.split():

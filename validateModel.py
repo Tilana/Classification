@@ -22,8 +22,6 @@ def validateModel(model, features):
     except:
         pass
 
-    print model.whitelist 
-
     print 'Display Results'
     viewer = Viewer(model.classifierType)
     displayFeatures = ['Court', 'Year', 'Sexual.Assault.Manual', 'Domestic.Violence.Manual', 'predictedLabel', 'tag', 'Family.Member.Victim', 'probability', 'Age']

@@ -146,19 +146,20 @@ class ClassificationModel:
         return self.pca.transform(data)
 
     def FeatureSelection(self, X, y):
-        self.FeatureSelector = SelectKBest(chi2, k=5000)
+        self.FeatureSelector = SelectKBest(chi2, k=3000)
         return self.FeatureSelector.fit_transform(X,y)
 
 
-    def trainClassifier(self, features, scaling=False, pca=False, components=10, selectFeatures=True):
+    def trainClassifier(self, features, scaling=False, pca=False, components=10, selectFeatures=False):
         self.scaling = scaling
         self.pca = pca
         self.selectFeatures = selectFeatures 
         target = self.trainTarget.tolist()
+        #plotHistogram(self.trainData.loc[6,'tfIdf'], log=True, open=1) 
         #plotHistogram(df.flattenArray(self.trainData['tfIdf']), log=True, open=1) 
         if self.whitelist:
-            #self.increaseWeights(self.trainData, 'tfIdf', self.whitelist)
-            plotHistogram(df.flattenArray(self.trainData['tfIdf']), log=True, open=1) 
+            self.increaseWeights(self.trainData, 'tfIdf', self.whitelist)
+            #plotHistogram(df.flattenArray(self.trainData['tfIdf']), log=True, open=1) 
         trainData = self.getFeatureList(self.trainData,features)
         if scaling:
             trainData = self.scaleData(trainData)
@@ -166,7 +167,6 @@ class ClassificationModel:
             trainData = self.PCA(trainData, components)
         if self.selectFeatures:
             trainData = self.FeatureSelection(trainData, target)
-            pdb.set_trace()
         self.classifier.fit(trainData, target)
 
     def getFeatureList(self, data, features):

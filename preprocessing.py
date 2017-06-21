@@ -1,5 +1,4 @@
 from lda import ClassificationModel
-import pdb
 
 def preprocessing(data, modelPath, vocabulary):
 

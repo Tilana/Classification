@@ -5,7 +5,7 @@ import pdb
 
 classifierTypes = ['LogisticRegression', 'BernoulliNB', 'RandomForest', 'DecisionTree'] #, 'SVM', 'kNN']
 #classifierTypes = ['kNN', 'DecisionTree']
-classifierTypes = ['DecisionTree']
+classifierTypes = ['LogisticRegression']
 
 
 def createResultPath(dataPath, target,  **args):
@@ -46,8 +46,6 @@ def modelSelection(modelPath, target, features, nrTrainingDocs=None, whitelist=N
     bestScore = 0
     bestParams = []
 
-    #pdb.set_trace()
-
     for classifierType in classifierTypes:
         print classifierType
 
@@ -57,7 +55,6 @@ def modelSelection(modelPath, target, features, nrTrainingDocs=None, whitelist=N
         print('Best score: %0.3f' % score)
         model.predict(features)
         model.evaluate()
-        #pdb.set_trace()
         print 'Accuraccy: {:f}'.format(model.evaluation.accuracy)
         print 'Precision: {:f}'.format(model.evaluation.precision)
         print 'Recall: {:f}'.format(model.evaluation.recall)

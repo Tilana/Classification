@@ -9,10 +9,10 @@ def buildClassificationModel():
     targets = ['Sexual.Assault.Manual', 'Domestic.Violence.Manual', 'Age', 'Family.Member.Victim']
     target = targets[2]
     modelPath = 'processedData/SADV'
-    modelPath = 'processedData/processedData'
+    #modelPath = 'processedData/processedData'
 
     classifierTypes = ['DecisionTree', 'MultinomialNB', 'BernoulliNB', 'RandomForest', 'SVM', 'LogisticRegression']
-    classifierType = classifierTypes[-1]
+    classifierType = classifierTypes[0]
     alpha = 0.01 
     #selectedFeatures = ['tfIdf', 'Sexual.Assault.Manual']
     selectedFeatures = ['tfIdf']
