@@ -1,6 +1,7 @@
 import re
 import pandas as pd
 from lda import namedEntityRecognition as ner
+import pdb
 
 class FeatureExtractor:
 
@@ -10,14 +11,16 @@ class FeatureExtractor:
     def year(self, title):
         regex = r'\[\d{4}\]'
         match = re.search(regex, title)
-        year = self.extractDigit(match.group(0))
-        return year 
+        if match:
+            year = self.extractDigit(match.group(0))
+            return year 
 
     
     def court(self, title):
         regex = r'[A-Z]{4}'
         match = re.findall(regex, title)
-        return match[0]
+        if len(match)>0:
+            return match[0]
 
 
     def extractDigit(self, string):

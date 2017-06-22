@@ -34,7 +34,7 @@ def loadEncodedFiles(path):
 
 
 def loadCSV(path):
-    return pd.read_csv(path)
+    return pd.read_csv(path, encoding='utf8')
 
 
 def loadPickle(path):
