@@ -8,7 +8,6 @@ from listUtils import sortTupleList
 import dataframeUtils as df
 from ImagePlotter import plotHistogram, boxplot
 from Evaluation import Evaluation
-from Preprocessor import Preprocessor
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn import svm, neighbors, linear_model
@@ -297,46 +296,12 @@ class ClassificationModel:
         return make_scorer(fbeta_score, beta=beta, average='macro')
 
 
-    def buildPreprocessor(self, vecType='tfIdf', min_df=10, max_df=0.5, stop_words='english', ngram_range = (1,2), max_features=8000, vocabulary=None, binary=False):
-        self.preprocessor = Preprocessor(processor=vecType, min_df=min_df, max_df=max_df, stop_words=stop_words, ngram_range=ngram_range, max_features=max_features, vocabulary=vocabulary, binary=binary)
-
-
-    def trainPreprocessor(self, vecType='tfIdf'):
-        trainDocs = self.data.text.tolist()
-        self.data[vecType] = self.preprocessor.trainVectorizer(trainDocs)
-        self.vocabulary = self.preprocessor.vocabulary
-
-
-    def preprocessTestData(self, vecType='tfIdf'):
+    def preprocessTestData(self, preprocessor, vecType='tfIdf'):
         testDocs = self.testData.text.tolist()
-        self.testData[vecType] = self.preprocessor.vectorizeDocs(testDocs)
-
-    def existsProcessedData(self, path):
-        return os.path.exists(path + '.pkl')
-
-
-    def save(self, path):
-        self.savePreprocessor(path)
-        with open(path +'.pkl', 'wb') as f:
-            pickle.dump(self, f, -1)
+        self.testData[vecType] = preprocessor.vectorizeDocs(testDocs)
 
     
-    def load(self, path):
-        model = pickle.load(open(path+'.pkl', 'rb'))
-        model.loadPreprocessor(path)
-        return model
+    
 
-
-    def savePreprocessor(self, path):
-        if hasattr(self, 'preprocessor'):
-            self.preprocessor.save(path)
-            del self.preprocessor
-
-
-    def loadPreprocessor(self, path):
-        preprocessor = Preprocessor()
-        if os.path.exists(path+'.pkl'):
-            self.preprocessor = preprocessor.load(path)
-            self.vocabulary = self.preprocessor.vocabulary
 
         

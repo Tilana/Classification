@@ -1,0 +1,7 @@
+title,text,feature a,feature b,feature c
+Doc 1,,0.32,,0
+,Text 2,,,0
+Doc 3,Text 3,0.82,,
+Doc 4,,0.27,,1
+,,,,
+Doc 6,Text 6,1.33,,1

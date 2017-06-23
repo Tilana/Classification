@@ -4,7 +4,7 @@ from buildClassificationModel import buildClassificationModel
 from FeatureExtraction import FeatureExtraction
 from FeatureAnalysis import FeatureAnalysis
 from validateModel import validateModel
-from lda.docLoader import loadData
+from lda import Collection
 import pdb
 
 targets = ['Sexual.Assault.Manual', 'Domestic.Violence.Manual', 'Age', 'Family.Member.Victim', 'SGBV', 'Rape', 'DV.Restraining.Order', 'Penal.Code', 'Defilement', 'Reconciliation', 'Incest', 'Year']
@@ -25,12 +25,18 @@ def classificationScript():
     #modelPath = 'processedData/processedData_whitelist'
     #modelPath = 'processedData/SADV_whitelist'
     modelPath = 'processedData/SADV'
-    modelPath = 'processedData/RightDocs'
+    modelPath = 'processedData/RightDocs_test2'
 
-    data = loadData(dataPath)
-    #data = data[data['Sexual.Assault.Manual'] | data['Domestic.Violence.Manual']]
-    #preprocessing(data, modelPath, whitelist)
-    #pdb.set_trace()
+    collection = Collection()
+    if not collection.existsProcessedData(modelPath):
+        collection = Collection(dataPath)
+        collection.cleanData()
+        collection.preprocess('tfidf', whitelist)
+        collection.save(modelPath)
+
+    collection = Collection().load(modelPath)
+
+    pdb.set_trace()
     
     data = FeatureExtraction(data[:5])
     pdb.set_trace()
