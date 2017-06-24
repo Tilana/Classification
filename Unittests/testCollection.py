@@ -17,8 +17,8 @@ class testCollection(unittest.TestCase):
         self.assertFalse(self.collection.data.empty)
         self.assertGreater(self.collection.nrDocs, 0)
 
-    def test_cleanData(self):
-        self.collection.cleanData()
+    def test_cleanDataframe(self):
+        self.collection.cleanDataframe()
         self.assertTrue(self.collection.nrDocs, 3)
         nanColumns = self.collection.data.isnull().all()
         for col in nanColumns:

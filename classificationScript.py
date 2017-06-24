@@ -1,5 +1,4 @@
 from modelSelection import modelSelection 
-from preprocessing import preprocessing
 from buildClassificationModel import buildClassificationModel
 from FeatureExtraction import FeatureExtraction
 from FeatureAnalysis import FeatureAnalysis
@@ -25,20 +24,22 @@ def classificationScript():
     #modelPath = 'processedData/processedData_whitelist'
     #modelPath = 'processedData/SADV_whitelist'
     modelPath = 'processedData/SADV'
-    modelPath = 'processedData/RightDocs_test2'
+    modelPath = 'processedData/RightDocs'
 
     collection = Collection()
     if not collection.existsProcessedData(modelPath):
         collection = Collection(dataPath)
-        collection.cleanData()
+        collection.cleanDataframe()
+        collection.cleanTexts()
         collection.preprocess('tfidf', whitelist)
         collection.save(modelPath)
 
     collection = Collection().load(modelPath)
+    collection.cleanTexts()
 
     pdb.set_trace()
     
-    data = FeatureExtraction(data[:5])
+    data = FeatureExtraction(collection.data[:5])
     pdb.set_trace()
     FeatureAnalysis(data)
 

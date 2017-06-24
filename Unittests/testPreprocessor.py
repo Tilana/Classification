@@ -32,5 +32,17 @@ class testPreprocessor(unittest.TestCase):
         self.assertEqual(self.processor.wordTokenize(text), tokens)
 
 
+    def test_removeHTMLtags(self):
+        text = '<h>title<\h> <p>text<\p>'
+        target = 'title text'
+        self.assertEqual(self.processor.removeHTMLtags(text), target)
+
+    def test_removeLinebreaks(self):
+        text = 'This text\n has linebreaks.\n\n Remove\n them.'
+        target = 'This text has linebreaks. Remove them.'
+        self.assertEqual(self.processor.removeLinebreaks(text), target)
+        
+
+
 if __name__ == '__main__':
     unittest.main()

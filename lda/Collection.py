@@ -15,7 +15,7 @@ class Collection:
         self.nrDocs = len(self.data)
 
 
-    def cleanData(self, textField='text'):
+    def cleanDataframe(self, textField='text'):
         dataWithText = self.data[self.data[textField].notnull()]
         cleanDataframe = dataWithText.dropna(axis=1, how='all')
         self.data  = cleanDataframe.reset_index()
@@ -61,5 +61,20 @@ class Collection:
             self.preprocessor = preprocessor.load(path)
             self.vocabulary = self.preprocessor.vocabulary
 
+    
     def existsProcessedData(self, path):
         return os.path.exists(path + '.pkl')
+
+    
+    def cleanTexts(self):
+        preprocessor = Preprocessor()
+        self.applyToRows('text', preprocessor.removeHTMLtags, 'cleanText')
+        self.applyToRows('cleanText', preprocessor.cleanText, 'cleanText')
+        self.applyToRows('cleanText', preprocessor.numbersInTextToDigits, 'cleanText')
+
+    
+    def applyToRows(self, field, fun, name, args=None):
+        if args:
+            self.data[name] = self.data.apply(lambda doc: fun(doc[field], args), axis=1)
+        else:
+            self.data[name] = self.data.apply(lambda doc: fun(doc[field]), axis=1)

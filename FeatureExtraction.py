@@ -1,13 +1,6 @@
 from lda import FeatureExtractor, Preprocessor
 import pdb
 
-def applyToRows(data, field, fun, name, args=None):
-    if args:
-        data[name] = data.apply(lambda doc: fun(doc[field], args), axis=1)
-    else:
-        data[name] = data.apply(lambda doc: fun(doc[field]), axis=1)
-
-
 
 def FeatureExtraction(data):
 
