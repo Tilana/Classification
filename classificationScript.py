@@ -39,11 +39,9 @@ def classificationScript():
 
     collection = Collection().load(modelPath)
 
-    pdb.set_trace()
-
     #data = FeatureExtraction(collection.data[:5])
     FeatureAnalysis(collection)
-    pdb.set_trace()
+    #pdb.set_trace()
 
     model  = modelSelection(modelPath, target, features, whitelist=whitelist)
 

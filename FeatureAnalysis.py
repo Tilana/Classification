@@ -3,23 +3,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import pdb
 from lda import listUtils as utils
-from lda.ImagePlotter import barplot
-
-
-def plotFrequency(data, colName):
-    try:
-        plt.clf()
-        plt.subplot(1,1,1)
-        data[colName].hist()
-        plt.title('Histogram of '+ colname + '   N:' + str(len(data)))
-        plt.ylabel('Frequency in Number of Documents')
-        plt.xlabel(colName)
-        plt.savefig('Plots/'+colName + '.jpg')
-        plt.show()
-        plt.clf()
-    except:
-        pass
-
+from lda.ImagePlotter import barplot, plotHistogram
 
 
 def FeatureAnalysis(collection, target=None):
@@ -37,13 +21,18 @@ def FeatureAnalysis(collection, target=None):
         n = 50
         barplot(scores[:n], target + ' - Chi-Square relevant words', 'Chi-Square score', words[:n])
 
-    pdb.set_trace()
+    #pdb.set_trace()
+    #collection.data = collection.data.fillna(-1)
+    print 'Histograms'
+    for col in collection.data.columns:
+        plotHistogram(collection.data[col].tolist(), path='Plots/HRC/'+col+'.jpg', title=col, ylabel='Number of Documents', xlabel=col)
 
-    for col in data.columns:
-        plotFrequency(data, col)
+    
+    print 'Correlation of Variables'
+    collection.data.corr()
 
     pdb.set_trace()
-    caseType = data.ext_CaseType.value_counts(sort=False, dropna=False)
+    caseType = collection.data.ext_CaseType.value_counts(sort=False, dropna=False)
     ax = caseType.plot.barh(title='Document Type  N: '+str(len(data)))
     ax.set_xlabel('Number of Documents')
     plt.show()
