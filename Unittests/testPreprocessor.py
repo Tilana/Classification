@@ -37,11 +37,6 @@ class testPreprocessor(unittest.TestCase):
         target = 'title text'
         self.assertEqual(self.processor.removeHTMLtags(text), target)
 
-    def test_removeLinebreaks(self):
-        text = 'This text\n has linebreaks.\n\n Remove\n them.'
-        target = 'This text has linebreaks. Remove them.'
-        self.assertEqual(self.processor.removeLinebreaks(text), target)
-        
 
 
 if __name__ == '__main__':
