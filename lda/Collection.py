@@ -1,5 +1,6 @@
 from docLoader import loadData
 from Preprocessor import Preprocessor
+from FeatureExtractor import FeatureExtractor
 import cPickle as pickle
 import pandas as pd
 import numpy as np
@@ -22,16 +23,16 @@ class Collection:
         self.nrDocs = len(self.data)
 
 
-    def preprocess(self, vecType='tfidf', vocabulary=None):
-        self.buildPreprocessor(vecType=vecType, ngram_range=(1,2), min_df=5, max_df=0.50, max_features=8000, binary=False, vocabulary=vocabulary)
-        self.trainPreprocessor(vecType)
+    def vectorize(self, vecType='tfidf', vocabulary=None):
+        self.buildVectorizer(vecType=vecType, ngram_range=(1,2), min_df=5, max_df=0.50, max_features=8000, binary=False, vocabulary=vocabulary)
+        self.trainVectorizer(vecType)
 
 
-    def buildPreprocessor(self, vecType='tfIdf', min_df=10, max_df=0.5, stop_words='english', ngram_range = (1,2), max_features=8000, vocabulary=None, binary=False):
+    def buildVectorizer(self, vecType='tfIdf', min_df=10, max_df=0.5, stop_words='english', ngram_range = (1,2), max_features=8000, vocabulary=None, binary=False):
         self.preprocessor = Preprocessor(processor=vecType, min_df=min_df, max_df=max_df, stop_words=stop_words, ngram_range=ngram_range, max_features=max_features, vocabulary=vocabulary, binary=binary)
 
 
-    def trainPreprocessor(self, vecType='tfIdf'):
+    def trainVectorizer(self, vecType='tfIdf'):
         trainDocs = self.data.text.tolist()
         self.data[vecType] = self.preprocessor.trainVectorizer(trainDocs)
         self.vocabulary = self.preprocessor.vocabulary
@@ -71,6 +72,12 @@ class Collection:
         self.applyToRows('text', preprocessor.removeHTMLtags, 'cleanText')
         self.applyToRows('cleanText', preprocessor.cleanText, 'cleanText')
         self.applyToRows('cleanText', preprocessor.numbersInTextToDigits, 'cleanText')
+
+
+    def extractEntities(self):
+        featureExtractor = FeatureExtractor()
+        self.applyToRows('text', featureExtractor.entities, 'entities')
+
 
     
     def applyToRows(self, field, fun, name, args=None):

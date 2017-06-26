@@ -1,4 +1,4 @@
-from lda import Viewer, FeatureExtractor, Preprocessor, ClassificationModel
+from lda import Viewer 
 import matplotlib.pyplot as plt
 import pandas as pd
 import pdb
@@ -15,31 +15,27 @@ def plotFrequency(data, colName):
         plt.ylabel('Frequency in Number of Documents')
         plt.xlabel(colName)
         plt.savefig('Plots/'+colName + '.jpg')
+        plt.show()
         plt.clf()
     except:
         pass
 
 
 
-def FeatureAnalysis(data=None):
+def FeatureAnalysis(collection, target=None):
 
-    modelPath = 'processedData/SADV'
+    if target:
+        targetData = collection.data[target].tolist()
+        data = collection.getFeatureList(collection.data, 'tfIdf')
 
-    model = ClassificationModel()
-    model = model.load(modelPath)
+        bestFeatures = collection.FeatureSelection(data, targetData)
+        scores = zip(collection.vocabulary, collection.FeatureSelector.scores_)
 
-    target = 'Domestic.Violence.Manual'
-    targetData = model.data[target].tolist()
-    data = model.getFeatureList(model.data, 'tfIdf')
+        sortedScores = utils.sortTupleList(scores)
+        words, scores = zip(*sortedScores)
 
-    bestFeatures = model.FeatureSelection(data, targetData)
-    scores = zip(model.vocabulary, model.FeatureSelector.scores_)
-
-    sortedScores = utils.sortTupleList(scores)
-    words, scores = zip(*sortedScores)
-
-    n = 50
-    barplot(scores[:n], 'Domestic Violence - Chi-Square relevant words', 'Chi-Square score', words[:n])
+        n = 50
+        barplot(scores[:n], target + ' - Chi-Square relevant words', 'Chi-Square score', words[:n])
 
     pdb.set_trace()
 

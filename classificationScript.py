@@ -1,6 +1,5 @@
 from modelSelection import modelSelection 
 from buildClassificationModel import buildClassificationModel
-from FeatureExtraction import FeatureExtraction
 from FeatureAnalysis import FeatureAnalysis
 from validateModel import validateModel
 from lda import Collection
@@ -29,19 +28,22 @@ def classificationScript():
     collection = Collection()
     if not collection.existsProcessedData(modelPath):
         collection = Collection(dataPath)
+        print 'Preprocessing'
         collection.cleanDataframe()
         collection.cleanTexts()
-        collection.preprocess('tfidf', whitelist)
+        print 'Extract Entities'
+        collection.extractEntities()
+        print 'Vectorize'
+        collection.vectorize('tfidf', whitelist)
         collection.save(modelPath)
 
     collection = Collection().load(modelPath)
-    collection.cleanTexts()
 
     pdb.set_trace()
-    
-    data = FeatureExtraction(collection.data[:5])
+
+    #data = FeatureExtraction(collection.data[:5])
+    FeatureAnalysis(collection)
     pdb.set_trace()
-    FeatureAnalysis(data)
 
     model  = modelSelection(modelPath, target, features, whitelist=whitelist)
 
