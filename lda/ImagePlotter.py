@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import seaborn as sns
 import numpy as np
 import pdb
 
@@ -23,6 +24,16 @@ class ImagePlotter:
         self.showFigure()
         self.save(path)
         self.closeFigure()
+
+    def heatmap(self, data, path):
+        self.createFigure()
+        ax = sns.heatmap(data.T)
+        for item in ax.get_yticklabels():
+            item.set_rotation(0)
+        for item in ax.get_xticklabels():
+            item.set_rotation(90)
+        self.showFigure()
+        self.save(path)
     
     
     def boxplot(self, data):

@@ -34,6 +34,8 @@ class FeatureAnalyser:
 
 
     def correlateVariables(self, collection): 
-        return collection.data.corr()
+        correlationMatrix = collection.data.corr()
+        self.plotter.heatmap(correlationMatrix, path='Plots/'+collection.name+'/'+'featureCorrelation_countries2.jpg')
+        return correlationMatrix 
 
 

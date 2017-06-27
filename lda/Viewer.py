@@ -142,6 +142,8 @@ class Viewer:
             if type(attribute)==str or type(attribute)==int:
                 f.write(""" <p><b> %s:  </b> %s </p> """ % (elem, getattr(collection, elem)))
         self.printLinkedList(f, collection.name, collection.data)
+        f.write('<h4> Correlation of Variables')
+
         f.write("</body></html>")
         f.close()
         webbrowser.open_new_tab(name)

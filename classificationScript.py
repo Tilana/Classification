@@ -13,7 +13,7 @@ def classificationScript():
 
     target = targets[1]
     features = ['tfIdf']
-    analyse = False
+    analyse = True 
 
     #dataPath = 'Documents/ICAAD/ICAAD.pkl'
     dataPath = 'Documents/RightDocs.csv'
@@ -42,16 +42,15 @@ def classificationScript():
     
     collection = Collection().load(modelPath)
     #data = FeatureExtraction(collection.data[:5])
-    #FeatureAnalysis(collection)
     
     if analyse:
         analyser = FeatureAnalyser()
         analyser.frequencyPlots(collection)
         collection.correlation =  analyser.correlateVariables(collection)
+        viewer = Viewer(collection.name)
+        viewer.printCollection(collection)
 
-    viewer = Viewer(collection.name)
-    viewer.printCollection(collection)
-    pdb.set_trace()
+    #pdb.set_trace()
 
     model  = modelSelection(modelPath, target, features, whitelist=whitelist)
 
