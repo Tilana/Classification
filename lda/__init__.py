@@ -1,6 +1,7 @@
 import docLoader
 from Document import Document
 from FeatureExtractor import FeatureExtractor
+from FeatureAnalyser import FeatureAnalyser
 from Evaluation import Evaluation
 from Dictionary import Dictionary
 from Entities import Entities
@@ -14,6 +15,6 @@ from ClassificationModel import ClassificationModel
 from Preprocessor import Preprocessor
 from NeuralNet import NeuralNet
 from Info import Info
+from ImagePlotter import ImagePlotter
 import listUtils
 import dataframeUtils
-import ImagePlotter

@@ -6,7 +6,6 @@ import cPickle as pickle
 import os
 from listUtils import sortTupleList
 import dataframeUtils as df
-from ImagePlotter import plotHistogram, boxplot
 from Evaluation import Evaluation
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
@@ -154,11 +153,8 @@ class ClassificationModel:
         self.pca = pca
         self.selectFeatures = selectFeatures 
         target = self.trainTarget.tolist()
-        #plotHistogram(self.trainData.loc[6,'tfIdf'], log=True, open=1) 
-        #plotHistogram(df.flattenArray(self.trainData['tfIdf']), log=True, open=1) 
         if self.whitelist:
             self.increaseWeights(self.trainData, 'tfIdf', self.whitelist)
-            #plotHistogram(df.flattenArray(self.trainData['tfIdf']), log=True, open=1) 
         trainData = self.getFeatureList(self.trainData,features)
         if scaling:
             trainData = self.scaleData(trainData)

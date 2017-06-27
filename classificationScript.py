@@ -1,8 +1,7 @@
 from modelSelection import modelSelection 
 from buildClassificationModel import buildClassificationModel
-from FeatureAnalysis import FeatureAnalysis
 from validateModel import validateModel
-from lda import Collection
+from lda import Collection, FeatureAnalyser
 import pdb
 
 targets = ['Sexual.Assault.Manual', 'Domestic.Violence.Manual', 'Age', 'Family.Member.Victim', 'SGBV', 'Rape', 'DV.Restraining.Order', 'Penal.Code', 'Defilement', 'Reconciliation', 'Incest', 'Year']
@@ -36,12 +35,14 @@ def classificationScript():
         print 'Vectorize'
         collection.vectorize('tfidf', whitelist)
         collection.save(modelPath)
-
+    
     collection = Collection().load(modelPath)
-
     #data = FeatureExtraction(collection.data[:5])
-    FeatureAnalysis(collection)
-    #pdb.set_trace()
+    #FeatureAnalysis(collection)
+    analyser = FeatureAnalyser()
+    analyser.frequencyPlots(collection)
+    analyser.correlateVariables(collection)
+    pdb.set_trace()
 
     model  = modelSelection(modelPath, target, features, whitelist=whitelist)
 
