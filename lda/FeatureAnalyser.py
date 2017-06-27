@@ -30,7 +30,7 @@ class FeatureAnalyser:
             data = collection.data[col]
             values = data.value_counts(sort=False)
             if len(values) < 50:
-                self.plotter.barplot(values.tolist(), ylabel=values.index, path='Plots/HRC/'+col+'.jpg', title=col, xlabel='Number of Documents')
+                self.plotter.barplot(values.tolist(), ylabel=values.index, path='Plots/'+collection.name+'/'+col+'.jpg', title=col, xlabel='Number of Documents')
 
 
     def correlateVariables(self, collection): 

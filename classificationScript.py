@@ -1,7 +1,7 @@
 from modelSelection import modelSelection 
 from buildClassificationModel import buildClassificationModel
 from validateModel import validateModel
-from lda import Collection, FeatureAnalyser
+from lda import Collection, FeatureAnalyser, Viewer
 import pdb
 
 targets = ['Sexual.Assault.Manual', 'Domestic.Violence.Manual', 'Age', 'Family.Member.Victim', 'SGBV', 'Rape', 'DV.Restraining.Order', 'Penal.Code', 'Defilement', 'Reconciliation', 'Incest', 'Year']
@@ -13,6 +13,7 @@ def classificationScript():
 
     target = targets[1]
     features = ['tfIdf']
+    analyse = False
 
     #dataPath = 'Documents/ICAAD/ICAAD.pkl'
     dataPath = 'Documents/RightDocs.csv'
@@ -25,8 +26,11 @@ def classificationScript():
     modelPath = 'processedData/RightDocs'
 
     collection = Collection()
+    
     if not collection.existsProcessedData(modelPath):
         collection = Collection(dataPath)
+        collection.name = 'HRC'
+        collection.emptyDocs = 10111
         print 'Preprocessing'
         collection.cleanDataframe()
         collection.cleanTexts()
@@ -39,9 +43,14 @@ def classificationScript():
     collection = Collection().load(modelPath)
     #data = FeatureExtraction(collection.data[:5])
     #FeatureAnalysis(collection)
-    analyser = FeatureAnalyser()
-    analyser.frequencyPlots(collection)
-    analyser.correlateVariables(collection)
+    
+    if analyse:
+        analyser = FeatureAnalyser()
+        analyser.frequencyPlots(collection)
+        collection.correlation =  analyser.correlateVariables(collection)
+
+    viewer = Viewer(collection.name)
+    viewer.printCollection(collection)
     pdb.set_trace()
 
     model  = modelSelection(modelPath, target, features, whitelist=whitelist)

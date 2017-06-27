@@ -1,6 +1,7 @@
 from __future__ import division
 import webbrowser
 import os, sys
+import pdb
 
 
 class Viewer:
@@ -56,6 +57,24 @@ class Viewer:
         f.write("""</table>""")
         f.write("""</div>""")
 
+    def printLinkedList(self, f, name, dataframe):
+        path = '../../Plots/' + name + '/'
+        f.write("""<div>""")                                   
+        f.write("""<h4>Variables</h4><table>""")
+        for column in dataframe.columns:
+            filepath = path + column + '.jpg'
+            if os.path.exists(filepath):
+                print 'file exists'
+            try:
+                f.write("""<tr><td><a href='%s'> %s </a></td></tr>""" % (filepath, column)) 
+            except:
+                print 'Error Viewer - printLinkedList: Cannot open figure'
+            #else:
+            #    f.write("""<tr><td> %s </td></tr>""" % column.encode('utf8'))
+        f.write("""</table>""")
+        f.write("""</div>""")
+        
+
     def printClusterDocuments(self, f, title, documentTuples):
         f.write("""<div>""")                                   
         f.write("""<h4>%s</h4><table>""" % title.encode('utf8'))
@@ -110,6 +129,26 @@ class Viewer:
         f.write("""</body></html>""")
         f.close()
         webbrowser.open_new_tab(self.path + '/dictionaryCollection.html')
+
+    def printCollection(self, collection):
+        name = self.path + '/collection.html'
+        f = open(name, 'w')
+        f.write("<html>")
+        self.writeHead(f, 'Document Overview')
+        f.write("<body>")
+        for elem in dir(collection):
+            print elem
+            attribute = getattr(collection, elem)
+            if type(attribute)==str or type(attribute)==int:
+                f.write(""" <p><b> %s:  </b> %s </p> """ % (elem, getattr(collection, elem)))
+        self.printLinkedList(f, collection.name, collection.data)
+        f.write("</body></html>")
+        f.close()
+        webbrowser.open_new_tab(name)
+
+
+
+
 
     def documentOverview(self, collection):
         name = self.path + '/documents.html'
