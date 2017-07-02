@@ -49,14 +49,16 @@ class Viewer:
         self.listToHtmlTable(f, title + '- %d' % len(l), l)
         f.write("""</div>""")
     
+    
     def printLinkedDocuments(self, f, title, data, folder=0):
         f.write("""<div>""")                                   
         f.write("""<h4>%s</h4><table>""" % title.encode('utf8'))
         for ind, doc in data.iterrows():
-            f.write("""<tr><td><a href='%sDocuments/doc%02d.html'> %s </a></td></tr>""" % (folder*'../', doc.id, doc.title)) 
+            f.write("""<tr><td><a href='%sDocuments/doc%02d.html'> %s </a></td></tr>""" % (folder*'../', doc['index'], doc.title.encode('utf8'))) 
         f.write("""</table>""")
         f.write("""</div>""")
 
+    
     def printLinkedList(self, f, name, dataframe):
         path = '../../Plots/' + name + '/'
         f.write("""<div>""")                                   
@@ -202,16 +204,20 @@ class Viewer:
 
 
     def printDocument(self, doc, features, openHtml=False):
-        docID = int(doc.id)
+        #docID = int(doc.id)
+        docID = int(doc['index'])
         pagename = self.path + '/Documents/doc%02d.html' % docID 
         f = open(pagename, 'w')
         f.write("<html>")
-        self.writeHead(f, "Document {:6d} - {}".format(docID, doc.title))
+        self.writeHead(f, "Document {:6d} - {}".format(docID, doc.title.encode('utf8')))
         f.write("""<body><div style="width:100%;"><div style="float:right; width:40%;">""")
         f.write("<h4> Properties: </h4>")
         for elem in features:
             if hasattr(doc, elem):
-                f.write("{:25}: {:>40}<br><br>".format(elem, doc[elem]))
+                if type(doc[elem])==unicode:
+                    f.write("{:25}: {:>40}<br><br>".format(elem, doc[elem].encode('utf8')))
+                else:
+                    f.write("{:25}: {:>40}<br><br>".format(elem, doc[elem]))
         f.write("""</div>""")
         f.write("""<div style="float:left; width:55%%;"><p>%s</p></div></div></body></html>""" % doc.text.encode('utf8'))
         f.close()

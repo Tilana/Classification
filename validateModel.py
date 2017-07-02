@@ -23,8 +23,10 @@ def validateModel(model, features):
         pass
 
     print 'Display Results'
-    viewer = Viewer(model.classifierType)
-    displayFeatures = ['Court', 'Year', 'Sexual.Assault.Manual', 'Domestic.Violence.Manual', 'predictedLabel', 'tag', 'Family.Member.Victim', 'probability', 'Age']
+    viewer = Viewer(model.name + '/' + model.classifierType)
+    #pdb.set_trace()
+    #displayFeatures = ['Court', 'Year', 'Sexual.Assault.Manual', 'Domestic.Violence.Manual', 'predictedLabel', 'tag', 'Family.Member.Victim', 'probability', 'Age']
+    displayFeatures = ['predictedLabel', 'probability', 'tag', 'Year', 'entities', 'DocType', 'Type1', 'Type2', 'agenda', 'is_last', 'order', 'favour_count', 'agains_count']
     viewer.printDocuments(model.testData, displayFeatures)
     viewer.classificationResults(model, normalized=False)
 
