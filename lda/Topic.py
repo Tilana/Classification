@@ -1,5 +1,5 @@
 import listUtils as utils
-import ImagePlotter 
+from ImagePlotter import ImagePlotter 
 
 class Topic:
 
@@ -53,7 +53,8 @@ class Topic:
             self.relevanceScores = [0]
 
         title = 'Frequency of Relevant Documents for Topic %d' % self.number
-        ImagePlotter.plotHistogram(self.relevanceScores, title, path, 'Relevance', 'Number of Documents', log=1, open=0)
+        plotter = ImagePlotter()
+        plotter.plotHistogram(self.relevanceScores, title, path, 'Relevance', 'Number of Documents', log=1, open=0)
 
         
             

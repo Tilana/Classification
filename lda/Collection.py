@@ -2,9 +2,11 @@ from docLoader import loadData
 from Preprocessor import Preprocessor
 from FeatureExtractor import FeatureExtractor
 import cPickle as pickle
+import listUtils as utils
 import pandas as pd
 import numpy as np
 import os
+import pdb
 
 class Collection:
     
@@ -77,7 +79,6 @@ class Collection:
     def extractEntities(self):
         featureExtractor = FeatureExtractor()
         self.applyToRows('text', featureExtractor.entities, 'entities')
-
 
     
     def applyToRows(self, field, fun, name, args=None):

@@ -1,6 +1,6 @@
 from Topic import Topic
 from Word2Vec import Word2Vec
-from gensim import models, similarities
+from gensim import models, similarities, matutils
 import listUtils as utils
 import pickle
 import logging
@@ -16,6 +16,8 @@ class Model:
     def createModel(self, corpus, dictionary, info):
         logging.basicConfig(format='%(asctime)s: %(levelname)s : %(message)s', level=logging.INFO)
         path = 'TopicModel/'+info.data+'_'+info.identifier
+        if not type(corpus)==list:
+            corpus = matutils.Sparse2Corpus(corpus, documents_columns=False)
         if not os.path.exists(path):
             if self.name=='LDA':
                 if info.multicore:

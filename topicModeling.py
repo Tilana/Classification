@@ -124,6 +124,7 @@ def topicModeling():
 
     print 'Topic Coverage'
     topicCoverage = lda.model[corpus]
+    topicCoverage = gensim.matutils.corpus2csc(topicCoverage)
     
     print 'Get Documents related to Topics'
     lda.getTopicRelatedDocuments(topicCoverage, info)

@@ -24,6 +24,7 @@ class Preprocessor:
         self.setVocabulary()
         return [docVec for docVec in wordCounts.toarray()]
                                                                               
+
     def vectorizeDocs(self, docs):
         wordCounts = self.vectorizer.transform(docs)
         return [docVec for docVec in wordCounts.toarray()]
