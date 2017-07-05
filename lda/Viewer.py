@@ -204,8 +204,7 @@ class Viewer:
 
 
     def printDocument(self, doc, features, openHtml=False):
-        #docID = int(doc.id)
-        docID = int(doc['index'])
+        docID = int(doc.id)
         pagename = self.path + '/Documents/doc%02d.html' % docID 
         f = open(pagename, 'w')
         f.write("<html>")
@@ -246,7 +245,7 @@ class Viewer:
     	    f.write("""<col style="width:10%"> <col style="width:40%"> <col style="width:25%">""")
     	    for doc in model.topics[num].relatedDocuments[0:300]:
     	    	#f.write("<tr><td><a href='../Documents/doc%02d.html'>Document %d</a></td><td>%s</td><td>Relevance: %.2f</td></tr>" % (doc[1], doc[1], collection[doc[1]].title.encode('utf8'), doc[0]))
-                f.write("<tr><td><a href='../Documents/doc%02d.html'>Document %d</a></td><td>%s</td><td>Relevance: %.2f</td></tr>" % (doc[1], doc[1], collection.loc[doc[1].encode('utf8'), 'title'], doc[0]))
+                f.write("<tr><td><a href='../Documents/doc%02d.html'>Document %d</a></td><td>%s</td><td>Relevance: %.2f</td></tr>" % (doc[1], doc[1], collection.loc[doc[1], 'title'].encode('utf8') , doc[0]))
     
     	    f.write("</table></body></html>")
     	    f.close()

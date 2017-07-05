@@ -33,6 +33,7 @@ def TopicModeling_HRC():
     #path = 'TopicModel/HRC_test_store'
 
     collection = Collection().load(modelPath)
+    collection.data['id'] = range(len(collection.data))
     #documents = collection.data.cleanText.tolist()
 
     #vectorizer = collection.preprocessor.vectorizer
@@ -61,6 +62,8 @@ def TopicModeling_HRC():
     colNames = ['Topic'+str(elem) for elem in range(info.numberTopics)]
     topicDF = pd.DataFrame(topicCoverage.todense(), index=colNames)
     collection.data = pd.concat([collection.data, topicDF.T], axis=1)
+
+    pdb.set_trace()
 
     viewer = Viewer(info.data+'_'+info.identifier)
     viewer.printTopics(lda)
