@@ -1,5 +1,6 @@
 import listUtils as utils
 from ImagePlotter import ImagePlotter 
+import os
 
 class Topic:
 
@@ -46,7 +47,9 @@ class Topic:
             self.medianSimilarity = utils.getMedian(self.pairwiseSimilarity)
 
     def getRelevanceHistogram(self, info):
-        path = 'html/' + info.data + '_' + info.identifier + '/Images/documentRelevance_topic%d.jpg' % self.number
+        imageFolder = 'results/' + info.data + '_' + info.identifier + '/Images'
+        self.createFolder(imageFolder)
+        path = imageFolder + '/documentRelevance_topic%d.jpg' % self.number
         if zip(*self.relatedDocuments)!=[]:
             self.relevanceScores = zip(*self.relatedDocuments)[0]
         else:
@@ -57,6 +60,12 @@ class Topic:
         plotter.plotHistogram(self.relevanceScores, title, path, 'Relevance', 'Number of Documents', log=1, open=0)
 
         
-            
+                
+    def createFolder(self, path):
+        try:
+            os.makedirs(path)
+        except OSError:
+            if not os.path.isdir(path):
+                raise
 
 

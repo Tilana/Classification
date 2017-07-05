@@ -1,7 +1,10 @@
-from lda import Collection, Model, Info
+from lda import Collection, Model, Info, Viewer
+from lda.listUtils import flattenList
+import csv
 import pdb
 import gensim
 import numpy as np
+import pandas as pd
 from scipy import io
 
 def TopicModeling_HRC():
@@ -9,16 +12,21 @@ def TopicModeling_HRC():
     info = Info()
     info.data = 'HRC'
     info.modelType = 'LDA'
-    info.categories = ['human', 'environment']
-    info.numberTopics = 15
+    info.numberTopics = 4
     info.passes = 3
     info.iterations = 100
     info.name = 'HRC'
-    info.identifier = 'test'
+    info.identifier = 'TM4'
     info.online = 0
     info.multicore = 0
     info.chunksize = 1000
 
+    #with open('Documents/HRC_topics.csv', 'rb') as f:
+    #    reader = csv.reader(f)
+    #    targets = flattenList(list(reader))
+    #info.categories = targets
+    info.categories = ['women', 'health', 'democracy', 'terrorism', 'water', 'peasants', 'trafficking', 'children', 'journalists', 'arms', 'torture', 'slavery', 'climate', 'poverty', 'corruption', 'housing', 'religion', 'internet', 'sport', 'governance', 'truth']
+    
     lda = Model(info)
 
     modelPath = 'processedData/RightDocs_topics'
@@ -42,21 +50,25 @@ def TopicModeling_HRC():
 
     topicCoverage = lda.model[corpus]
     
-    pdb.set_trace()
-
     print 'Get Documents related to Topics'
     lda.getTopicRelatedDocuments(topicCoverage, info)
     
     print 'Similarity Analysis'
-    lda.computeSimilarityMatrix(corpus, numFeatures=info.numberTopics, num_best = 7)
+    #lda.computeSimilarityMatrix(corpus, numFeatures=info.numberTopics, num_best = 7)
 
-    pdb.set_trace()
-    #collection.setTopicCoverage(topicCoverage)
 
     topicCoverage = gensim.matutils.corpus2csc(topicCoverage)
-    topicDF = pd.DataFrame(topicCoverage.todense())
-                                                              
-    data = pd.concat([collection.data, topicDF.T], axis=1)
+    colNames = ['Topic'+str(elem) for elem in range(info.numberTopics)]
+    topicDF = pd.DataFrame(topicCoverage.todense(), index=colNames)
+    collection.data = pd.concat([collection.data, topicDF.T], axis=1)
+
+    viewer = Viewer(info.data+'_'+info.identifier)
+    viewer.printTopics(lda)
+
+    displayFeatures = colNames 
+    viewer.printDocuments(collection.data, displayFeatures)
+    viewer.printDocsRelatedTopics(lda, collection.data)
+
 
 
 if __name__ == '__main__':

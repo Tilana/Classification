@@ -1,6 +1,6 @@
 from __future__ import division
 import webbrowser
-import os, sys
+import os
 import pdb
 
 
@@ -227,8 +227,10 @@ class Viewer:
 
     
     def printDocsRelatedTopics(self, model, collection, openHtml=False):
+        topicFolder = self.path + '/Topics'
+        self.createFolder(topicFolder)
         for num in range(0, model.numberTopics): 
-    	    pagename = self.path + '/Topics/%stopic%d.html' % (model.name, num)
+    	    pagename = topicFolder + '/%stopic%d.html' % (model.name, num)
     	    f = open(pagename, 'w')
     	    f.write("<html>")
             self.writeHead(f, '%s Document Relevance for Topic %d' %  (model.name, num))
@@ -244,7 +246,7 @@ class Viewer:
     	    f.write("""<col style="width:10%"> <col style="width:40%"> <col style="width:25%">""")
     	    for doc in model.topics[num].relatedDocuments[0:300]:
     	    	#f.write("<tr><td><a href='../Documents/doc%02d.html'>Document %d</a></td><td>%s</td><td>Relevance: %.2f</td></tr>" % (doc[1], doc[1], collection[doc[1]].title.encode('utf8'), doc[0]))
-                f.write("<tr><td><a href='../Documents/doc%02d.html'>Document %d</a></td><td>%s</td><td>Relevance: %.2f</td></tr>" % (doc[1], doc[1], collection[doc[1]].title, doc[0]))
+                f.write("<tr><td><a href='../Documents/doc%02d.html'>Document %d</a></td><td>%s</td><td>Relevance: %.2f</td></tr>" % (doc[1], doc[1], collection.loc[doc[1].encode('utf8'), 'title'], doc[0]))
     
     	    f.write("</table></body></html>")
     	    f.close()
