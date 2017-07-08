@@ -215,6 +215,12 @@ class Viewer:
             if hasattr(doc, elem):
                 if type(doc[elem])==unicode:
                     f.write("{:25}: {:>40}<br><br>".format(elem, doc[elem].encode('utf8')))
+
+                elif elem.find('Topic') != -1:
+                    topicNumber = int(elem.split('Topic')[1])
+                    f.write("<tr><td><a href='../Topics/LDAtopic%d.html'> Topic %d : </a><td>%.4f</td></tr> <br><br>" % (topicNumber, topicNumber, doc[elem])) 
+                    #f.write("{:25} : {:>40}<br><br>".format(elem, <a href='Topics/%stopic%d.html'>  <font color='red'> Topic %d </font> </a>
+
                 else:
                     f.write("{:25}: {:>40}<br><br>".format(elem, doc[elem]))
         f.write("""</div>""")
