@@ -215,12 +215,9 @@ class Viewer:
             if hasattr(doc, elem):
                 if type(doc[elem])==unicode:
                     f.write("{:25}: {:>40}<br><br>".format(elem, doc[elem].encode('utf8')))
-
                 elif elem.find('Topic') != -1:
                     topicNumber = int(elem.split('Topic')[1])
                     f.write("<tr><td><a href='../Topics/LDAtopic%d.html'> Topic %d : </a><td>%.4f</td></tr> <br><br>" % (topicNumber, topicNumber, doc[elem])) 
-                    #f.write("{:25} : {:>40}<br><br>".format(elem, <a href='Topics/%stopic%d.html'>  <font color='red'> Topic %d </font> </a>
-
                 else:
                     f.write("{:25}: {:>40}<br><br>".format(elem, doc[elem]))
         f.write("""</div>""")
@@ -244,6 +241,8 @@ class Viewer:
             topic = model.topics[num]
             f.write("<tr><td><a href='%stopic%d.html'>Topic %d</a></td><td>%s</td></tr>" % (model.name, topic.number, topic.number, str(topic.wordDistribution)[1:-1].encode('utf-8')))
             f.write("</table>")
+            f.write(""" <h4> Descriptors </h4> """)
+            f.write(str(topic.keywords))
             f.write(""" <h4> Relevance Histogram </h4> """)
             f.write("""<img src="../Images/documentRelevance_topic%d.jpg" alt="wrong path" height="280">""" % num)
             f.write("<h4>Related Documents</h4>")

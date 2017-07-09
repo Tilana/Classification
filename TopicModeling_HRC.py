@@ -12,12 +12,12 @@ def TopicModeling_HRC():
     info = Info()
     info.data = 'HRC'
     info.modelType = 'LDA'
-    info.numberTopics = 4
+    info.numberTopics = 4 
     info.passes = 3
-    info.iterations = 100
+    info.iterations = 70 
     info.name = 'HRC'
     info.identifier = 'TM4'
-    info.online = 0
+    info.online = 1
     info.multicore = 0
     info.chunksize = 1000
 
@@ -34,6 +34,8 @@ def TopicModeling_HRC():
 
     collection = Collection().load(modelPath)
     collection.data['id'] = range(len(collection.data))
+
+    #pdb.set_trace()
     #documents = collection.data.cleanText.tolist()
 
     #vectorizer = collection.preprocessor.vectorizer
@@ -49,6 +51,8 @@ def TopicModeling_HRC():
     lda.createModel(tfIdf, id2word, info)
     lda.createTopics(info)
 
+    #pdb.set_trace()
+
     topicCoverage = lda.model[corpus]
     
     print 'Get Documents related to Topics'
@@ -57,13 +61,12 @@ def TopicModeling_HRC():
     print 'Similarity Analysis'
     #lda.computeSimilarityMatrix(corpus, numFeatures=info.numberTopics, num_best = 7)
 
-
     topicCoverage = gensim.matutils.corpus2csc(topicCoverage)
     colNames = ['Topic'+str(elem) for elem in range(info.numberTopics)]
     topicDF = pd.DataFrame(topicCoverage.todense(), index=colNames)
     collection.data = pd.concat([collection.data, topicDF.T], axis=1)
 
-    pdb.set_trace()
+    #pdb.set_trace()
 
     viewer = Viewer(info.data+'_'+info.identifier)
     viewer.printTopics(lda)
@@ -71,6 +74,8 @@ def TopicModeling_HRC():
     displayFeatures = colNames 
     viewer.printDocuments(collection.data, displayFeatures)
     viewer.printDocsRelatedTopics(lda, collection.data)
+
+    pdb.set_trace()
 
 
 

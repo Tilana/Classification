@@ -1,6 +1,7 @@
 import listUtils as utils
 from ImagePlotter import ImagePlotter 
 import os
+import pandas as pd
 
 class Topic:
 
@@ -19,17 +20,17 @@ class Topic:
     def setAttribute(self, name, value):
         setattr(self, name, value)
 
-    def getTopicWords(self):
+    def getWords(self):
         return zip(*self.wordDistribution)[0][0:7]
 
     def labelTopic(self, word2vec, categories):
-        topicWords = word2vec.filterList(self.getTopicWords()) 
+        topicWords = word2vec.filterList(self.getWords()) 
         similarWords = word2vec.getSimilarWords(topicWords)
         meanSimilarity = word2vec.getMeanSimilarity(categories, similarWords)
-        self.keywords = word2vec.sortCategories(meanSimilarity, categories)
+        self.keywords = pd.DataFrame(meanSimilarity, index=categories).sort_values(0, ascending=False)
 
     def findIntruder(self, word2vec):
-       topicWords = word2vec.filterList(self.getTopicWords())
+       topicWords = word2vec.filterList(self.getWords())
        if not topicWords:
            self.intruder = 'default'
        else:
@@ -37,7 +38,7 @@ class Topic:
     
     
     def computeSimilarityScore(self, word2vec):
-        topicWords = word2vec.filterList(self.getTopicWords())
+        topicWords = word2vec.filterList(self.getWords())
         if not topicWords:
             self.pairwiseSimilarity = []
             self.medianSimilarity = 0
