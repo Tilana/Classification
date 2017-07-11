@@ -13,14 +13,17 @@ with open('Documents/HRC_topics.csv', 'rb') as f:
     reader = csv.reader(f)
     targets = flattenList(list(reader))
 
+targets = ['OHCHR']
+
 
 #whitelist = ['domestic violence', 'grievous harm', 'domestic', 'wife', 'wounding', 'bodily harm', 'batter', 'aggression', 'attack', 'protection order', 'woman']
 whitelist = None
 
 def classificationScript():
 
-    for target in targets[8:]: 
-        features = ['tfidf']
+    for target in targets: 
+
+        features = ['tfidf', 'Year']
         analyse = False 
 
         #dataPath = 'Documents/ICAAD/ICAAD.pkl'
@@ -46,10 +49,17 @@ def classificationScript():
             collection.extractEntities()
             print 'Vectorize'
             collection.vectorize('tfidf', whitelist)
+            collection.data['id'] = range(len(collection.data))
             collection.save(modelPath)
         
         collection = Collection().load(modelPath)
+        #pdb.set_trace()
+        
         #data = FeatureExtraction(collection.data[:5])
+
+        analyser = FeatureAnalyser()
+        plotPath = 'results/' + collection.name + '/' + target + '/frequencyDistribution.jpg'
+        analyser.frequencyPlots(collection, [target], plotPath)
         
         if analyse:
             analyser = FeatureAnalyser()
@@ -58,11 +68,19 @@ def classificationScript():
             viewer = Viewer(collection.name)
             viewer.printCollection(collection)
 
-        #pdb.set_trace()
-
         model  = modelSelection(collection, target, features, whitelist=whitelist)
-
         validateModel(model, features) 
+
+        
+        print 'Display Results'
+        viewer = Viewer(model.name)
+        #pdb.set_trace()
+        #displayFeatures = ['Court', 'Year', 'Sexual.Assault.Manual', 'Domestic.Violence.Manual', 'predictedLabel', 'tag', 'Family.Member.Victim', 'probability', 'Age']
+        displayFeatures = ['predictedLabel', 'probability', 'tag', 'Year', 'entities', 'DocType', 'Type1', 'Type2', 'Session', 'Date', 'agenda', 'is_last', 'order', 'favour_count', 'agains_count', 'topis', 'sponsors']
+        viewer.printDocuments(model.testData, displayFeatures, target)
+        viewer.classificationResults(model, normalized=False)
+
+        pdb.set_trace()
 
 
 if __name__=='__main__':
