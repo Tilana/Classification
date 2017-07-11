@@ -13,7 +13,7 @@ with open('Documents/HRC_topics.csv', 'rb') as f:
     reader = csv.reader(f)
     targets = flattenList(list(reader))
 
-targets = ['OHCHR']
+#targets = ['OHCHR']
 
 
 #whitelist = ['domestic violence', 'grievous harm', 'domestic', 'wife', 'wounding', 'bodily harm', 'batter', 'aggression', 'attack', 'protection order', 'woman']

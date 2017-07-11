@@ -12,7 +12,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn import svm, neighbors, linear_model
 from sklearn.naive_bayes import MultinomialNB, BernoulliNB, GaussianNB
 from sklearn.metrics import fbeta_score, make_scorer
-from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import GridSearchCV, StratifiedKFold
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.decomposition import PCA
 from sklearn.feature_selection import SelectKBest, chi2
@@ -58,8 +58,14 @@ class ClassificationModel:
 
 
     def _generateRandomIndices(self, num):
-        self.trainIndices = random.sample(self.data.index, num)
-        self.testIndices = list(set(self.data.index) - set(self.trainIndices))
+        split = StratifiedKFold(n_splits=2) #, train_size=num)
+        X = self.data
+        y = self.target
+        split.get_n_splits(X,y)
+        for trainIndex, testIndex in split.split(X,y):
+            self.trainIndices = trainIndex
+            self.testIndices = testIndex
+        
 
     def _generateHalfSplitIndices(self, num):
         self.trainIndices = self.data.index[:num]
