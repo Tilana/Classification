@@ -21,9 +21,9 @@ whitelist = None
 
 def classificationScript():
 
-    for target in targets: 
+    for target in targets[15:]: 
 
-        features = ['tfidf', 'Year']
+        features = ['tfidf']
         analyse = False 
 
         #dataPath = 'Documents/ICAAD/ICAAD.pkl'
@@ -50,9 +50,12 @@ def classificationScript():
             print 'Vectorize'
             collection.vectorize('tfidf', whitelist)
             collection.data['id'] = range(len(collection.data))
+            print 'Set Relevant Words'
+            collection.setRelevantWords()
             collection.save(modelPath)
         
         collection = Collection().load(modelPath)
+        viewer = Viewer(collection.name, target)
         #pdb.set_trace()
         
         #data = FeatureExtraction(collection.data[:5])
@@ -73,13 +76,12 @@ def classificationScript():
 
         
         print 'Display Results'
-        viewer = Viewer(model.name)
         #pdb.set_trace()
         #displayFeatures = ['Court', 'Year', 'Sexual.Assault.Manual', 'Domestic.Violence.Manual', 'predictedLabel', 'tag', 'Family.Member.Victim', 'probability', 'Age']
-        displayFeatures = ['predictedLabel', 'probability', 'tag', 'Year', 'entities', 'DocType', 'Type1', 'Type2', 'Session', 'Date', 'agenda', 'is_last', 'order', 'favour_count', 'agains_count', 'topis', 'sponsors']
+        displayFeatures = ['predictedLabel', 'probability', 'tag', 'Year', 'entities', 'DocType', 'Type1', 'Type2', 'Session', 'Date', 'agenda', 'is_last', 'order', 'favour_count', 'agains_count', 'topics', 'sponsors', 'relevantWords']
         viewer.printDocuments(model.testData, displayFeatures, target)
         viewer.classificationResults(model, normalized=False)
-
+        
         pdb.set_trace()
 
 

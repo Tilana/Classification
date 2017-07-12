@@ -5,9 +5,11 @@ import pdb
 
 class Viewer:
 
-    def __init__(self, name):
+    def __init__(self, name, folder=None):
         self.path = 'results/' + name
         self.createFolder(self.path)
+        if folder:
+            self.createFolder(self.path + '/' + folder)
 
     def createFolder(self, path):
         try:

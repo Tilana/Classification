@@ -80,6 +80,15 @@ class Collection:
         featureExtractor = FeatureExtractor()
         self.applyToRows('text', featureExtractor.entities, 'entities')
 
+    def setRelevantWords(self):
+        self.applyToRows('tfidf', self.relevantWords, 'relevantWords') 
+
+    def relevantWords(self, wordWeights):
+        sortedWeights = sorted(enumerate(wordWeights), key=lambda x: x[1], reverse=True)
+        sortedWeights = [wordWeight for wordWeight in sortedWeights if wordWeight[1]>0]
+        return [(self.vocabulary[wordIndex], weight) for (wordIndex, weight) in sortedWeights]
+
+
     
     def applyToRows(self, field, fun, name, args=None):
         if args:
