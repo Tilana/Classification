@@ -1,5 +1,7 @@
+# encoding=utf8
 from docLoader import loadData
 from Preprocessor import Preprocessor
+import preprocessor as tweetPreprocessor
 from FeatureExtractor import FeatureExtractor
 import cPickle as pickle
 import listUtils as utils
@@ -75,6 +77,17 @@ class Collection:
         self.applyToRows('cleanText', preprocessor.cleanText, 'cleanText')
         self.applyToRows('cleanText', preprocessor.numbersInTextToDigits, 'cleanText')
 
+
+    def cleanTweets(self):
+        self.applyToRows('decodeTweet', tweetPreprocessor.clean, 'cleanTweets')
+
+    def extractDate(self):
+        self.applyToRows('tweet_time', separateDateAndTime, 'date')
+
+    
+    def extractDate(self):
+        collection.data['date'] = collection.data.apply(lambda doc: doc['tweet_time'].split('T')[0], axis=1)
+        
 
     def extractEntities(self):
         featureExtractor = FeatureExtractor()
