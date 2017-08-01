@@ -27,17 +27,17 @@ class Collection:
         self.nrDocs = len(self.data)
 
 
-    def vectorize(self, vecType='tfidf', vocabulary=None):
-        self.buildVectorizer(vecType=vecType, ngram_range=(1,2), min_df=5, max_df=0.50, max_features=8000, binary=False, vocabulary=vocabulary)
-        self.trainVectorizer(vecType)
+    def vectorize(self, vecType='tfidf', vocabulary=None, field='text', ngrams=(1,2), maxFeatures=8000):
+        self.buildVectorizer(vecType=vecType, ngram_range=ngrams, min_df=5, max_df=0.50, max_features=maxFeatures, binary=False, vocabulary=vocabulary)
+        self.trainVectorizer(vecType, field)
 
 
     def buildVectorizer(self, vecType='tfIdf', min_df=10, max_df=0.5, stop_words='english', ngram_range = (1,2), max_features=8000, vocabulary=None, binary=False):
         self.preprocessor = Preprocessor(processor=vecType, min_df=min_df, max_df=max_df, stop_words=stop_words, ngram_range=ngram_range, max_features=max_features, vocabulary=vocabulary, binary=binary)
 
 
-    def trainVectorizer(self, vecType='tfIdf'):
-        trainDocs = self.data.text.tolist()
+    def trainVectorizer(self, vecType='tfIdf', field='text'):
+        trainDocs = self.data[field].tolist()
         self.data[vecType] = self.preprocessor.trainVectorizer(trainDocs)
         self.vocabulary = self.preprocessor.vocabulary
 
@@ -86,7 +86,7 @@ class Collection:
 
     
     def extractDate(self):
-        collection.data['date'] = collection.data.apply(lambda doc: doc['tweet_time'].split('T')[0], axis=1)
+        self.data['date'] = self.data.apply(lambda doc: doc['tweet_time'].split('T')[0], axis=1)
         
 
     def extractEntities(self):

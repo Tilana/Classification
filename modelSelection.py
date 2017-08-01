@@ -5,7 +5,8 @@ import pdb
 
 classifierTypes = ['LogisticRegression', 'BernoulliNB', 'RandomForest', 'DecisionTree'] #, 'SVM', 'kNN']
 #classifierTypes = ['kNN', 'DecisionTree']
-classifierTypes = ['LogisticRegression'] #, 'kNN', 'DecisionTree']
+classifierTypes = ['LogisticRegression', 'kNN', 'DecisionTree', 'BernoulliNB']
+classifierTypes = ['DecisionTree']
 
 
 def createResultPath(name, target,  **args):
@@ -20,7 +21,6 @@ def modelSelection(collection, target, features, nrTrainingDocs=None, whitelist=
     pca=False
     pcaComponents = 130 
     resultPath = createResultPath(collection.name, target)
-    #pdb.set_trace()
 
     model = ClassificationModel()
     model.data = collection.data

@@ -15,13 +15,12 @@ with open('Documents/HRC_topics.csv', 'rb') as f:
 
 #targets = ['OHCHR']
 
-
 #whitelist = ['domestic violence', 'grievous harm', 'domestic', 'wife', 'wounding', 'bodily harm', 'batter', 'aggression', 'attack', 'protection order', 'woman']
 whitelist = None
 
 def classificationScript():
 
-    for target in targets[15:]: 
+    for target in targets: 
 
         features = ['tfidf']
         analyse = False 
@@ -33,39 +32,41 @@ def classificationScript():
         #modelPath = 'processedData/doc2vec'
         #modelPath = 'processedData/processedData_whitelist'
         #modelPath = 'processedData/SADV_whitelist'
-        modelPath = 'processedData/SADV'
+        #modelPath = 'processedData/SADV'
         modelPath = 'processedData/RightDocs_topics'
+        #modelPath = 'processedData/RightDocs_topics_5grams'
 
         collection = Collection()
+
         
         if not collection.existsProcessedData(modelPath):
             collection = Collection(dataPath)
-            collection.name = 'HRC'
-            collection.emptyDocs = 10111
+            collection.emptyDocs = 10111 
             print 'Preprocessing'
+            pdb.set_trace()
             collection.cleanDataframe()
+            collection.data['id'] = range(len(collection.data))
             collection.cleanTexts()
             print 'Extract Entities'
             collection.extractEntities()
             print 'Vectorize'
-            collection.vectorize('tfidf', whitelist)
-            collection.data['id'] = range(len(collection.data))
+            collection.vectorize('tfidf', whitelist, ngrams=(1,5), maxFeatures=10000)
             print 'Set Relevant Words'
             collection.setRelevantWords()
             collection.save(modelPath)
         
         collection = Collection().load(modelPath)
-        viewer = Viewer(collection.name, target)
-        #pdb.set_trace()
-        
-        #data = FeatureExtraction(collection.data[:5])
 
+        viewer = Viewer(collection.name, target)
+        print 'Feature Extraction' 
+        data = FeatureExtraction(collection.data[:5])
+
+        print 'Feature Analysis'
         analyser = FeatureAnalyser()
         plotPath = 'results/' + collection.name + '/' + target + '/frequencyDistribution.jpg'
         analyser.frequencyPlots(collection, [target], plotPath)
         
         if analyse:
-            analyser = FeatureAnalyser()
             analyser.frequencyPlots(collection)
             collection.correlation =  analyser.correlateVariables(collection)
             viewer = Viewer(collection.name)
@@ -76,13 +77,12 @@ def classificationScript():
 
         
         print 'Display Results'
-        #pdb.set_trace()
         #displayFeatures = ['Court', 'Year', 'Sexual.Assault.Manual', 'Domestic.Violence.Manual', 'predictedLabel', 'tag', 'Family.Member.Victim', 'probability', 'Age']
         displayFeatures = ['predictedLabel', 'probability', 'tag', 'Year', 'entities', 'DocType', 'Type1', 'Type2', 'Session', 'Date', 'agenda', 'is_last', 'order', 'favour_count', 'agains_count', 'topics', 'sponsors', 'relevantWords']
-        viewer.printDocuments(model.testData, displayFeatures, target)
+       # viewer.printDocuments(model.testData, displayFeatures, target)
+        viewer.printDocuments(collection.data, displayFeatures, target)
         viewer.classificationResults(model, normalized=False)
         
-        pdb.set_trace()
 
 
 if __name__=='__main__':

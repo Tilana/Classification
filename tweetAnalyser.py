@@ -4,7 +4,8 @@ from validateModel import validateModel
 from lda import Collection, FeatureAnalyser, Viewer
 import pdb
 import csv
-from lda.listUtils import flattenList
+from lda.listUtils import flattenList, sortTupleList
+from sklearn.feature_extraction.text import CountVectorizer
 
 #targets = ['Sexual.Assault.Manual', 'Domestic.Violence.Manual', 'Age', 'Family.Member.Victim', 'SGBV', 'Rape', 'DV.Restraining.Order', 'Penal.Code', 'Defilement', 'Reconciliation', 'Incest', 'Year']
 targets = ['Year', 'DocType', 'Type1', 'Type2', 'agenda', 'is_last', 'favour', 'favour_count', 'against_count', 'order', 'sponsors_count']
@@ -29,26 +30,47 @@ def tweetAnalyser():
         dataPath = 'Documents/gamergate_sample.csv'
         modelPath = 'processedData/gamerGate'
 
-        collection = Collection()
-
         #pdb.set_trace()
         
-        if not collection.existsProcessedData(modelPath):
-            collection = Collection(dataPath)
-            collection.cleanDataframe()
-            collection.name = 'GamerGate'
-            collection.emptyDocs = 0 
-            collection.data['decodeTweet'] = collection.data.apply(lambda doc: doc['tweet'].encode('utf8'), axis=1)
-            print 'Preprocessing'
-            collection.cleanTweets()
-            print 'Extract Entities'
-            ##collection.extractEntities()
-            print 'Vectorize'
-            collection.vectorize('tfidf', whitelist)
-            collection.data['id'] = range(len(collection.data))
-            print 'Set Relevant Words'
-            collection.setRelevantWords()
-            collection.save(modelPath)
+        collection = Collection(dataPath)
+        #collection.cleanDataframe()
+        collection.name = 'GamerGate'
+        collection.emptyDocs = 0 
+        collection.data['decodeTweet'] = collection.data.apply(lambda doc: doc['tweet'].encode('utf8'), axis=1)
+        collection.cleanTweets()
+        
+        collection.extractDate()
+        collection.data['year'] = collection.data.apply(lambda doc: int(doc['date'].split('-')[0]), axis=1)
+        collection.data['month'] = collection.data.apply(lambda doc: int(doc['date'].split('-')[1]), axis=1)
+
+        years = collection.data.year.unique()
+        years.sort()
+
+        for year in years:
+            print year
+            collectionYear = collection.data[collection.data.year==year]
+            months = collectionYear.month.unique()
+            months.sort()
+            for month in months:
+                print month
+                text = ' '.join(collectionYear[collectionYear.month==month].cleanTweets.tolist())
+                text = text.lower()
+                vectorizer = CountVectorizer(stop_words='english', ngram_range=(1,2))
+                wordCounts = vectorizer.fit_transform([text]).toarray()[0]
+                vocabulary = vectorizer.vocabulary_
+                invVocabulary = dict([(vocabulary[key], key) for key in vocabulary.iterkeys()])
+                wordFreq = [(invVocabulary[index], freq) for index, freq in enumerate(wordCounts)]
+                wordFreq = sortTupleList(wordFreq)
+                print wordFreq[:50]
+
+        pdb.set_trace()
+                
+        print 'Vectorize'
+        collection.vectorize('tfidf', field='cleanTweets')
+        collection.data['id'] = range(len(collection.data))
+        print 'Set Relevant Words'
+        collection.setRelevantWords()
+        collection.save(modelPath)
         
         collection = Collection().load(modelPath)
         #target = targets[-18]

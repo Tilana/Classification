@@ -7,19 +7,19 @@ import numpy as np
 import pandas as pd
 from scipy import io
 
-def TopicModeling_HRC():
+def TopicModeling_GamerGate():
 
     info = Info()
-    info.data = 'HRC'
+    info.data = 'GamersGate'
     info.modelType = 'LDA'
-    info.numberTopics = 4 
-    info.passes = 3
+    info.numberTopics = 5 
+    info.passes = 2
     info.iterations = 70 
-    info.name = 'HRC'
-    info.identifier = 'TM4'
+    info.name = 'GamersGate'
+    info.identifier = 'TM5'
     info.online = 1
     info.multicore = 0
-    info.chunksize = 1000
+    info.chunksize = 5000
 
     #with open('Documents/HRC_topics.csv', 'rb') as f:
     #    reader = csv.reader(f)
@@ -28,24 +28,26 @@ def TopicModeling_HRC():
     info.categories = ['women', 'health', 'democracy', 'terrorism', 'water', 'peasants', 'trafficking', 'children', 'journalists', 'arms', 'torture', 'slavery', 'climate', 'poverty', 'corruption', 'housing', 'religion', 'internet', 'sport', 'governance', 'truth']
     
     lda = Model(info)
+    #pdb.set_trace()
 
-    modelPath = 'processedData/RightDocs_topics'
+    modelPath = 'processedData/gamerGate'
     #path = 'TopicModel/HRC_test_store'
 
     collection = Collection().load(modelPath)
-    collection.data['id'] = range(len(collection.data))
+    #collection.data['id'] = range(len(collection.data))
 
     #pdb.set_trace()
-    #documents = collection.data.cleanText.tolist()
+    documents = collection.data.cleanText.tolist()
 
-    #vectorizer = collection.preprocessor.vectorizer
-    #tfIdf = vectorizer.fit_transform(documents)
-    #dictionary = vectorizer.vocabulary_
+    vectorizer = collection.preprocessor.vectorizer
+    tfIdf = vectorizer.fit_transform(documents)
+    #io.mmsave('TopicModel/tfIdf')
+    dictionary = vectorizer.vocabulary_
 
-    #id2word = dict((v, k) for k, v in dictionary.iteritems())
+    id2word = dict((v, k) for k, v in dictionary.iteritems())
 
-    id2word = np.load('TopicModel/dict.npy').item()
-    tfIdf = io.mmread('TopicModel/tfIdf').tocsr()
+    #id2word = np.load('TopicModel/dict.npy').item()
+    #tfIdf = io.mmread('TopicModel/tfIdf').tocsr()
     corpus = gensim.matutils.Sparse2Corpus(tfIdf, documents_columns=False) 
 
     lda.createModel(tfIdf, id2word, info)
@@ -73,6 +75,7 @@ def TopicModeling_HRC():
 
     displayFeatures = colNames 
     viewer.printDocuments(collection.data, displayFeatures)
+    collection.data['title'] = collection.data['user_name']
     viewer.printDocsRelatedTopics(lda, collection.data)
 
     pdb.set_trace()
@@ -80,4 +83,4 @@ def TopicModeling_HRC():
 
 
 if __name__ == '__main__':
-    TopicModeling_HRC()
+    TopicModeling_GamerGate()
