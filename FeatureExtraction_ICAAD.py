@@ -5,7 +5,7 @@ import pdb
 def FeatureExtraction_ICAAD(data):
 
     extractor = FeatureExtractor()
-    applyToRows(data, 'title', extractor.court, 'ext_Court') 
+    applyToRows(collection.data, 'title', extractor.court, 'ext_Court') 
     applyToRows(data, 'title', extractor.year, 'ext_Year') 
     applyToRows(data, 'cleanText', extractor.age, 'ext_Age') 
     applyToRows(data, 'cleanText', extractor.ageRange, 'ext_AgeRange') 
