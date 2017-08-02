@@ -6,6 +6,11 @@ import pandas as pd
 import MySQLdb
 import sqlite3
 
+def loadTargets(path, field):
+    projects = pd.read_csv(path)
+    targetValues = projects[field].dropna()
+    return targetValues.tolist()
+
 
 def loadData(path):
     fileFunctionMatch = {'csv': loadCSV, 'pkl': loadPickle}
