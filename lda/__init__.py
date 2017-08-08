@@ -1,5 +1,4 @@
 import docLoader
-from Document import Document
 from FeatureExtractor import FeatureExtractor
 from FeatureAnalyser import FeatureAnalyser
 from Evaluation import Evaluation

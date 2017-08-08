@@ -21,10 +21,6 @@ def TopicModeling_HRC():
     info.multicore = 0
     info.chunksize = 1000
 
-    #with open('Documents/HRC_topics.csv', 'rb') as f:
-    #    reader = csv.reader(f)
-    #    targets = flattenList(list(reader))
-    #info.categories = targets
     info.categories = ['women', 'health', 'democracy', 'terrorism', 'water', 'peasants', 'trafficking', 'children', 'journalists', 'arms', 'torture', 'slavery', 'climate', 'poverty', 'corruption', 'housing', 'religion', 'internet', 'sport', 'governance', 'truth']
     
     lda = Model(info)
@@ -66,7 +62,6 @@ def TopicModeling_HRC():
     topicDF = pd.DataFrame(topicCoverage.todense(), index=colNames)
     collection.data = pd.concat([collection.data, topicDF.T], axis=1)
 
-    #pdb.set_trace()
 
     viewer = Viewer(info.data+'_'+info.identifier)
     viewer.printTopics(lda)
