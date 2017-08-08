@@ -5,8 +5,10 @@ import pdb
 
 def validateModel(model, features):
 
+    #pdb.set_trace()
+
     nrDocs = len(model.data)
-    model.splitDataset(2*nrDocs/3, random=False)
+    model.splitDataset(2*nrDocs/3, random=True)
     #model.validationSet()
 
     print 'Train Classifier'
@@ -22,11 +24,6 @@ def validateModel(model, features):
     except:
         pass
 
-    print 'Display Results'
-    viewer = Viewer(model.classifierType)
-    displayFeatures = ['Court', 'Year', 'Sexual.Assault.Manual', 'Domestic.Violence.Manual', 'predictedLabel', 'tag', 'Family.Member.Victim', 'probability', 'Age']
-    viewer.printDocuments(model.testData, displayFeatures)
-    viewer.classificationResults(model, normalized=False)
 
 
 if __name__=='__main__':

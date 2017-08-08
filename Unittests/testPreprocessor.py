@@ -32,5 +32,12 @@ class testPreprocessor(unittest.TestCase):
         self.assertEqual(self.processor.wordTokenize(text), tokens)
 
 
+    def test_removeHTMLtags(self):
+        text = '<h>title<\h> <p>text<\p>'
+        target = 'title text'
+        self.assertEqual(self.processor.removeHTMLtags(text), target)
+
+
+
 if __name__ == '__main__':
     unittest.main()

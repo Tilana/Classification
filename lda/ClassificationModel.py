@@ -6,15 +6,13 @@ import cPickle as pickle
 import os
 from listUtils import sortTupleList
 import dataframeUtils as df
-from ImagePlotter import plotHistogram, boxplot
 from Evaluation import Evaluation
-from Preprocessor import Preprocessor
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn import svm, neighbors, linear_model
 from sklearn.naive_bayes import MultinomialNB, BernoulliNB, GaussianNB
 from sklearn.metrics import fbeta_score, make_scorer
-from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import GridSearchCV, StratifiedKFold
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.decomposition import PCA
 from sklearn.feature_selection import SelectKBest, chi2
@@ -60,8 +58,14 @@ class ClassificationModel:
 
 
     def _generateRandomIndices(self, num):
-        self.trainIndices = random.sample(self.data.index, num)
-        self.testIndices = list(set(self.data.index) - set(self.trainIndices))
+        split = StratifiedKFold(n_splits=2) #, train_size=num)
+        X = self.data
+        y = self.target
+        split.get_n_splits(X,y)
+        for trainIndex, testIndex in split.split(X,y):
+            self.trainIndices = trainIndex
+            self.testIndices = testIndex
+        
 
     def _generateHalfSplitIndices(self, num):
         self.trainIndices = self.data.index[:num]
@@ -155,11 +159,8 @@ class ClassificationModel:
         self.pca = pca
         self.selectFeatures = selectFeatures 
         target = self.trainTarget.tolist()
-        #plotHistogram(self.trainData.loc[6,'tfIdf'], log=True, open=1) 
-        #plotHistogram(df.flattenArray(self.trainData['tfIdf']), log=True, open=1) 
         if self.whitelist:
             self.increaseWeights(self.trainData, 'tfIdf', self.whitelist)
-            #plotHistogram(df.flattenArray(self.trainData['tfIdf']), log=True, open=1) 
         trainData = self.getFeatureList(self.trainData,features)
         if scaling:
             trainData = self.scaleData(trainData)
@@ -297,46 +298,12 @@ class ClassificationModel:
         return make_scorer(fbeta_score, beta=beta, average='macro')
 
 
-    def buildPreprocessor(self, vecType='tfIdf', min_df=10, max_df=0.5, stop_words='english', ngram_range = (1,2), max_features=8000, vocabulary=None, binary=False):
-        self.preprocessor = Preprocessor(processor=vecType, min_df=min_df, max_df=max_df, stop_words=stop_words, ngram_range=ngram_range, max_features=max_features, vocabulary=vocabulary, binary=binary)
-
-
-    def trainPreprocessor(self, vecType='tfIdf'):
-        trainDocs = self.data.text.tolist()
-        self.data[vecType] = self.preprocessor.trainVectorizer(trainDocs)
-        self.vocabulary = self.preprocessor.vocabulary
-
-
-    def preprocessTestData(self, vecType='tfIdf'):
+    def preprocessTestData(self, preprocessor, vecType='tfIdf'):
         testDocs = self.testData.text.tolist()
-        self.testData[vecType] = self.preprocessor.vectorizeDocs(testDocs)
-
-    def existsProcessedData(self, path):
-        return os.path.exists(path + '.pkl')
-
-
-    def save(self, path):
-        self.savePreprocessor(path)
-        with open(path +'.pkl', 'wb') as f:
-            pickle.dump(self, f, -1)
+        self.testData[vecType] = preprocessor.vectorizeDocs(testDocs)
 
     
-    def load(self, path):
-        model = pickle.load(open(path+'.pkl', 'rb'))
-        model.loadPreprocessor(path)
-        return model
+    
 
-
-    def savePreprocessor(self, path):
-        if hasattr(self, 'preprocessor'):
-            self.preprocessor.save(path)
-            del self.preprocessor
-
-
-    def loadPreprocessor(self, path):
-        preprocessor = Preprocessor()
-        if os.path.exists(path+'.pkl'):
-            self.preprocessor = preprocessor.load(path)
-            self.vocabulary = self.preprocessor.vocabulary
 
         

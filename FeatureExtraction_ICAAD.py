@@ -1,23 +1,11 @@
 from lda import FeatureExtractor, Preprocessor
 import pdb
 
-def applyToRows(data, field, fun, name, args=None):
-    if args:
-        data[name] = data.apply(lambda doc: fun(doc[field], args), axis=1)
-    else:
-        data[name] = data.apply(lambda doc: fun(doc[field]), axis=1)
 
+def FeatureExtraction_ICAAD(data):
 
-
-def FeatureExtraction(data):
-
-    preprocessor = Preprocessor()
-    #pdb.set_trace()
-    applyToRows(data, 'text', preprocessor.cleanText, 'cleanText') 
-    applyToRows(data, 'cleanText', preprocessor.numbersInTextToDigits, 'cleanText') 
-    
     extractor = FeatureExtractor()
-    applyToRows(data, 'title', extractor.court, 'ext_Court') 
+    applyToRows(collection.data, 'title', extractor.court, 'ext_Court') 
     applyToRows(data, 'title', extractor.year, 'ext_Year') 
     applyToRows(data, 'cleanText', extractor.age, 'ext_Age') 
     applyToRows(data, 'cleanText', extractor.ageRange, 'ext_AgeRange') 
@@ -33,4 +21,4 @@ def FeatureExtraction(data):
 
 
 if __name__ == '__main__':
-    FeatureExtraction()
+    FeatureExtraction_ICAAD()

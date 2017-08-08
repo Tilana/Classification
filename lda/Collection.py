@@ -1,157 +1,110 @@
-import urllib2
-import docLoader
-from Dictionary import Dictionary
-from Document import Document
-from Evaluation import Evaluation
-from ClassificationModel import ClassificationModel
-import sPickle
+# encoding=utf8
+from docLoader import loadData
+from Preprocessor import Preprocessor
+import preprocessor as tweetPreprocessor
+from FeatureExtractor import FeatureExtractor
+import cPickle as pickle
+import listUtils as utils
 import pandas as pd
 import numpy as np
+import os
+import pdb
 
 class Collection:
     
-    def __init__(self):
-        self.documents = [] 
-
-    def load(self, path=None, fileType=0, startDoc="couchdb", numberDocs=None):
-        if path is not None and fileType=="couchdb":
-            urllib2.urlopen(urllib2.Request(path)) 
-            (titles, texts) = docLoader.loadCouchdb(path)
-        elif path is not None and fileType == "folder":
-            (titles, texts) = docLoader.loadTxtFiles(path)
-        elif path is not None and fileType == "csv":
-            (titles, texts) = docLoader.loadCsvFile(path)
-        else:
-            titles = ['']
-            texts = ['']
-        if numberDocs is None:
-            numberDocs = len(titles)
-        self.documents = self.createDocumentList(titles[startDoc:startDoc + numberDocs], texts[startDoc:startDoc + numberDocs])
-        self.number = len(self.documents)
-
-    def setDocNumber(self):
-        for index, doc in enumerate(self.documents):
-            doc.nr = index
-    
-    def createCorpus(self, dictionary):
-        corpus = []
-        for document in self.documents:
-            vectorRepresentation = dictionary.ids.doc2bow(document.tokens)
-            corpus.append(vectorRepresentation)
-            document.setAttribute('vectorRepresentation', vectorRepresentation)
-        return corpus
+    def __init__(self, path=None):
+        self.data = pd.DataFrame() 
+        if path:
+            self.path = path
+            self.data = loadData(path)
+        self.nrDocs = len(self.data)
 
 
-    def loadPreprocessedCollection(self, filename):
-        collection = []
-        for doc in sPickle.s_load(open(filename)):
-            collection.append(doc)
-        self.documents = collection
-        self.number = len(self.documents)
+    def cleanDataframe(self, textField='text'):
+        dataWithText = self.data[self.data[textField].notnull()]
+        cleanDataframe = dataWithText.dropna(axis=1, how='all')
+        self.data  = cleanDataframe.reset_index()
+        self.nrDocs = len(self.data)
 
 
-    def createEntityCorpus(self, dictionary):
-        self.entityCorpus = [sorted([(dictionary.getDictionaryId(entry[0]), entry[1]) for entry in document.entities.getEntities()]) for document in self.documents]
+    def vectorize(self, vecType='tfidf', vocabulary=None, field='text', ngrams=(1,2), maxFeatures=8000):
+        self.buildVectorizer(vecType=vecType, ngram_range=ngrams, min_df=5, max_df=0.50, max_features=maxFeatures, binary=False, vocabulary=vocabulary)
+        self.trainVectorizer(vecType, field)
 
 
-    def addFeatureToDocuments(self, featureName, featureList):
-        if len(featureList)==len(self.documents):
-            for index,document in enumerate(self.documents):
-                document.setAttribute(featureName, featureList[index])
-        else:
-            print 'Length of documents and features is not equale'
+    def buildVectorizer(self, vecType='tfIdf', min_df=10, max_df=0.5, stop_words='english', ngram_range = (1,2), max_features=8000, vocabulary=None, binary=False):
+        self.preprocessor = Preprocessor(processor=vecType, min_df=min_df, max_df=max_df, stop_words=stop_words, ngram_range=ngram_range, max_features=max_features, vocabulary=vocabulary, binary=binary)
 
 
-
-    def computeRelevantWords(self, tfidf, dictionary, document, N=10):
-        docRepresentation = tfidf[document.vectorRepresentation]
-        freqWords = sorted(docRepresentation, key=lambda frequency: frequency[1], reverse=True)[0:N]
-        freqWords = [(dictionary.getWord(item[0]), item[1], item[0]) for item in freqWords]
-        document.setAttribute('freqWords', freqWords)
+    def trainVectorizer(self, vecType='tfIdf', field='text'):
+        trainDocs = self.data[field].tolist()
+        self.data[vecType] = self.preprocessor.trainVectorizer(trainDocs)
+        self.vocabulary = self.preprocessor.vocabulary
 
 
-#    def createFrequentWords(self, N=10):
-#        for index, docs in enumerate(self.documents):
-#            self.setFrequentWordsInDoc(docs, N=N)
-
-
-    def applyToAllDocuments(self, f):
-        for document in self.documents:
-            f(document)
-
-
-    def computeVectorRepresentation(self, document):
-        document.setAttribute('vectorRepresentation', self.dictionary.ids.doc2bow(document.tokens))
-
-
-    def prepareDocumentCollection(self, lemmatize=True, createEntities=True, includeEntities=True, stopwords=None, specialChars = None, removeShortTokens=True, threshold=2, whiteList = None, bigrams = False):
-        for index, document in enumerate(self.documents):
-            print index, document.title
-            document.prepareDocument(lemmatize, includeEntities, stopwords, specialChars, removeShortTokens=True, threshold=threshold, whiteList = whiteList, bigrams=bigrams)
-
-    def writeDocumentFeatureFile(self, info, topics, keywords):
-        columns = self._createColumns(topics) + keywords
-        dataframe = pd.DataFrame(np.nan, index = range(0, self.number), columns = columns)
-        for ind, document in enumerate(self.documents):
-            coverageDictionary = dict(document.LDACoverage)
-            coverage = [coverageDictionary.get(nr, 0.0) for nr in topics]
-            similarity = [document.LDASimilarity[nr][0] for nr in range(1, 6)]
-            relevantWords = [document.freqWords[nr][2] for nr in range(0, 3) if len(document.freqWords)>=3]
-            values = [document.title, document.id, document.SA, document.DV, document.court, document.year] + coverage + similarity + relevantWords 
-            if hasattr(document, 'targetCategories'):
-                values = values + list(zip(*document.targetCategories)[1])
-            values = values + [np.nan] * (len(columns) - len(values))
-            dataframe.loc[ind] = values
-            for word in document.entities.getEntities():
-                dataframe.loc[ind,word[0]] = word[1]
-        dataframe = dataframe.dropna(axis=1, how='all')
-        dataframe = dataframe.fillna(0)
-        path = 'html/'+ info.data +'_' + info.identifier + '/DocumentFeatures.csv'
-        dataframe.to_csv(path)   
-
-    def _createColumnNames(self, title, number):
-        return [(title + '%d' % nr) for nr in range(1, number+1)]
-
-    def _createTopicNames(self, topics):
-        return [('Topic%d' % topicNr) for topicNr in topics]
-
-    def _createColumns(self, topics):
-        properties = self.documents[0].__dict__.keys()
-        columnNamesTopic = self._createTopicNames(topics)
-        columnNamesRelevantWords = self._createColumnNames('relevantWord', 3)
-        columnNamesSimilarDocs = self._createColumnNames('similarDocs', 5)
-        columns = ['File', 'id', 'SA', 'DV', 'court', 'year'] + columnNamesTopic + columnNamesSimilarDocs + columnNamesRelevantWords
-        hasTargetCategories = 'targetCategories' in properties
-        if hasTargetCategories:
-            columnNamesTarget = self._createColumnNames('targetCategory', 3) 
-            columns = columns + columnNamesTarget
-        return columns
+    def save(self, path):
+        self.savePreprocessor(path)
+        with open(path +'.pkl', 'wb') as f:
+            pickle.dump(self, f, -1)
 
     
-    def createDocumentList(self, titles, texts):
-        return [Document(title, text) for title, text in zip(titles, texts)]
-
-    def saveDocumentCollection(self, path):
-        sPickle.s_dump(self.documents, open(path, 'w'))
-
-    def evaluate(self, feature='SA'):
-        target, prediction = zip(*[(getattr(doc, feature), getattr(doc, 'pred'+feature)) for doc in self.documents if doc.id != 'nan'])
-        evaluation = Evaluation(target, prediction)
-        evaluation.feature = feature
-        evaluation.setAllTags()
-        evaluation.accuracy()
-        evaluation.recall()
-        evaluation.precision()
-        evaluation.confusionMatrix()
-        return evaluation
-
-    def getConfusionDocuments(self, feature):
-        matches = ['TP', 'FP', 'TN', 'FN']
-        for match in matches:
-            docs = self.getTaggedDocuments(feature, match)
-            setattr(self, feature+'_'+match, docs)
-
-    def getTaggedDocuments(self, feature, tag):
-        return [(doc.title, ind) for ind, doc in enumerate(self.documents) if getattr(doc, feature+'tag')==tag and doc.id != 'nan'] 
+    def load(self, path):
+        collection = pickle.load(open(path+'.pkl', 'rb'))
+        collection.loadPreprocessor(path)
+        return collection
 
 
+    def savePreprocessor(self, path):
+        if hasattr(self, 'preprocessor'):
+            self.preprocessor.save(path)
+            del self.preprocessor
+
+
+    def loadPreprocessor(self, path):
+        preprocessor = Preprocessor()
+        if os.path.exists(path+'.pkl'):
+            self.preprocessor = preprocessor.load(path)
+            self.vocabulary = self.preprocessor.vocabulary
+
+    
+    def existsProcessedData(self, path):
+        return os.path.exists(path + '.pkl')
+
+    
+    def cleanTexts(self):
+        preprocessor = Preprocessor()
+        self.applyToRows('text', preprocessor.removeHTMLtags, 'cleanText')
+        self.applyToRows('cleanText', preprocessor.cleanText, 'cleanText')
+        self.applyToRows('cleanText', preprocessor.numbersInTextToDigits, 'cleanText')
+
+
+    def cleanTweets(self):
+        self.applyToRows('decodeTweet', tweetPreprocessor.clean, 'cleanTweets')
+
+    def extractDate(self):
+        self.applyToRows('tweet_time', separateDateAndTime, 'date')
+
+    
+    def extractDate(self):
+        self.data['date'] = self.data.apply(lambda doc: doc['tweet_time'].split('T')[0], axis=1)
+        
+
+    def extractEntities(self):
+        featureExtractor = FeatureExtractor()
+        self.applyToRows('text', featureExtractor.entities, 'entities')
+
+    def setRelevantWords(self):
+        self.applyToRows('tfidf', self.relevantWords, 'relevantWords') 
+
+    def relevantWords(self, wordWeights):
+        sortedWeights = sorted(enumerate(wordWeights), key=lambda x: x[1], reverse=True)
+        sortedWeights = [wordWeight for wordWeight in sortedWeights if wordWeight[1]>0]
+        return [(self.vocabulary[wordIndex], weight) for (wordIndex, weight) in sortedWeights]
+
+
+    
+    def applyToRows(self, field, fun, name, args=None):
+        if args:
+            self.data[name] = self.data.apply(lambda doc: fun(doc[field], args), axis=1)
+        else:
+            self.data[name] = self.data.apply(lambda doc: fun(doc[field]), axis=1)

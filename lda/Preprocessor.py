@@ -1,5 +1,6 @@
 import re
 import cPickle as pickle
+from bs4 import BeautifulSoup
 from nltk.stem import WordNetLemmatizer
 from nltk import pos_tag
 from nltk.corpus import wordnet
@@ -23,6 +24,7 @@ class Preprocessor:
         self.setVocabulary()
         return [docVec for docVec in wordCounts.toarray()]
                                                                               
+
     def vectorizeDocs(self, docs):
         wordCounts = self.vectorizer.transform(docs)
         return [docVec for docVec in wordCounts.toarray()]
@@ -45,19 +47,24 @@ class Preprocessor:
         posTags = self.posTagging(tokens)
         return self.posLemmatize(posTags)
 
+
     def setVocabulary(self):
         self.vocabulary = self.vectorizer.get_feature_names()
+
 
     def getVocabDict(self):
         ids = self.vectorizer.vocabulary_.values()
         words = self.vectorizer.vocabulary_.keys()
         return dict(zip(ids,words))
 
+
     def posTagging(self, tokens):
         return pos_tag(tokens)
 
+
     def wordTokenize(self, text):
         return [word for sent in sent_tokenize(text) for word in word_tokenize(sent)]
+
 
     def treebank2WordnetTag(self, tag):
         if tag.startswith('J'):
@@ -70,6 +77,7 @@ class Preprocessor:
             return wordnet.ADV
         else:
             return ''
+
 
     def save(self, path):
         self.saveVectorizer(path)
@@ -110,5 +118,9 @@ class Preprocessor:
         posTags = self.posTagging(tokens)
         lemmas = self.posLemmatize(posTags)
         return ' '.join(lemmas)
+
+    def removeHTMLtags(self, text):
+        html = BeautifulSoup(text)
+        return html.get_text()
 
         

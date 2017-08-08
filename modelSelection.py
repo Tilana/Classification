@@ -5,28 +5,25 @@ import pdb
 
 classifierTypes = ['LogisticRegression', 'BernoulliNB', 'RandomForest', 'DecisionTree'] #, 'SVM', 'kNN']
 #classifierTypes = ['kNN', 'DecisionTree']
-classifierTypes = ['LogisticRegression']
+classifierTypes = ['LogisticRegression', 'kNN', 'DecisionTree', 'BernoulliNB']
+classifierTypes = ['DecisionTree']
 
 
-def createResultPath(dataPath, target,  **args):
+def createResultPath(name, target,  **args):
     path = 'modelSelection/'
-    dataPath = dataPath.split('/')[1]
     target = target.replace('.','')
-    #if pca:
-    #    path = path + 'pca' + str(pcaComponents)+'.csv'    
-    path = path+dataPath+'_'+target+'_whitelist_50median.csv'
+    path = path+name+'_'+target+'.csv'
     return path
 
 
-def modelSelection(modelPath, target, features, nrTrainingDocs=None, whitelist=None):
+def modelSelection(collection, target, features, nrTrainingDocs=None, whitelist=None):
 
     pca=False
-    
     pcaComponents = 130 
-    resultPath = createResultPath(modelPath, target)
+    resultPath = createResultPath(collection.name, target)
 
     model = ClassificationModel()
-    model = model.load(modelPath)
+    model.data = collection.data
 
     nrTrainingDocs = nrTrainingDocs
     if not nrTrainingDocs:
@@ -68,6 +65,7 @@ def modelSelection(modelPath, target, features, nrTrainingDocs=None, whitelist=N
 
     bestModel = model
     bestModel.buildClassifier(bestClassifier, bestParams)
+    bestModel.name = collection.name
     #toCSV(results, resultPath)
 
     return bestModel 

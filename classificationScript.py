@@ -1,44 +1,75 @@
 from modelSelection import modelSelection 
-from preprocessing import preprocessing
-from buildClassificationModel import buildClassificationModel
-from FeatureExtraction import FeatureExtraction
-from FeatureAnalysis import FeatureAnalysis
 from validateModel import validateModel
-from lda.docLoader import loadData
+from lda import Collection, FeatureAnalyser, Viewer
+from lda.docLoader import loadTargets
 import pdb
 
-targets = ['Sexual.Assault.Manual', 'Domestic.Violence.Manual', 'Age', 'Family.Member.Victim', 'SGBV', 'Rape', 'DV.Restraining.Order', 'Penal.Code', 'Defilement', 'Reconciliation', 'Incest', 'Year']
-
-whitelist = ['domestic violence', 'grievous harm', 'domestic', 'wife', 'wounding', 'bodily harm', 'batter', 'aggression', 'attack', 'protection order', 'woman']
-whitelist = None
 
 def classificationScript():
-
-    target = targets[1]
-    features = ['tfIdf']
-
-    #dataPath = 'Documents/ICAAD/ICAAD.pkl'
-    dataPath = 'Documents/RightDocs.csv'
-    #modelPath = 'processedData/processedData_TF_binary'
-    #modelPath = 'processedData/processedData'
-    #modelPath = 'processedData/doc2vec'
-    #modelPath = 'processedData/processedData_whitelist'
-    #modelPath = 'processedData/SADV_whitelist'
-    modelPath = 'processedData/SADV'
-    modelPath = 'processedData/RightDocs'
-
-    data = loadData(dataPath)
-    #data = data[data['Sexual.Assault.Manual'] | data['Domestic.Violence.Manual']]
-    #preprocessing(data, modelPath, whitelist)
-    #pdb.set_trace()
     
-    data = FeatureExtraction(data[:5])
-    pdb.set_trace()
-    FeatureAnalysis(data)
+    name = 'RightDocs'
+    targets = loadTargets('Documents/ProjectTargets.csv', 'HRC_topics')
+    whitelist = None
+    analyse = False
+    features = ['tfidf']
 
-    model  = modelSelection(modelPath, target, features, whitelist=whitelist)
+    for target in targets: 
 
-    validateModel(model, features) 
+        #dataPath = 'Documents/ICAAD/ICAAD.pkl'
+        dataPath = 'Documents/RightDocs.csv'
+        #modelPath = 'processedData/processedData_TF_binary'
+        #modelPath = 'processedData/processedData'
+        #modelPath = 'processedData/doc2vec'
+        #modelPath = 'processedData/processedData_whitelist'
+        #modelPath = 'processedData/SADV_whitelist'
+        #modelPath = 'processedData/SADV'
+        modelPath = 'processedData/RightDocs_topics'
+        #modelPath = 'processedData/RightDocs_topics_5grams'
+
+        collection = Collection()
+
+        if not collection.existsProcessedData(modelPath):
+            collection = Collection(dataPath)
+            collection.name = name 
+            collection.emptyDocs = 10111 
+            print 'Preprocessing'
+            collection.cleanDataframe()
+            collection.data['id'] = range(len(collection.data))
+            collection.cleanTexts()
+            print 'Extract Entities'
+            collection.extractEntities()
+            print 'Vectorize'
+            collection.vectorize('tfidf', whitelist, ngrams=(1,5), maxFeatures=10000)
+            print 'Set Relevant Words'
+            collection.setRelevantWords()
+            collection.save(modelPath)
+        
+        collection = Collection().load(modelPath)
+        viewer = Viewer(collection.name, target)
+
+        #print 'Feature Extraction' 
+        #data = FeatureExtraction_ICAAD(collection.data[:5])
+
+        print 'Feature Analysis'
+        analyser = FeatureAnalyser()
+        plotPath = 'results/' + collection.name + '/' + target + '/frequencyDistribution.jpg'
+        analyser.frequencyPlots(collection, [target], plotPath)
+        
+        if analyse:
+            analyser.frequencyPlots(collection)
+            collection.correlation =  analyser.correlateVariables(collection)
+            viewer.printCollection(collection)
+
+        model  = modelSelection(collection, target, features, whitelist=whitelist)
+        validateModel(model, features) 
+
+        
+        print 'Display Results'
+        #displayFeatures = ['Court', 'Year', 'Sexual.Assault.Manual', 'Domestic.Violence.Manual', 'predictedLabel', 'tag', 'Family.Member.Victim', 'probability', 'Age']
+        displayFeatures = ['predictedLabel', 'probability', 'tag', 'Year', 'entities', 'DocType', 'Type1', 'Type2', 'Session', 'Date', 'agenda', 'is_last', 'order', 'favour_count', 'agains_count', 'topics', 'sponsors', 'relevantWords']
+        viewer.printDocuments(model.testData, displayFeatures, target)
+        viewer.classificationResults(model, normalized=False)
+        
 
 
 if __name__=='__main__':
