@@ -78,6 +78,11 @@ class Collection:
         self.applyToRows('cleanText', preprocessor.numbersInTextToDigits, 'cleanText')
 
 
+    def removeStopwords(self):
+        preprocessor = Preprocessor()
+        self.applyToRows('cleanText', preprocessor.removeStopwords, 'cleanTokens')
+
+
     def cleanTweets(self):
         self.applyToRows('decodeTweet', tweetPreprocessor.clean, 'cleanTweets')
 

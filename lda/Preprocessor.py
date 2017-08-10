@@ -3,11 +3,13 @@ import cPickle as pickle
 from bs4 import BeautifulSoup
 from nltk.stem import WordNetLemmatizer
 from nltk import pos_tag
-from nltk.corpus import wordnet
+from nltk.corpus import wordnet, stopwords
+import string
 from nltk.tokenize import word_tokenize, sent_tokenize, wordpunct_tokenize
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 
 numberDict = {'zero': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10, 'eleven': 11, 'twelve': 12, 'thirteen': 13, 'fourteen': 14, 'fifteen': 15, 'sixteen': 16, 'seventeen': 17, 'eighteen': 18, 'nineteen': 19, 'twenty': 20, 'thirty': 30, 'forty': 40, 'fifty': 50, 'sixty': 60, 'seventy': 70, 'eighty': 80, 'ninety': 90}
+
 
 class Preprocessor:
 
@@ -106,6 +108,7 @@ class Preprocessor:
         writtenNumbers = numberDict.keys()
         return set([word for word in wordpunct_tokenize(text.lower()) if word in writtenNumbers])
 
+    
     def numbersInTextToDigits(self, text):
         wordNumbers = self.findNumbers(text)
         for word in wordNumbers:
@@ -113,14 +116,25 @@ class Preprocessor:
             text = re.sub(word, digitNum, text)
         return text
 
+    
     def cleanText(self, text):
         tokens = self.wordTokenize(text.lower())
         posTags = self.posTagging(tokens)
         lemmas = self.posLemmatize(posTags)
         return ' '.join(lemmas)
 
+    
     def removeHTMLtags(self, text):
         html = BeautifulSoup(text)
         return html.get_text()
+
+    
+    def removeStopwords(self, text, stopchars=None):
+        if not stopchars:
+            stopchars= stopwords.words('english') + list(string.punctuation)
+        return [word for word in text.split() if word not in stopchars]
+
+
+
 
         
