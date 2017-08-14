@@ -131,7 +131,7 @@ class Preprocessor:
     
     def removeStopwords(self, text, stopchars=None):
         if not stopchars:
-            stopchars= stopwords.words('english') + list(string.punctuation)
+            stopchars= stopwords.words('english') + list(string.punctuation) + ['--', "''", '``', "'s"]
         return [word for word in text.split() if word not in stopchars]
 
 

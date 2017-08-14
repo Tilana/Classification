@@ -49,9 +49,10 @@ class Collection:
 
     
     def load(self, path):
-        collection = pickle.load(open(path+'.pkl', 'rb'))
-        collection.loadPreprocessor(path)
-        return collection
+        model = pickle.load(open(path+'.pkl', 'rb'))
+        self.data = model.data
+        self.loadPreprocessor(path)
+        return self 
 
 
     def savePreprocessor(self, path):
