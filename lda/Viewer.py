@@ -275,7 +275,6 @@ class Viewer:
                 webbrowser.open_new_tab(pagename)
 
     def printClassificationReport(self, report, f):
-        f.write('<h4>Classification Report</h4><table>')
         f.write('<tr><td></td><td>Precision</td><td>Recall</td><td>F1-score</td><td>Support</td></tr>')
         rows = report.split('\n')
         for row in rows[2:len(rows) - 2]:
@@ -292,14 +291,14 @@ class Viewer:
     def classificationResults(self, model, normalized = False):
         targetFolder = self.path + '/' + model.targetFeature
         self.createFolder(targetFolder)
-        pagename = targetFolder + '/' + model.targetFeature + '.html'
+        pagename = targetFolder + '/' + model.classifierType + '.html'
         f = open(pagename, 'w')
         title = '%s Classification - %s' % (model.classifierType, model.targetFeature)
         f.write('<html>')
         self.writeHead(f, title)
         f.write('<body><div style="width:100%;">')
         f.write(' <p><b> Classifier: </b> %s </p> ' % model.classifierType)
-        f.write(' <p><b> Size of Training Data: </b> %s </p> ' % len(model.trainData))
+        #f.write(' <p><b> Size of Training Data: </b> %s </p> ' % len(model.trainData))
         f.write(' <p><b> Size of Test Data: </b> %s </p>' % len(model.testData))
         f.write('<p><b> Frequency Distribution: </b></p>')
         f.write('<img src="frequencyDistribution.jpg" alt="plot not available" height="280">')
