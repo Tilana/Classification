@@ -15,11 +15,12 @@ def validateModel(model, features):
     model.trainClassifier(features)
 
     print 'Evaluation'
+    #pdb.set_trace()
     model.predict(features)
     model.evaluate()
-    model.evaluation.confusionMatrix(model.targetLabels)
     #model.evaluation.classificationReport(model.targetLabels)
     try:
+        model.evaluation.confusionMatrix(model.targetLabels)
         model.relevantFeatures()
     except:
         pass

@@ -14,10 +14,10 @@ class Evaluation:
 
     def accuracy(self):
         self.accuracy = accuracy_score(self.target, self.prediction)
-                                                                    
+
     def recall(self):
         self.recall = recall_score(self.target, self.prediction, average=self.average)
-                                                                    
+
     def precision(self):
         self.precision = precision_score(self.target, self.prediction, average=self.average)
 
@@ -34,7 +34,7 @@ class Evaluation:
         self.normConfusionMatrix = self.confusionMatrix.div(self.confusionMatrix.sum(axis=1), axis=0)
 
     def classificationReport(self, labels=None):
-        self.report = classification_report(self.target.tolist(), self.prediction, target_names=labels)
+        self.report = classification_report(self.target, self.prediction, target_names=labels)
 
 
     def checkLength(self):
@@ -86,6 +86,6 @@ class Evaluation:
         for tag in categories:
             self.setTag(tag)
             self.setTagLength(tag)
-    
+
     def toSeries(self, fields=['accuracy', 'precision', 'recall']):
        return pd.Series([self.__dict__[field] for field in fields])
