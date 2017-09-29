@@ -24,7 +24,7 @@ class Viewer:
     def listToHtmlTable(self, f, title, unicodeList):
         f.write('<h4>%s</h4><table>' % title.encode('utf8'))
         for items in unicodeList:
-            f.write('<tr><td>%s</td></tr>' % items.encode('utf8'))
+            f.write('<tr><td>- %s</td></tr>' % items.encode('utf8'))
 
         f.write('</table>')
 
@@ -226,7 +226,9 @@ class Viewer:
         f.write('<h4> Properties: </h4>')
         for elem in features:
             if hasattr(doc, elem):
-                if type(doc[elem]) == unicode:
+                if isinstance(doc[elem], list):
+                    self.listToHtmlTable(f, elem, doc[elem])
+                elif type(doc[elem]) == unicode:
                     f.write('{:25}: {:>40}<br><br>'.format(elem, doc[elem].encode('utf8')))
                 elif elem.find('Topic') != -1:
                     topicNumber = int(elem.split('Topic')[1])
