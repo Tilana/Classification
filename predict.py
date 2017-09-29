@@ -13,10 +13,10 @@ import pandas as pd
 import pdb
 from data_helpers import splitInSentences
 from sklearn.metrics import accuracy_score, precision_score, recall_score
-from lda import Viewer, ClassificationModel
+from lda import Viewer, ClassificationModel, Evaluation
 
 def setFinalPrediction(data):
-    predictions = data.prediction
+    predictions = data.predictedLabel
     if sum(predictions)>=1:
         return 1
     elif sum(predictions)==0:
@@ -28,6 +28,9 @@ def setFinalPrediction(data):
 def textToSentenceData(data):
     sentences = splitInSentences(data, FLAGS.target)
     return pd.DataFrame(sentences, columns=['id', FLAGS.target, 'sentences'])
+
+def storeEvidence(data):
+    return data.sentences.tolist()
 
 
 def loadProcessor(directory):
@@ -76,7 +79,6 @@ print("")
 def predict(data):
 
     model = ClassificationModel()
-    model.testData = data
     model.targetFeature = FLAGS.target
     model.classifierType = 'CNN sentences'
     model.classificationType = 'binary'
@@ -113,7 +115,6 @@ def predict(data):
             # Generate batches for one epoch
             batches = data_helpers.batch_iter(list(x_test), FLAGS.batch_size, 1, shuffle=False)
 
-            # Collect the predictions here
             all_predictions = []
 
             for x_test_batch in batches:
@@ -121,39 +122,32 @@ def predict(data):
                 all_predictions = np.concatenate([all_predictions, batch_predictions])
 
 
-    sentenceDF['prediction'] = all_predictions
-    numberDocs = len(data.id.unique())
+    sentenceDF['predictedLabel'] = all_predictions
+    predictedEvidenceSentences = sentenceDF[sentenceDF['predictedLabel']==1]
+    predictedEvidenceSentences.set_index('id', inplace=True)
+    evidencePerDoc = predictedEvidenceSentences.groupby('id')
+    evidenceSentences = evidencePerDoc.apply(storeEvidence)
+    data = data.merge(evidenceSentences.to_frame('evidence'), left_on='id', right_index=True, how='outer')
+
     docs = sentenceDF.groupby('id')
-    predictions = docs.apply(setFinalPrediction)
-    data = data.merge(predictions.to_frame('prediction'), left_on='id', right_index=True)
-
-    y_true = data[FLAGS.target].tolist()
-    pred = data['prediction'].tolist()
-
-    accuracy = accuracy_score(y_true, pred)
-    precision = precision_score(y_true, pred)
-    recall = recall_score(y_true, pred)
+    predictionPerDoc = docs.apply(setFinalPrediction)
+    data = data.merge(predictionPerDoc.to_frame('predictedLabel'), left_on='id', right_index=True)
 
     print 'Total number of documents: {:d}'.format(len(data))
     print 'Total number of sentences: {:d}'.format(len(sentenceDF))
     print 'Total number of {:s} documents: {:d}'.format(FLAGS.target, sum(data[FLAGS.target]==1))
-    print 'Total number of {:s} predicted documents: {:d}'.format(FLAGS.target, sum(data.prediction==1))
-    print 'Total number of {:s} predicted sentences: {:d}'.format(FLAGS.target, sum(sentenceDF.prediction==1))
-    print '----**---- Evaluation Measures ----**----'
-    print 'Accuracy: {:g}'.format(accuracy)
-    print 'Precision: {:g}'.format(precision)
-    print 'Recall: {:g}'.format(recall)
+    print 'Total number of {:s} predicted documents: {:d}'.format(FLAGS.target, sum(data.predictedLabel==1))
+    print 'Total number of {:s} predicted sentences: {:d}'.format(FLAGS.target, sum(sentenceDF.predictedLabel==1))
 
+    model.testData = data
     model.testTarget = data[FLAGS.target].tolist()
-    model.testData['predictedLabel'] = pred
     model.testIndices = model.testData.index
     model.evaluate()
     model.evaluation.confusionMatrix()
-    model.evaluation.classificationReport()
 
     viewer = Viewer(FLAGS.dataset, FLAGS.target)
 
-    displayFeatures = ['Court', 'Year', 'Sexual.Assault.Manual', 'Domestic.Violence.Manual', 'predictedLabel', 'tag', 'Family.Member.Victim', 'probability', 'Age']
+    displayFeatures = ['Court', 'Year', 'Sexual.Assault.Manual', 'Domestic.Violence.Manual', 'predictedLabel', 'tag', 'Family.Member.Victim', 'probability', 'Age', 'evidence']
     viewer.printDocuments(model.testData, displayFeatures, FLAGS.target)
     viewer.classificationResults(model, normalized=False)
 
@@ -166,5 +160,5 @@ if __name__=='__main__':
     data = pd.read_pickle(data_path)
 
     testData = getTestData(checkpoint_dir, data)
-    predict(testData)
+    predict(testData[:30])
 
