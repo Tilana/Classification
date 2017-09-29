@@ -30,7 +30,7 @@ def textToSentenceData(data):
     return pd.DataFrame(sentences, columns=['id', FLAGS.target, 'sentences'])
 
 def storeEvidence(data):
-    return data.sentences.tolist()
+    return zip(data.sentences.tolist(), data.activation.tolist())
 
 
 def loadProcessor(directory):
@@ -111,23 +111,31 @@ def predict(data):
 
             # Tensors we want to evaluate
             predictions = graph.get_operation_by_name("output/predictions").outputs[0]
+            activation = graph.get_operation_by_name("output/scores").outputs[0]
 
             # Generate batches for one epoch
             batches = data_helpers.batch_iter(list(x_test), FLAGS.batch_size, 1, shuffle=False)
 
             all_predictions = []
+            all_activations = []
 
             for x_test_batch in batches:
                 batch_predictions = sess.run(predictions, {input_x: x_test_batch, dropout_keep_prob: 1.0})
+                batch_activation = sess.run(activation, {input_x: x_test_batch, dropout_keep_prob: 1.0})
+                batch_activation = np.max(batch_activation, axis=1)
                 all_predictions = np.concatenate([all_predictions, batch_predictions])
+                all_activations = np.concatenate([all_activations, batch_activation])
 
 
     sentenceDF['predictedLabel'] = all_predictions
+    sentenceDF['activation'] = all_activations
     predictedEvidenceSentences = sentenceDF[sentenceDF['predictedLabel']==1]
     predictedEvidenceSentences.set_index('id', inplace=True)
     evidencePerDoc = predictedEvidenceSentences.groupby('id')
     evidenceSentences = evidencePerDoc.apply(storeEvidence)
     data = data.merge(evidenceSentences.to_frame('evidence'), left_on='id', right_index=True, how='outer')
+
+    #pdb.set_trace()
 
     docs = sentenceDF.groupby('id')
     predictionPerDoc = docs.apply(setFinalPrediction)

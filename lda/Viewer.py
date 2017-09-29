@@ -227,7 +227,10 @@ class Viewer:
         for elem in features:
             if hasattr(doc, elem):
                 if isinstance(doc[elem], list):
-                    self.listToHtmlTable(f, elem, doc[elem])
+                    if isinstance(doc[elem][0], tuple):
+                        self.printTupleList(f, elem, doc[elem], 'float')
+                    else:
+                        self.listToHtmlTable(f, elem, doc[elem])
                 elif type(doc[elem]) == unicode:
                     f.write('{:25}: {:>40}<br><br>'.format(elem, doc[elem].encode('utf8')))
                 elif elem.find('Topic') != -1:
