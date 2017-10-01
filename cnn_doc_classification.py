@@ -3,6 +3,7 @@ import pandas as pd
 import tensorflow as tf
 import numpy as np
 import os
+import data_helpers
 import time
 import datetime
 import data_helpers
@@ -11,6 +12,7 @@ from tensorflow.contrib import learn
 from lda import ClassificationModel
 from data_helpers import splitInSentences
 import pdb
+from tensorflow.python import debug as tf_debug
 
 
 def textToSentenceData(data):
@@ -36,14 +38,16 @@ ID = 'SA'
 TARGET = 'Sexual.Assault.Manual'
 MODEL_PATH = './runs/' + DATASET + '_' + ID + '/'
 BATCH_SIZE = 20
+ITERATIONS = 10
 
 def cnn_doc_classification():
 
     data_path = os.path.join(PATH, DATASET, DATASET + '.pkl')
     data = pd.read_pickle(data_path)
+    data.set_index('id', inplace=True, drop=False)
 
     model = ClassificationModel()
-    model.data = data[:20]
+    model.data = data
     model.targetFeature = TARGET
     model.target = data[TARGET]
 
@@ -52,9 +56,10 @@ def cnn_doc_classification():
     model.testIndices= indices.loc['test'].dropna()
     model.split()
 
+    nrDocuments = 500
 
-    sentenceDF = textToSentenceData(data[:100])
-    x_raw = sentenceDF.sentences.tolist()
+    trainSentences = textToSentenceData(model.testData)
+    x_raw = trainSentences.sentences.tolist()
 
     vocab_processor = loadProcessor(MODEL_PATH)
     x_test = np.array(list(vocab_processor.transform(x_raw)))
@@ -68,6 +73,7 @@ def cnn_doc_classification():
         session_conf = tf.ConfigProto()
         sess = tf.Session(config=session_conf)
         with sess.as_default():
+
             # Load the saved meta graph and restore variables
             saver = tf.train.import_meta_graph("{}.meta".format(checkpoint_file))
             saver.restore(sess, checkpoint_file)
@@ -89,59 +95,58 @@ def cnn_doc_classification():
                 all_activations = np.concatenate([all_activations, batch_activation])
 
 
-    #pdb.set_trace()
-    sentenceDF = sentenceDF.merge(pd.DataFrame(all_activations), left_index=True, right_index=True)
-    docs = sentenceDF.groupby('id')
+    trainSentences = trainSentences.merge(pd.DataFrame(all_activations), left_index=True, right_index=True)
+    docs = trainSentences.groupby('id')
     numberSentences = docs.count()[TARGET]
     maxNumberSentences = max(numberSentences)
 
-    #pdb.set_trace()
 
     X_raw = np.array(docs.apply(padDocuments, maxNumberSentences).tolist())
+    X_raw = X_raw.reshape(X_raw.shape[0], maxNumberSentences*2)
 
-    #.as_matrix()
     print 'Maximal number of sentences in document: {:d}'.format(maxNumberSentences)
 
-
-    #XX = tf.reshape(X_raw, [-1, maxNumberSentences])
-
     # Initialize Document Classification Model
-    X = tf.placeholder(tf.float32, [None, maxNumberSentences, 2])
+    X = tf.placeholder(tf.float32, [None, maxNumberSentences*2])
     Y_ = tf.placeholder(tf.float32, [None, 2])
-    W = tf.Variable(tf.zeros([maxNumberSentences, 2]))
+    W = tf.Variable(tf.zeros([maxNumberSentences*2, 2]))
     bias = tf.Variable(tf.zeros([2]))
 
     init = tf.global_variables_initializer()
 
-    Y = tf.nn.softmax(tf.matmul(tf.reshape(X, [-1, maxNumberSentences]), W) + bias)
+    Y = tf.nn.softmax(tf.matmul(X, W) + bias)
 
-    cross_entropy = -tf.reduce_sum(Y_ *tf.log(Y))
+    cross_entropy = -tf.reduce_sum(Y_ * tf.log(Y))
     is_correct = tf.equal(tf.argmax(Y, 1), tf.argmax(Y_,1))
     accuracy = tf.reduce_mean(tf.cast(is_correct, tf.float32))
 
-    optimizer = tf.train.GradientDescentOptimizer(0.003)
+    optimizer = tf.train.GradientDescentOptimizer(0.00001)
     train_step = optimizer.minimize(cross_entropy)
 
-    sess = tf.Session()
-    sess.run(init)
-    for i in range(20):
-        batch_X = X_raw
-        batch_Y = pd.get_dummies(data[TARGET].tolist()[:len(X_raw)])
-        train_data = {X: batch_X, Y_: batch_Y}
 
-        sess.run(train_step, feed_dict=train_data)
+    with tf.Session() as sess:
+        sess.run(init)
 
+        x_train = X_raw
+        y_train = pd.get_dummies(data[TARGET].tolist()[:nrDocuments]).as_matrix()
 
+        batches = data_helpers.batch_iter(list(zip(x_train, y_train)), BATCH_SIZE, ITERATIONS)
 
-    #predictedEvidenceSentences = sentenceDF[sentenceDF['predictedLabel']==1]
-    #predictedEvidenceSentences.set_index('id', inplace=True)
-    #evidencePerDoc = predictedEvidenceSentences.groupby('id')
-    #evidenceSentences = evidencePerDoc.apply(storeEvidence)
-    #data = data.merge(evidenceSentences.to_frame('evidence'), left_on='id', right_index=True, how='outer')
+        for batch in batches:
+            x_batch, y_batch = zip(*batch)
+            x_batch = np.array(x_batch)
+            y_batch = np.array(y_batch)
 
-    #pdb.set_trace()
+            train_data = {X: x_batch, Y_: y_batch}
+            sess.run(train_step, feed_dict=train_data)
 
+            entropy = sess.run(cross_entropy, feed_dict=train_data)
+            print 'Entropy: ' + str(entropy)
 
+        isCorrect = sess.run(is_correct, feed_dict=train_data)
+        print isCorrect
+        accuracy = sess.run(accuracy, feed_dict=train_data)
+        print accuracy
 
 
     pdb.set_trace()
