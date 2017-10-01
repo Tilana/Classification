@@ -37,8 +37,8 @@ DATASET = 'ICAAD'
 ID = 'SA'
 TARGET = 'Sexual.Assault.Manual'
 MODEL_PATH = './runs/' + DATASET + '_' + ID + '/'
-BATCH_SIZE = 20
-ITERATIONS = 10
+BATCH_SIZE = 50
+ITERATIONS = 100
 
 def cnn_doc_classification():
 
@@ -58,53 +58,68 @@ def cnn_doc_classification():
 
     nrDocuments = 500
 
-    trainSentences = textToSentenceData(model.testData)
-    x_raw = trainSentences.sentences.tolist()
+
+    def getSentenceActivation(sentences):
+
+        checkpoint_path = os.path.join(MODEL_PATH, "checkpoints")
+        checkpoint_file = tf.train.latest_checkpoint(checkpoint_path)
+
+        graph = tf.Graph()
+        with graph.as_default():
+            session_conf = tf.ConfigProto()
+            sess = tf.Session(config=session_conf)
+            with sess.as_default():
+
+                # Load the saved meta graph and restore variables
+                saver = tf.train.import_meta_graph("{}.meta".format(checkpoint_file))
+                saver.restore(sess, checkpoint_file)
+
+                # Get the placeholders from the graph by name
+                input_x = graph.get_operation_by_name("input_x").outputs[0]
+                dropout_keep_prob = graph.get_operation_by_name("dropout_keep_prob").outputs[0]
+
+                # Tensors we want to evaluate
+                activation = graph.get_operation_by_name("output/scores").outputs[0]
+
+                # Generate batches for one epoch
+                batches = data_helpers.batch_iter(list(sentences), BATCH_SIZE, 1, shuffle=False)
+
+                all_activations = np.empty((0,2))
+
+                for x_test_batch in batches:
+                    batch_activation = sess.run(activation, {input_x: x_test_batch, dropout_keep_prob: 1.0})
+                    all_activations = np.concatenate([all_activations, batch_activation])
+
+        return all_activations
+
+
 
     vocab_processor = loadProcessor(MODEL_PATH)
-    x_test = np.array(list(vocab_processor.transform(x_raw)))
+    trainSentences = textToSentenceData(model.trainData)
+    testSentences = textToSentenceData(model.testData)
 
-    checkpoint_path = os.path.join(MODEL_PATH, "checkpoints")
-    checkpoint_file = tf.train.latest_checkpoint(checkpoint_path)
+    x_train = np.array(list(vocab_processor.transform(trainSentences.sentences.tolist())))
+    x_test = np.array(list(vocab_processor.transform(testSentences.sentences.tolist())))
 
+    activations_train = getSentenceActivation(x_train)
+    activations_test = getSentenceActivation(x_test)
 
-    graph = tf.Graph()
-    with graph.as_default():
-        session_conf = tf.ConfigProto()
-        sess = tf.Session(config=session_conf)
-        with sess.as_default():
+    trainSentences = trainSentences.merge(pd.DataFrame(activations_train), left_index=True, right_index=True)
+    testSentences = testSentences.merge(pd.DataFrame(activations_test), left_index=True, right_index=True)
 
-            # Load the saved meta graph and restore variables
-            saver = tf.train.import_meta_graph("{}.meta".format(checkpoint_file))
-            saver.restore(sess, checkpoint_file)
-
-            # Get the placeholders from the graph by name
-            input_x = graph.get_operation_by_name("input_x").outputs[0]
-            dropout_keep_prob = graph.get_operation_by_name("dropout_keep_prob").outputs[0]
-
-            # Tensors we want to evaluate
-            activation = graph.get_operation_by_name("output/scores").outputs[0]
-
-            # Generate batches for one epoch
-            batches = data_helpers.batch_iter(list(x_test), BATCH_SIZE, 1, shuffle=False)
-
-            all_activations = np.empty((0,2))
-
-            for x_test_batch in batches:
-                batch_activation = sess.run(activation, {input_x: x_test_batch, dropout_keep_prob: 1.0})
-                all_activations = np.concatenate([all_activations, batch_activation])
-
-
-    trainSentences = trainSentences.merge(pd.DataFrame(all_activations), left_index=True, right_index=True)
-    docs = trainSentences.groupby('id')
-    numberSentences = docs.count()[TARGET]
+    train_docs = trainSentences.groupby('id')
+    test_docs = testSentences.groupby('id')
+    numberSentences = train_docs.count()[TARGET]
     maxNumberSentences = max(numberSentences)
 
-
-    X_raw = np.array(docs.apply(padDocuments, maxNumberSentences).tolist())
-    X_raw = X_raw.reshape(X_raw.shape[0], maxNumberSentences*2)
-
     print 'Maximal number of sentences in document: {:d}'.format(maxNumberSentences)
+
+    X_train = np.array(train_docs.apply(padDocuments, maxNumberSentences).tolist())
+    X_train = X_train.reshape(X_train.shape[0], maxNumberSentences*2)
+
+    X_test = np.array(test_docs.apply(padDocuments, maxNumberSentences).tolist())
+    X_test = X_test.reshape(X_test.shape[0], maxNumberSentences*2)
+
 
     # Initialize Document Classification Model
     X = tf.placeholder(tf.float32, [None, maxNumberSentences*2])
@@ -127,10 +142,9 @@ def cnn_doc_classification():
     with tf.Session() as sess:
         sess.run(init)
 
-        x_train = X_raw
-        y_train = pd.get_dummies(data[TARGET].tolist()[:nrDocuments]).as_matrix()
+        Y_train = pd.get_dummies(model.trainTarget.tolist()).as_matrix()
 
-        batches = data_helpers.batch_iter(list(zip(x_train, y_train)), BATCH_SIZE, ITERATIONS)
+        batches = data_helpers.batch_iter(list(zip(X_train, Y_train)), BATCH_SIZE, ITERATIONS)
 
         for batch in batches:
             x_batch, y_batch = zip(*batch)
@@ -143,9 +157,9 @@ def cnn_doc_classification():
             entropy = sess.run(cross_entropy, feed_dict=train_data)
             print 'Entropy: ' + str(entropy)
 
-        isCorrect = sess.run(is_correct, feed_dict=train_data)
-        print isCorrect
-        accuracy = sess.run(accuracy, feed_dict=train_data)
+        Y_test = pd.get_dummies(model.testTarget.tolist()).as_matrix()
+        testData = {X: X_test, Y_: Y_test}
+        accuracy = sess.run(accuracy, feed_dict=testData)
         print accuracy
 
 
