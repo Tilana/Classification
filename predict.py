@@ -48,11 +48,13 @@ def getTestData(directory, data):
 
 # Data Path
 tf.flags.DEFINE_string("dataset", "ICAAD", "Dataset")
-tf.flags.DEFINE_string("id", "DV", "dataset category/target")
+#tf.flags.DEFINE_string("id", "DV", "dataset category/target")
+tf.flags.DEFINE_string("id", "SA", "dataset category/target")
 tf.flags.DEFINE_string("sentence_id", "DV", "sentence category")
 tf.flags.DEFINE_string("data_path", "../data", "Data path")
 tf.flags.DEFINE_string("model_path", "./runs", "Model path")
-tf.flags.DEFINE_string("target", "Domestic.Violence.Manual", "Target")
+#tf.flags.DEFINE_string("target", "Domestic.Violence.Manual", "Target")
+tf.flags.DEFINE_string("target", "Sexual.Assault.Manual", "Target")
 
 FLAGS = tf.flags.FLAGS
 model_name  = '_'.join([FLAGS.dataset, FLAGS.id])
@@ -168,5 +170,6 @@ if __name__=='__main__':
     data = pd.read_pickle(data_path)
 
     testData = getTestData(checkpoint_dir, data)
-    predict(testData[:30])
+    #predict(testData[:30])
+    predict(testData)
 
