@@ -3,19 +3,21 @@ import pandas as pd
 from lda import namedEntityRecognition as ner
 import pdb
 
+
 class FeatureExtractor:
 
-    def __init__(self):
-        self.wordList = pd.read_csv('Documents/ICAAD/CategoryLists.csv')
+    def __init__(self, path):
+        if path:
+            self.wordList = pd.read_csv(path)
 
     def year(self, title):
         regex = r'\[\d{4}\]'
         match = re.search(regex, title)
         if match:
             year = self.extractDigit(match.group(0))
-            return year 
+            return year
 
-    
+
     def court(self, title):
         regex = r'[A-Z]{4}'
         match = re.findall(regex, title)
@@ -28,7 +30,7 @@ class FeatureExtractor:
         match = re.search(regex, string)
         return int(match.group(0))
 
-    
+
     def age(self, text):
         regex = r'\d+[-| ]*year\w*[-| ]*old|age of \d+|\d+ year\w* of age'
         return re.findall(regex, text)
@@ -49,7 +51,7 @@ class FeatureExtractor:
     def caseType(self, text):
         regex = r'RULING|JUDGEMENT|SUMMING UP|SENTENCE|JUDGMENT|DECISION|CHARGE|MINUTE|SENTENCING|REASONS|SUMMARY|APPEAL'
         result = re.findall(regex, text)
-        return self.getFirstElement(result) 
+        return self.getFirstElement(result)
 
     def victimRelated(self, text):
         regex = r'[\w ]+complainant|victim|plaintiff be \w+.+'
@@ -75,7 +77,7 @@ class FeatureExtractor:
     def groupTuples(self, tupleList):
         return [' '.join(elem) for elem in tupleList]
 
-    
+
     def entities(self, text):
         return ner.getNamedEntities(text)
 

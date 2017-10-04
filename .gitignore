@@ -12,4 +12,5 @@ stopwords/
 Plots/
 venv/
 modelSelection/
+runs/**/*
 

@@ -1,7 +1,7 @@
 # encoding=utf8
 from docLoader import loadData
 from Preprocessor import Preprocessor
-import preprocessor as tweetPreprocessor
+#import preprocessor as tweetPreprocessor
 from FeatureExtractor import FeatureExtractor
 import cPickle as pickle
 import listUtils as utils
@@ -11,9 +11,9 @@ import os
 import pdb
 
 class Collection:
-    
+
     def __init__(self, path=None):
-        self.data = pd.DataFrame() 
+        self.data = pd.DataFrame()
         if path:
             self.path = path
             self.data = loadData(path)
@@ -47,12 +47,12 @@ class Collection:
         with open(path +'.pkl', 'wb') as f:
             pickle.dump(self, f, -1)
 
-    
+
     def load(self, path):
         model = pickle.load(open(path+'.pkl', 'rb'))
         self.data = model.data
         self.loadPreprocessor(path)
-        return self 
+        return self
 
 
     def savePreprocessor(self, path):
@@ -67,11 +67,11 @@ class Collection:
             self.preprocessor = preprocessor.load(path)
             self.vocabulary = self.preprocessor.vocabulary
 
-    
+
     def existsProcessedData(self, path):
         return os.path.exists(path + '.pkl')
 
-    
+
     def cleanTexts(self):
         preprocessor = Preprocessor()
         self.applyToRows('text', preprocessor.removeHTMLtags, 'cleanText')
@@ -90,17 +90,17 @@ class Collection:
     def extractDate(self):
         self.applyToRows('tweet_time', separateDateAndTime, 'date')
 
-    
+
     def extractDate(self):
         self.data['date'] = self.data.apply(lambda doc: doc['tweet_time'].split('T')[0], axis=1)
-        
 
-    def extractEntities(self):
-        featureExtractor = FeatureExtractor()
+
+    def extractEntities(self, path=None):
+        featureExtractor = FeatureExtractor(path)
         self.applyToRows('text', featureExtractor.entities, 'entities')
 
     def setRelevantWords(self):
-        self.applyToRows('tfidf', self.relevantWords, 'relevantWords') 
+        self.applyToRows('tfidf', self.relevantWords, 'relevantWords')
 
     def relevantWords(self, wordWeights):
         sortedWeights = sorted(enumerate(wordWeights), key=lambda x: x[1], reverse=True)
@@ -108,7 +108,7 @@ class Collection:
         return [(self.vocabulary[wordIndex], weight) for (wordIndex, weight) in sortedWeights]
 
 
-    
+
     def applyToRows(self, field, fun, name, args=None):
         if args:
             self.data[name] = self.data.apply(lambda doc: fun(doc[field], args), axis=1)
