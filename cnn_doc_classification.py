@@ -9,7 +9,7 @@ import datetime
 import data_helpers
 from text_cnn import TextCNN
 from tensorflow.contrib import learn
-from lda import ClassificationModel
+from lda import ClassificationModel, Viewer
 from data_helpers import splitInSentences
 import pdb
 from tensorflow.python import debug as tf_debug
@@ -27,7 +27,7 @@ def loadProcessor(directory):
 def padDocuments(doc, nrSentences):
     pads = np.zeros((nrSentences, 2))
     activation = doc[[0,1]].as_matrix()
-    pads[:len(activation)] = activation
+    pads[:len(activation)] = activation[:nrSentences]
     return pads
 
 
@@ -37,8 +37,9 @@ DATASET = 'ICAAD'
 ID = 'SA'
 TARGET = 'Sexual.Assault.Manual'
 MODEL_PATH = './runs/' + DATASET + '_' + ID + '/'
-BATCH_SIZE = 50
-ITERATIONS = 100
+BATCH_SIZE = 100
+ITERATIONS = 500
+multilayer = 1
 
 def cnn_doc_classification():
 
@@ -50,14 +51,12 @@ def cnn_doc_classification():
     model.data = data
     model.targetFeature = TARGET
     model.target = data[TARGET]
+    model.classificationType = 'binary'
 
     indices = pd.read_csv(MODEL_PATH + 'trainTest_split.csv', index_col=0)
     model.trainIndices = indices.loc['train'].dropna()
     model.testIndices= indices.loc['test'].dropna()
     model.split()
-
-    nrDocuments = 500
-
 
     def getSentenceActivation(sentences):
 
@@ -80,17 +79,22 @@ def cnn_doc_classification():
 
                 # Tensors we want to evaluate
                 activation = graph.get_operation_by_name("output/scores").outputs[0]
+                probability = tf.nn.softmax(activation)
+                #activation = graph.get_operation_by_name("output/scores").outputs[0]
 
                 # Generate batches for one epoch
                 batches = data_helpers.batch_iter(list(sentences), BATCH_SIZE, 1, shuffle=False)
 
                 all_activations = np.empty((0,2))
+                all_probabilities = np.empty((0,2))
 
                 for x_test_batch in batches:
                     batch_activation = sess.run(activation, {input_x: x_test_batch, dropout_keep_prob: 1.0})
                     all_activations = np.concatenate([all_activations, batch_activation])
+                    batch_probabilities = sess.run(probability, {input_x: x_test_batch, dropout_keep_prob:1.0})
+                    all_probabilities = np.concatenate([all_probabilities, batch_probabilities])
 
-        return all_activations
+        return all_probabilities
 
 
 
@@ -111,6 +115,7 @@ def cnn_doc_classification():
     test_docs = testSentences.groupby('id')
     numberSentences = train_docs.count()[TARGET]
     maxNumberSentences = max(numberSentences)
+    #maxNumberSentences = 230
 
     print 'Maximal number of sentences in document: {:d}'.format(maxNumberSentences)
 
@@ -124,18 +129,32 @@ def cnn_doc_classification():
     # Initialize Document Classification Model
     X = tf.placeholder(tf.float32, [None, maxNumberSentences*2])
     Y_ = tf.placeholder(tf.float32, [None, 2])
-    W = tf.Variable(tf.zeros([maxNumberSentences*2, 2]))
-    bias = tf.Variable(tf.zeros([2]))
+
+    if multilayer:
+        W1 = tf.Variable(tf.truncated_normal([maxNumberSentences*2, 200], stddev=0.1))
+        B1 = tf.Variable(tf.zeros([200]))
+
+        W2 = tf.Variable(tf.truncated_normal([200, 2], stddev=0.1))
+        B2 = tf.Variable(tf.zeros([2]))
+
+        Y1 = tf.nn.relu(tf.matmul(X, W1) + B1)
+        Y = tf.nn.softmax(tf.matmul(Y1, W2) + B2)
+    else:
+        W = tf.Variable(tf.zeros([maxNumberSentences*2, 2]))
+        bias = tf.Variable(tf.zeros([2]))
+
+        Y = tf.nn.softmax(tf.matmul(X, W) + bias)
+
 
     init = tf.global_variables_initializer()
-
-    Y = tf.nn.softmax(tf.matmul(X, W) + bias)
 
     cross_entropy = -tf.reduce_sum(Y_ * tf.log(Y))
     is_correct = tf.equal(tf.argmax(Y, 1), tf.argmax(Y_,1))
     accuracy = tf.reduce_mean(tf.cast(is_correct, tf.float32))
 
-    optimizer = tf.train.GradientDescentOptimizer(0.00001)
+    #optimizer = tf.train.GradientDescentOptimizer(0.0005)
+    optimizer = tf.train.GradientDescentOptimizer(0.003)
+    optimizer = tf.train.AdamOptimizer(0.003)
     train_step = optimizer.minimize(cross_entropy)
 
 
@@ -155,12 +174,30 @@ def cnn_doc_classification():
             sess.run(train_step, feed_dict=train_data)
 
             entropy = sess.run(cross_entropy, feed_dict=train_data)
+            acc = sess.run(accuracy, feed_dict=train_data)
             print 'Entropy: ' + str(entropy)
+            print 'Accuracy: ' + str(acc)
+
 
         Y_test = pd.get_dummies(model.testTarget.tolist()).as_matrix()
         testData = {X: X_test, Y_: Y_test}
+        predictedLabels = sess.run(Y, feed_dict=testData)
+        model.testData['predictedLabel'] = np.argmax(predictedLabels, 1)
+        model.testData['probability'] = np.max(predictedLabels, 1)
         accuracy = sess.run(accuracy, feed_dict=testData)
         print accuracy
+
+    #pdb.set_trace()
+    model.testTarget = model.testTarget.tolist()
+    model.evaluate()
+    model.evaluation.confusionMatrix()
+    model.classifierType = 'CNN Docs'
+
+    viewer = Viewer('Adam', 'test')
+
+    displayFeatures = ['Court', 'Year', 'Sexual.Assault.Manual', 'Domestic.Violence.Manual', 'predictedLabel', 'tag', 'Family.Member.Victim', 'probability', 'Age', 'evidence', 'probability']
+    viewer.printDocuments(model.testData, displayFeatures, TARGET)
+    viewer.classificationResults(model, normalized=False)
 
 
     pdb.set_trace()
