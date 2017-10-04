@@ -38,7 +38,7 @@ ID = 'SA'
 TARGET = 'Sexual.Assault.Manual'
 MODEL_PATH = './runs/' + DATASET + '_' + ID + '/'
 BATCH_SIZE = 100
-ITERATIONS = 500
+ITERATIONS = 200
 multilayer = 1
 
 def cnn_doc_classification():
@@ -132,29 +132,32 @@ def cnn_doc_classification():
 
     if multilayer:
         W1 = tf.Variable(tf.truncated_normal([maxNumberSentences*2, 200], stddev=0.1))
-        B1 = tf.Variable(tf.zeros([200]))
+        B1 = tf.Variable(tf.ones([200])/10)
 
         W2 = tf.Variable(tf.truncated_normal([200, 2], stddev=0.1))
-        B2 = tf.Variable(tf.zeros([2]))
+        B2 = tf.Variable(tf.ones([2])/10)
 
         Y1 = tf.nn.relu(tf.matmul(X, W1) + B1)
-        Y = tf.nn.softmax(tf.matmul(Y1, W2) + B2)
+        Ylogits = tf.matmul(Y1, W2) + B2
+        Y= tf.nn.softmax(Ylogits)
+
     else:
         W = tf.Variable(tf.zeros([maxNumberSentences*2, 2]))
-        bias = tf.Variable(tf.zeros([2]))
+        bias = tf.Variable(tf.ones([2])/10)
 
-        Y = tf.nn.softmax(tf.matmul(X, W) + bias)
+        Ylogits = tf.matmul(X, W) + bias
+        Y = tf.nn.softmax(Ylogits)
 
+    init = tf.initialize_all_variables()
 
-    init = tf.global_variables_initializer()
-
-    cross_entropy = -tf.reduce_sum(Y_ * tf.log(Y))
+    cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=Ylogits, labels=Y_)
+    cross_entropy = tf.reduce_mean(cross_entropy)*100
     is_correct = tf.equal(tf.argmax(Y, 1), tf.argmax(Y_,1))
     accuracy = tf.reduce_mean(tf.cast(is_correct, tf.float32))
 
-    #optimizer = tf.train.GradientDescentOptimizer(0.0005)
     optimizer = tf.train.GradientDescentOptimizer(0.003)
-    optimizer = tf.train.AdamOptimizer(0.003)
+    #optimizer = tf.train.AdamOptimizer(0.003)
+    #optimizer = tf.train.AdadeltaOptimizer(0.001)
     train_step = optimizer.minimize(cross_entropy)
 
 
@@ -187,13 +190,13 @@ def cnn_doc_classification():
         accuracy = sess.run(accuracy, feed_dict=testData)
         print accuracy
 
-    #pdb.set_trace()
+
     model.testTarget = model.testTarget.tolist()
     model.evaluate()
     model.evaluation.confusionMatrix()
     model.classifierType = 'CNN Docs'
 
-    viewer = Viewer('Adam', 'test')
+    viewer = Viewer('DocsCNN', 'test')
 
     displayFeatures = ['Court', 'Year', 'Sexual.Assault.Manual', 'Domestic.Violence.Manual', 'predictedLabel', 'tag', 'Family.Member.Victim', 'probability', 'Age', 'evidence', 'probability']
     viewer.printDocuments(model.testData, displayFeatures, TARGET)
