@@ -42,7 +42,7 @@ def summarizeTexts():
     noSADV_sentences = splitInSentences(summaries)
 
     noSADV_data = pd.DataFrame(noSADV_sentences, columns=['id', 'sentence'])
-    noSADV_data.to_csv('../data/noSADV_sentences.csv')
+    noSADV_data.to_csv('../data/noSADV_summaries.csv')
 
 
     print 'SA Documents'
@@ -51,7 +51,7 @@ def summarizeTexts():
     SA_sentences = splitInSentences(SA_summaries)
 
     SA_data = pd.DataFrame(SA_sentences, columns=['id', 'sentence'])
-    SA_data.to_csv('../data/SA_sentences.csv')
+    SA_data.to_csv('../data/SA_summaries.csv')
 
 
     print 'DV Documents'
@@ -60,7 +60,7 @@ def summarizeTexts():
     DV_sentences = splitInSentences(DV_summaries)
 
     DV_data = pd.DataFrame(DV_sentences, columns=['id', 'sentence'])
-    DV_data.to_csv('../data/DV_sentences.csv')
+    DV_data.to_csv('../data/DV_summaries.csv')
 
 
 
