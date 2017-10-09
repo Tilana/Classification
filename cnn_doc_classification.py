@@ -127,31 +127,47 @@ def cnn_doc_classification():
 
 
     nn = NeuralNet(maxNumberSentences*activations_train.shape[1], nrClasses)
-    nn.buildNeuralNet(multilayer=1, hidden_layer_size=100, optimizerType='GD')
 
     with tf.Session() as sess:
         nn.setSession(sess)
+
+        nn.setSummaryWriter('runs/Test2/', sess.graph)
+        nn.buildNeuralNet(multilayer=1, hidden_layer_size=100, optimizerType='GD')
         nn.initializeVariables()
 
+        #pdb.set_trace()
+
         Y_train = pd.get_dummies(model.trainTarget.tolist()).as_matrix()
+        Y_test = pd.get_dummies(model.testTarget.tolist()).as_matrix()
 
         batches = data_helpers.batch_iter(list(zip(X_train, Y_train)), BATCH_SIZE, ITERATIONS)
+
+        c=0
 
         for batch in batches:
             x_batch, y_batch = zip(*batch)
             x_batch = np.array(x_batch)
             y_batch = np.array(y_batch)
 
-            train_data = {nn.X: x_batch, nn.Y_: y_batch}
-            sess.run(nn.train_step, feed_dict=train_data)
+            train_data = {nn.X: x_batch, nn.Y_: y_batch, nn.step:c}
+            _, train_summary = sess.run([nn.train_step, nn.summary], feed_dict=train_data)
+
+            nn.writeSummary(train_summary, c)
 
             entropy = sess.run(nn.cross_entropy, feed_dict=train_data)
             acc = sess.run(nn.accuracy, feed_dict=train_data)
             print 'Entropy: ' + str(entropy)
             print 'Accuracy: ' + str(acc)
 
+            if c % 10 == 0:
+                testData = {nn.X: X_test, nn.Y_: Y_test}
+                predictedLabels, test_summary = sess.run([nn.Y, nn.summary], feed_dict=testData)
 
-        Y_test = pd.get_dummies(model.testTarget.tolist()).as_matrix()
+                nn.writeSummary(test_summary, c, 'test')
+
+            c = c + 1
+
+
         testData = {nn.X: X_test, nn.Y_: Y_test}
         predictedLabels = sess.run(nn.Y, feed_dict=testData)
         model.testData['predictedLabel'] = np.argmax(predictedLabels, 1)

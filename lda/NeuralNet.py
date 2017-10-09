@@ -7,6 +7,7 @@ class NeuralNet:
         self.output_size = output_size
         self.X = tf.placeholder(tf.float32, [None, self.input_size])
         self.Y_ = tf.placeholder(tf.float32, [None, self.output_size])
+        self.step = tf.placeholder(tf.float32, shape=(), name='init')
 
     def buildNeuralNet(self, multilayer, hidden_layer_size, optimizerType):
         if multilayer:
@@ -15,8 +16,26 @@ class NeuralNet:
             self.oneLayerNN()
         self.crossEntropy()
         self.optimizer(optimizerType)
+        self.getAccuracy()
         self.trainStep()
-        self.accuracy()
+        self.evaluationSummary()
+
+    def setSummaryWriter(self, path, graph):
+        self.train_summary = tf.summary.FileWriter(path + 'train', graph)
+        self.test_summary = tf.summary.FileWriter(path + 'test', graph)
+
+    def evaluationSummary(self):
+        loss_summary = tf.summary.scalar("loss", self.cross_entropy)
+        acc_summary = tf.summary.scalar("accuracy", self.accuracy)
+        self.summary = tf.summary.merge([loss_summary, acc_summary])
+
+    def writeSummary(self, summary, step, phase='train'):
+        if phase=='train':
+            self.train_summary.add_summary(summary, step)
+        elif phase=='test':
+            self.test_summary.add_summary(summary, step)
+        else:
+            print 'WARNING: Phase %s in write summary is not known'
 
     def oneLayerNN(self):
         self.W = tf.Variable(tf.zeros([self.input_size, self.output_size]))
@@ -52,10 +71,10 @@ class NeuralNet:
         else:
             print 'Warning: unkown Optimizer'
 
-    def trainStep(self):
+    def trainStep(self, summary=1):
         self.train_step = self.optimizer.minimize(self.cross_entropy)
 
-    def accuracy(self):
+    def getAccuracy(self):
         is_correct = tf.equal(tf.argmax(self.Y, 1), tf.argmax(self.Y_,1))
         self.accuracy = tf.reduce_mean(tf.cast(is_correct, tf.float32))
 
