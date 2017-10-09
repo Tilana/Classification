@@ -1,4 +1,5 @@
 import tensorflow as tf
+import osHelper
 
 class NeuralNet:
 
@@ -21,8 +22,12 @@ class NeuralNet:
         self.evaluationSummary()
 
     def setSummaryWriter(self, path, graph):
-        self.train_summary = tf.summary.FileWriter(path + 'train', graph)
-        self.test_summary = tf.summary.FileWriter(path + 'test', graph)
+        states = ['train', 'test']
+        for state in states:
+            state_path = path + state
+            osHelper.deleteFolderContent(state_path)
+            summary_writer = tf.summary.FileWriter(state_path, graph)
+            setattr(self, '_'.join([state, 'summary']), summary_writer)
 
     def evaluationSummary(self):
         loss_summary = tf.summary.scalar("loss", self.cross_entropy)
