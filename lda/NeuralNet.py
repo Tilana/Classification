@@ -20,6 +20,8 @@ class NeuralNet:
         self.getAccuracy()
         self.trainStep()
         self.evaluationSummary()
+        self.gradients()
+        self.gradientSummary()
 
     def setSummaryWriter(self, path, graph):
         states = ['train', 'test']
@@ -48,12 +50,6 @@ class NeuralNet:
         self.Ylogits = tf.matmul(self.X, self.W) + self.b
         self.Y = tf.nn.softmax(self.Ylogits)
 
-    def setSession(self, sess):
-        self.sess = sess
-
-    def initializeVariables(self):
-        self.sess.run(tf.global_variables_initializer())
-
     def multiLayerNN(self, hidden_layer_size=100):
         self.W1 = tf.Variable(tf.truncated_normal([self.input_size, hidden_layer_size]))
         self.W2 = tf.Variable(tf.truncated_normal([hidden_layer_size, self.output_size]))
@@ -76,12 +72,25 @@ class NeuralNet:
         else:
             print 'Warning: unkown Optimizer'
 
+    def gradients(self):
+        self.grads_and_vars = self.optimizer.compute_gradients(self.cross_entropy)
+
     def trainStep(self, summary=1):
         self.train_step = self.optimizer.minimize(self.cross_entropy)
 
     def getAccuracy(self):
         is_correct = tf.equal(tf.argmax(self.Y, 1), tf.argmax(self.Y_,1))
         self.accuracy = tf.reduce_mean(tf.cast(is_correct, tf.float32))
+
+    def gradientSummary(self):
+        grad_summaries = []
+        for g, v in self.grads_and_vars:
+            if g is not None:
+                grad_hist_summary = tf.summary.histogram('{}/grad/hist'.format(v.name), g)
+                sparsity_summary = tf.summary.scalar('{}/grad/sparsity'.format(v.name), tf.nn.zero_fraction(g))
+                grad_summaries.append(grad_hist_summary)
+                grad_summaries.append(sparsity_summary)
+        self.grad_summaries = tf.summary.merge(grad_summaries)
 
 
 

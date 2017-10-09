@@ -129,13 +129,12 @@ def cnn_doc_classification():
     nn = NeuralNet(maxNumberSentences*activations_train.shape[1], nrClasses)
 
     with tf.Session() as sess:
-        nn.setSession(sess)
 
         nn.setSummaryWriter('runs/Test2/', sess.graph)
         nn.buildNeuralNet(multilayer=1, hidden_layer_size=100, optimizerType='GD')
-        nn.initializeVariables()
 
-        #pdb.set_trace()
+        sess.run(tf.global_variables_initializer())
+
 
         Y_train = pd.get_dummies(model.trainTarget.tolist()).as_matrix()
         Y_test = pd.get_dummies(model.testTarget.tolist()).as_matrix()
@@ -150,9 +149,10 @@ def cnn_doc_classification():
             y_batch = np.array(y_batch)
 
             train_data = {nn.X: x_batch, nn.Y_: y_batch, nn.step:c}
-            _, train_summary = sess.run([nn.train_step, nn.summary], feed_dict=train_data)
+            _, train_summary, grad_summary = sess.run([nn.train_step, nn.summary, nn.grad_summaries], feed_dict=train_data)
 
             nn.writeSummary(train_summary, c)
+            nn.writeSummary(grad_summary, c)
 
             entropy = sess.run(nn.cross_entropy, feed_dict=train_data)
             acc = sess.run(nn.accuracy, feed_dict=train_data)
