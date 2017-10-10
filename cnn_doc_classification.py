@@ -38,7 +38,7 @@ ID = 'SA'
 TARGET = 'Sexual.Assault.Manual'
 MODEL_PATH = './runs/' + DATASET + '_' + ID + '/'
 BATCH_SIZE = 100
-ITERATIONS = 100
+ITERATIONS = 600
 multilayer = 1
 
 def cnn_doc_classification():
@@ -114,7 +114,7 @@ def cnn_doc_classification():
     test_docs = testSentences.groupby('id')
     numberSentences = train_docs.count()[TARGET]
     maxNumberSentences = max(numberSentences)
-    maxNumberSentences = 100
+    #maxNumberSentences = 100
     nrClasses = len(trainSentences[TARGET].unique())
 
     print 'Maximal number of sentences in document: {:d}'.format(maxNumberSentences)
@@ -130,8 +130,8 @@ def cnn_doc_classification():
 
     with tf.Session() as sess:
 
-        nn.setSummaryWriter('runs/Test2/', sess.graph)
-        nn.buildNeuralNet(multilayer=1, hidden_layer_size=100, optimizerType='GD')
+        nn.setSummaryWriter('runs/Test2/', tf.get_default_graph())
+        nn.buildNeuralNet(multilayer=1, hidden_layer_size=150, optimizerType='Adam')
 
         sess.run(tf.global_variables_initializer())
 
@@ -148,7 +148,10 @@ def cnn_doc_classification():
             x_batch = np.array(x_batch)
             y_batch = np.array(y_batch)
 
-            train_data = {nn.X: x_batch, nn.Y_: y_batch, nn.step:c}
+            learning_rate = nn.learningRate(c)
+            print 'Learning Rate:' + str(learning_rate)
+
+            train_data = {nn.X: x_batch, nn.Y_: y_batch, nn.step:c, nn.learning_rate: learning_rate}
             _, train_summary, grad_summary = sess.run([nn.train_step, nn.summary, nn.grad_summaries], feed_dict=train_data)
 
             nn.writeSummary(train_summary, c)
@@ -159,8 +162,8 @@ def cnn_doc_classification():
             print 'Entropy: ' + str(entropy)
             print 'Accuracy: ' + str(acc)
 
-            if c % 10 == 0:
-                testData = {nn.X: X_test, nn.Y_: Y_test}
+            if c % 100 == 0:
+                testData = {nn.X: X_test, nn.Y_: Y_test, nn.learning_rate: 0}
                 predictedLabels, test_summary = sess.run([nn.Y, nn.summary], feed_dict=testData)
 
                 nn.writeSummary(test_summary, c, 'test')
