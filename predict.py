@@ -48,13 +48,13 @@ def getTestData(directory, data):
 
 # Data Path
 tf.flags.DEFINE_string("dataset", "ICAAD", "Dataset")
-#tf.flags.DEFINE_string("id", "DV", "dataset category/target")
-tf.flags.DEFINE_string("id", "SA", "dataset category/target")
+tf.flags.DEFINE_string("id", "DV", "dataset category/target")
+#tf.flags.DEFINE_string("id", "SA", "dataset category/target")
 tf.flags.DEFINE_string("sentence_id", "DV", "sentence category")
 tf.flags.DEFINE_string("data_path", "../data", "Data path")
 tf.flags.DEFINE_string("model_path", "./runs", "Model path")
-#tf.flags.DEFINE_string("target", "Domestic.Violence.Manual", "Target")
-tf.flags.DEFINE_string("target", "Sexual.Assault.Manual", "Target")
+tf.flags.DEFINE_string("target", "Domestic.Violence.Manual", "Target")
+#tf.flags.DEFINE_string("target", "Sexual.Assault.Manual", "Target")
 
 FLAGS = tf.flags.FLAGS
 model_name  = '_'.join([FLAGS.dataset, FLAGS.id])
@@ -133,6 +133,11 @@ def predict(data):
     sentenceDF['activation'] = all_activations
     predictedEvidenceSentences = sentenceDF[sentenceDF['predictedLabel']==1]
     predictedEvidenceSentences.set_index('id', inplace=True)
+    sortedEvidenceSentences = predictedEvidenceSentences.sort_values('activation', ascending=False)
+    sortedEvidenceSentences = sortedEvidenceSentences[[FLAGS.target, 'predictedLabel', 'activation', 'sentences']]
+    evidencePath = os.path.join(FLAGS.data_path, FLAGS.dataset, FLAGS.id + '_evidence.csv')
+    sortedEvidenceSentences.to_csv(evidencePath, index=True)
+
     evidencePerDoc = predictedEvidenceSentences.groupby('id')
     evidenceSentences = evidencePerDoc.apply(storeEvidence)
     data = data.merge(evidenceSentences.to_frame('evidence'), left_on='id', right_index=True, how='outer')

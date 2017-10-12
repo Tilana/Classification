@@ -30,6 +30,14 @@ def padDocuments(doc, nrSentences):
     pads[:len(activation)] = activation[:nrSentences]
     return pads
 
+def highestActivation(data, col=1, thresh=100):
+    #pdb.set_trace()
+    pads = np.zeros((thresh, 2))
+    sortedData = data.sort_values(col, ascending=False)
+    data = sortedData[[0,1]].as_matrix()
+    pads[:len(sortedData)] = data[:thresh]
+    return pads
+
 
 
 PATH = '../data/'
@@ -39,7 +47,7 @@ TARGET = 'Sexual.Assault.Manual'
 MODEL_PATH = './runs/' + DATASET + '_' + ID + '/'
 BATCH_SIZE = 100
 ITERATIONS = 600
-multilayer = 1
+multilayer = 0
 
 def cnn_doc_classification():
 
@@ -92,8 +100,9 @@ def cnn_doc_classification():
                     all_activations = np.concatenate([all_activations, batch_activation])
                     batch_probabilities = sess.run(probability, {input_x: x_test_batch, dropout_keep_prob:1.0})
                     all_probabilities = np.concatenate([all_probabilities, batch_probabilities])
+                    #pdb.set_trace()
 
-        return all_probabilities
+        return all_activations
 
 
 
@@ -110,28 +119,39 @@ def cnn_doc_classification():
     trainSentences = trainSentences.merge(pd.DataFrame(activations_train), left_index=True, right_index=True)
     testSentences = testSentences.merge(pd.DataFrame(activations_test), left_index=True, right_index=True)
 
+    trainSentences = trainSentences[['id', TARGET, 0, 1, 'sentences']]
+    trainSentences.to_csv(PATH + DATASET + '/' + ID + '_sentence_activation_train.csv')
+
+    pdb.set_trace()
+
     train_docs = trainSentences.groupby('id')
     test_docs = testSentences.groupby('id')
     numberSentences = train_docs.count()[TARGET]
     maxNumberSentences = max(numberSentences)
-    #maxNumberSentences = 100
+    maxNumberSentences = 800
     nrClasses = len(trainSentences[TARGET].unique())
 
     print 'Maximal number of sentences in document: {:d}'.format(maxNumberSentences)
 
-    X_train = np.array(train_docs.apply(padDocuments, maxNumberSentences).tolist())
-    X_train = X_train.reshape(X_train.shape[0], maxNumberSentences*2)
+    #pdb.set_trace()
 
-    X_test = np.array(test_docs.apply(padDocuments, maxNumberSentences).tolist())
-    X_test = X_test.reshape(X_test.shape[0], maxNumberSentences*2)
+    X_train = np.array(train_docs.apply(highestActivation).tolist())
+    X_test = np.array(test_docs.apply(highestActivation).tolist())
+
+    ##X_train = np.array(train_docs.apply(padDocuments, maxNumberSentences).tolist())
+    X_train = X_train.reshape(X_train.shape[0], 100*2)
+
+    #X_test = np.array(test_docs.apply(padDocuments, maxNumberSentences).tolist())
+    X_test = X_test.reshape(X_test.shape[0], 100*2)
 
 
-    nn = NeuralNet(maxNumberSentences*activations_train.shape[1], nrClasses)
+    #nn = NeuralNet(maxNumberSentences*activations_train.shape[1], nrClasses)
+    nn = NeuralNet(100*activations_train.shape[1], nrClasses)
 
     with tf.Session() as sess:
 
         nn.setSummaryWriter('runs/Test2/', tf.get_default_graph())
-        nn.buildNeuralNet(multilayer=1, hidden_layer_size=150, optimizerType='Adam')
+        nn.buildNeuralNet(multilayer=1, hidden_layer_size=20, optimizerType='Adam')
 
         sess.run(tf.global_variables_initializer())
 
@@ -142,6 +162,7 @@ def cnn_doc_classification():
         batches = data_helpers.batch_iter(list(zip(X_train, Y_train)), BATCH_SIZE, ITERATIONS)
 
         c=0
+        dropout = 0.75
 
         for batch in batches:
             x_batch, y_batch = zip(*batch)
@@ -151,7 +172,7 @@ def cnn_doc_classification():
             learning_rate = nn.learningRate(c)
             print 'Learning Rate:' + str(learning_rate)
 
-            train_data = {nn.X: x_batch, nn.Y_: y_batch, nn.step:c, nn.learning_rate: learning_rate}
+            train_data = {nn.X: x_batch, nn.Y_: y_batch, nn.step:c, nn.learning_rate: learning_rate, nn.pkeep:dropout}
             _, train_summary, grad_summary = sess.run([nn.train_step, nn.summary, nn.grad_summaries], feed_dict=train_data)
 
             nn.writeSummary(train_summary, c)
@@ -163,7 +184,7 @@ def cnn_doc_classification():
             print 'Accuracy: ' + str(acc)
 
             if c % 100 == 0:
-                testData = {nn.X: X_test, nn.Y_: Y_test, nn.learning_rate: 0}
+                testData = {nn.X: X_test, nn.Y_: Y_test, nn.learning_rate: 0, nn.pkeep:1.0}
                 predictedLabels, test_summary = sess.run([nn.Y, nn.summary], feed_dict=testData)
 
                 nn.writeSummary(test_summary, c, 'test')
@@ -171,7 +192,6 @@ def cnn_doc_classification():
             c = c + 1
 
 
-        testData = {nn.X: X_test, nn.Y_: Y_test}
         predictedLabels = sess.run(nn.Y, feed_dict=testData)
         model.testData['predictedLabel'] = np.argmax(predictedLabels, 1)
         model.testData['probability'] = np.max(predictedLabels, 1)
