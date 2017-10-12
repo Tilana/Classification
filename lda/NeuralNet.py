@@ -11,6 +11,7 @@ class NeuralNet:
         self.Y_ = tf.placeholder(tf.float32, [None, self.output_size])
         self.step = tf.placeholder(tf.float32, shape=(), name='init')
         self.learning_rate = tf.placeholder(tf.float32, shape=())
+        self.pkeep = tf.placeholder(tf.float32, shape=())
 
     def buildNeuralNet(self, multilayer, hidden_layer_size, optimizerType):
         if multilayer:
@@ -60,7 +61,9 @@ class NeuralNet:
         self.b2 = tf.Variable(tf.zeros([self.output_size]))
 
         self.Y1 = tf.nn.relu(tf.matmul(self.X, self.W1) + self.b1)
-        self.Ylogits = tf.matmul(self.Y1, self.W2) + self.b2
+        self.Y1d = tf.nn.dropout(self.Y1, self.pkeep)
+
+        self.Ylogits = tf.matmul(self.Y1d, self.W2) + self.b2
         self.Y = tf.nn.softmax(self.Ylogits)
 
     def crossEntropy(self):
@@ -87,7 +90,7 @@ class NeuralNet:
         is_correct = tf.equal(tf.argmax(self.Y, 1), tf.argmax(self.Y_,1))
         self.accuracy = tf.reduce_mean(tf.cast(is_correct, tf.float32))
 
-    def learningRate(self, step, max_lr=0.003, min_lr=0.0001, decay_speed=1500):
+    def learningRate(self, step, max_lr=0.003, min_lr=0.0001, decay_speed=2000):
         return min_lr + (max_lr - min_lr) * math.exp(-step/decay_speed)
 
     def gradientSummary(self):
