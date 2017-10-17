@@ -93,10 +93,17 @@ target = 'cmp_code'
 id_name = 'cmp_code'
 categoryOfInterest = 110
 
+dataset = 'UPR'
+path = '../data/UPR/UPR_DATABASE.csv'
+target = 'label'
+id_name = 'UPR'
+categoryOfInterest = 'Minorities'
+
 # Load data
 print("Loading data...")
 data = pd.read_csv(path)
 data = data.rename(columns = {'Unnamed: 0': 'id'})
+data = data.rename(columns = {'Recommendation': 'text'})
 
 #posSample = data[data[target]==categoryOfInterest]
 #negSample = data[data[target] == negCategory].sample(len(posSample))
@@ -105,8 +112,6 @@ data = data.rename(columns = {'Unnamed: 0': 'id'})
 # Randomly split data in training and test set
 labels = data[target].tolist()
 y = pd.get_dummies(labels).values
-
-#pdb.set_trace()
 
 #x_train, x_dev, y_train, y_dev = train_test_split(data.sentence, y, test_size=0.3, random_state=200)
 x_train, x_dev, y_train, y_dev = train_test_split(data.text, y, test_size=0.3, random_state=200)

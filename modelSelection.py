@@ -19,7 +19,7 @@ def createResultPath(name, target,  **args):
 def modelSelection(collection, target, features, nrTrainingDocs=None, whitelist=None):
 
     pca=False
-    pcaComponents = 130 
+    pcaComponents = 130
     resultPath = createResultPath(collection.name, target)
 
     model = ClassificationModel()
@@ -28,9 +28,9 @@ def modelSelection(collection, target, features, nrTrainingDocs=None, whitelist=
     nrTrainingDocs = nrTrainingDocs
     if not nrTrainingDocs:
         nrTrainingDocs = len(model.data)/100*70
-    
+
     results = pd.DataFrame(columns=classifierTypes, index=['Best score', 'params', 'Test Accuracy', 'Test Precision', 'Test Recall'])
-    
+
     model.targetFeature = target
     model.features = features
     model.whitelist = whitelist
@@ -46,7 +46,7 @@ def modelSelection(collection, target, features, nrTrainingDocs=None, whitelist=
     for classifierType in classifierTypes:
         print classifierType
 
-        model.buildClassifier(classifierType) 
+        model.buildClassifier(classifierType)
         weightedFscore = model.weightFScore(2)
         (score, params) = model.gridSearch(features, scoring=weightedFscore, scaling=False, pca=pca, components=pcaComponents)
         print('Best score: %0.3f' % score)
@@ -68,7 +68,7 @@ def modelSelection(collection, target, features, nrTrainingDocs=None, whitelist=
     bestModel.name = collection.name
     #toCSV(results, resultPath)
 
-    return bestModel 
+    return bestModel
 
 
 if __name__=='__main__':

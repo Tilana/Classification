@@ -19,6 +19,8 @@ def textToSentenceData(data):
     sentences = splitInSentences(data, TARGET)
     return pd.DataFrame(sentences, columns=['id', TARGET, 'sentences'])
 
+def sentenceLength(sentence):
+    return len(sentence.split())
 
 def loadProcessor(directory):
     vocab_path = os.path.join(directory, "vocab")
@@ -30,11 +32,11 @@ def padDocuments(doc, nrSentences):
     pads[:len(activation)] = activation[:nrSentences]
     return pads
 
-def highestActivation(data, col=1, thresh=100):
+def highestActivation(data, col=0, thresh=100):
     #pdb.set_trace()
-    pads = np.zeros((thresh, 2))
+    pads = np.zeros((thresh, 1))
     sortedData = data.sort_values(col, ascending=False)
-    data = sortedData[[0,1]].as_matrix()
+    data = sortedData[[0]].as_matrix()
     pads[:len(sortedData)] = data[:thresh]
     return pads
 
@@ -43,11 +45,13 @@ def highestActivation(data, col=1, thresh=100):
 PATH = '../data/'
 DATASET = 'ICAAD'
 ID = 'SA'
+#ID = 'DV'
 TARGET = 'Sexual.Assault.Manual'
+#TARGET = 'Domestic.Violence.Manual'
 MODEL_PATH = './runs/' + DATASET + '_' + ID + '/'
 BATCH_SIZE = 100
 ITERATIONS = 600
-multilayer = 0
+multilayer = 1
 
 def cnn_doc_classification():
 
@@ -102,7 +106,7 @@ def cnn_doc_classification():
                     all_probabilities = np.concatenate([all_probabilities, batch_probabilities])
                     #pdb.set_trace()
 
-        return all_activations
+        return np.concatenate([all_activations, all_probabilities], axis=1)
 
 
 
@@ -110,19 +114,29 @@ def cnn_doc_classification():
     trainSentences = textToSentenceData(model.trainData)
     testSentences = textToSentenceData(model.testData)
 
+    trainSentences['sentenceLength'] = trainSentences.sentences.apply(sentenceLength)
+    trainSentences = trainSentences[trainSentences.sentenceLength > 5]
+    trainSentences = trainSentences[trainSentences.sentenceLength < 300]
+
+
+    testSentences['sentenceLength'] = testSentences.sentences.apply(sentenceLength)
+    testSentences = testSentences[testSentences.sentenceLength > 5]
+    testSentences = testSentences[testSentences.sentenceLength < 300]
+
     x_train = np.array(list(vocab_processor.transform(trainSentences.sentences.tolist())))
     x_test = np.array(list(vocab_processor.transform(testSentences.sentences.tolist())))
 
-    activations_train = getSentenceActivation(x_train)
+    activations_train  = getSentenceActivation(x_train)
     activations_test = getSentenceActivation(x_test)
 
     trainSentences = trainSentences.merge(pd.DataFrame(activations_train), left_index=True, right_index=True)
     testSentences = testSentences.merge(pd.DataFrame(activations_test), left_index=True, right_index=True)
 
-    trainSentences = trainSentences[['id', TARGET, 0, 1, 'sentences']]
+    trainSentences = trainSentences[['id', TARGET, 0, 1, 2, 3, 'sentences']]
     trainSentences.to_csv(PATH + DATASET + '/' + ID + '_sentence_activation_train.csv')
 
-    pdb.set_trace()
+    testSentences = testSentences[['id', TARGET, 0, 1, 2, 3, 'sentences']]
+    testSentences.to_csv(PATH + DATASET + '/' + ID + '_sentence_activation_test.csv')
 
     train_docs = trainSentences.groupby('id')
     test_docs = testSentences.groupby('id')
@@ -133,25 +147,26 @@ def cnn_doc_classification():
 
     print 'Maximal number of sentences in document: {:d}'.format(maxNumberSentences)
 
-    #pdb.set_trace()
+    pdb.set_trace()
 
     X_train = np.array(train_docs.apply(highestActivation).tolist())
     X_test = np.array(test_docs.apply(highestActivation).tolist())
 
     ##X_train = np.array(train_docs.apply(padDocuments, maxNumberSentences).tolist())
-    X_train = X_train.reshape(X_train.shape[0], 100*2)
+    X_train = X_train.reshape(X_train.shape[0], 100)
 
     #X_test = np.array(test_docs.apply(padDocuments, maxNumberSentences).tolist())
-    X_test = X_test.reshape(X_test.shape[0], 100*2)
+    X_test = X_test.reshape(X_test.shape[0], 100)
 
 
     #nn = NeuralNet(maxNumberSentences*activations_train.shape[1], nrClasses)
-    nn = NeuralNet(100*activations_train.shape[1], nrClasses)
+    #nn = NeuralNet(100*activations_train.shape[1], nrClasses)
+    nn = NeuralNet(100, nrClasses)
 
     with tf.Session() as sess:
 
         nn.setSummaryWriter('runs/Test2/', tf.get_default_graph())
-        nn.buildNeuralNet(multilayer=1, hidden_layer_size=20, optimizerType='Adam')
+        nn.buildNeuralNet(multilayer, hidden_layer_size=20, optimizerType='Adam')
 
         sess.run(tf.global_variables_initializer())
 

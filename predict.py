@@ -11,9 +11,9 @@ from tensorflow.contrib import learn
 import csv
 import pandas as pd
 import pdb
-from data_helpers import splitInSentences
+from data_helpers import splitInSentences, clean_str
 from sklearn.metrics import accuracy_score, precision_score, recall_score
-from lda import Viewer, ClassificationModel, Evaluation
+from lda import Viewer, ClassificationModel, Evaluation, Preprocessor
 
 def setFinalPrediction(data):
     predictions = data.predictedLabel
@@ -25,8 +25,8 @@ def setFinalPrediction(data):
         print 'Warning: negative predictions'
 
 
-def textToSentenceData(data):
-    sentences = splitInSentences(data, FLAGS.target)
+def textToSentenceData(data, target):
+    sentences = splitInSentences(data, target)
     return pd.DataFrame(sentences, columns=['id', FLAGS.target, 'sentences'])
 
 def storeEvidence(data):
@@ -47,17 +47,24 @@ def getTestData(directory, data):
 # ==================================================
 
 # Data Path
-tf.flags.DEFINE_string("dataset", "ICAAD", "Dataset")
-tf.flags.DEFINE_string("id", "DV", "dataset category/target")
+#tf.flags.DEFINE_string("dataset", "ICAAD", "Dataset")
+tf.flags.DEFINE_string("dataset", "HRC", "Dataset")
+tf.flags.DEFINE_string("id", "Minorities", "dataset category/target")
+#tf.flags.DEFINE_string("id", "DV", "dataset category/target")
 #tf.flags.DEFINE_string("id", "SA", "dataset category/target")
-tf.flags.DEFINE_string("sentence_id", "DV", "sentence category")
+tf.flags.DEFINE_string("sentence_id", "HRC", "sentence category")
+#tf.flags.DEFINE_string("sentence_id", "DV", "sentence category")
 tf.flags.DEFINE_string("data_path", "../data", "Data path")
 tf.flags.DEFINE_string("model_path", "./runs", "Model path")
-tf.flags.DEFINE_string("target", "Domestic.Violence.Manual", "Target")
+tf.flags.DEFINE_string("target", "Minorities", "Target")
+#tf.flags.DEFINE_string("target", "Domestic.Violence.Manual", "Target")
 #tf.flags.DEFINE_string("target", "Sexual.Assault.Manual", "Target")
+
+mapping = {'Disabilities':0, 'Enforced disappearances':1, 'Freedom of opinion and expression':2, 'Human rights violations by state agents':3, 'International humanitarian law':4, 'Migrants':5, 'Minorities':6, 'Poverty':7, 'Trafficking':8}
 
 FLAGS = tf.flags.FLAGS
 model_name  = '_'.join([FLAGS.dataset, FLAGS.id])
+model_name  = 'UPR_UPR'
 checkpoint_dir = os.path.join(FLAGS.model_path, model_name)
 
 # Eval Parameters
@@ -80,13 +87,19 @@ print("")
 
 def predict(data):
 
+
     model = ClassificationModel()
     model.targetFeature = FLAGS.target
     model.classifierType = 'CNN sentences'
     model.classificationType = 'binary'
+    #data = data[:10]
 
+    preprocessor = Preprocessor()
+    data.text = data.text.apply(preprocessor.removeHTMLtags)
 
-    sentenceDF = textToSentenceData(data)
+    sentenceDF = textToSentenceData(data, 'Symbol')
+    sentenceDF['sentences'] = sentenceDF.sentences.apply(clean_str)
+
     x_raw = sentenceDF.sentences.tolist()
 
     vocab_processor = loadProcessor(FLAGS.checkpoint_dir)
@@ -131,12 +144,21 @@ def predict(data):
 
     sentenceDF['predictedLabel'] = all_predictions
     sentenceDF['activation'] = all_activations
-    predictedEvidenceSentences = sentenceDF[sentenceDF['predictedLabel']==1]
+
+    for category, categoryID in mapping.iteritems():
+        print category
+        categoryEvidence = sentenceDF[sentenceDF['predictedLabel']==categoryID]
+        sortedEvidence = categoryEvidence.sort_values('activation', ascending=False)
+        sortedEvidence.to_csv(checkpoint_dir + '/evidence_' + category + '.csv')
+
+
+    categoryValue = mapping[FLAGS.target]
+    predictedEvidenceSentences = sentenceDF[sentenceDF['predictedLabel']==categoryValue]
     predictedEvidenceSentences.set_index('id', inplace=True)
-    sortedEvidenceSentences = predictedEvidenceSentences.sort_values('activation', ascending=False)
-    sortedEvidenceSentences = sortedEvidenceSentences[[FLAGS.target, 'predictedLabel', 'activation', 'sentences']]
-    evidencePath = os.path.join(FLAGS.data_path, FLAGS.dataset, FLAGS.id + '_evidence.csv')
-    sortedEvidenceSentences.to_csv(evidencePath, index=True)
+    #sortedEvidenceSentences = predictedEvidenceSentences.sort_values('activation', ascending=False)
+    #sortedEvidenceSentences = sortedEvidenceSentences[[FLAGS.target, 'predictedLabel', 'activation', 'sentences']]
+    #evidencePath = os.path.join(FLAGS.data_path, FLAGS.dataset, FLAGS.id + '_evidence.csv')
+    #sortedEvidenceSentences.to_csv(evidencePath, index=True)
 
     evidencePerDoc = predictedEvidenceSentences.groupby('id')
     evidenceSentences = evidencePerDoc.apply(storeEvidence)
@@ -150,31 +172,39 @@ def predict(data):
 
     print 'Total number of documents: {:d}'.format(len(data))
     print 'Total number of sentences: {:d}'.format(len(sentenceDF))
-    print 'Total number of {:s} documents: {:d}'.format(FLAGS.target, sum(data[FLAGS.target]==1))
+    #print 'Total number of {:s} documents: {:d}'.format(FLAGS.target, sum(data[FLAGS.target]==1))
     print 'Total number of {:s} predicted documents: {:d}'.format(FLAGS.target, sum(data.predictedLabel==1))
     print 'Total number of {:s} predicted sentences: {:d}'.format(FLAGS.target, sum(sentenceDF.predictedLabel==1))
 
     model.testData = data
-    model.testTarget = data[FLAGS.target].tolist()
-    model.testIndices = model.testData.index
-    model.evaluate()
-    model.evaluation.confusionMatrix()
+    #model.testTarget = data[FLAGS.target].tolist()
+    #model.testIndices = model.testData.index
+    #model.evaluate()
+    #model.evaluation.confusionMatrix()
 
     viewer = Viewer(FLAGS.dataset, FLAGS.target)
 
     displayFeatures = ['Court', 'Year', 'Sexual.Assault.Manual', 'Domestic.Violence.Manual', 'predictedLabel', 'tag', 'Family.Member.Victim', 'probability', 'Age', 'evidence']
     viewer.printDocuments(model.testData, displayFeatures, FLAGS.target)
-    viewer.classificationResults(model, normalized=False)
+    #viewer.classificationResults(model, normalized=False)
 
     pdb.set_trace()
 
 
 if __name__=='__main__':
     data_name = FLAGS.dataset + '.pkl'
+    data_name = FLAGS.dataset + '.csv'
     data_path = os.path.join(FLAGS.data_path, FLAGS.dataset, data_name)
-    data = pd.read_pickle(data_path)
 
-    testData = getTestData(checkpoint_dir, data)
+    #data = pd.read_pickle(data_path)
+    data = pd.read_csv(data_path, encoding='utf8')
+    data = data.dropna(subset=['text'])
+    data['id'] = data.index
+
+
+    #testData = getTestData(checkpoint_dir, data)
+    #pdb.set_trace()
     #predict(testData[:30])
-    predict(testData)
+    #predict(testData)
+    predict(data)
 

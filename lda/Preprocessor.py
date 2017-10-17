@@ -14,7 +14,7 @@ numberDict = {'zero': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5, '
 class Preprocessor:
 
     def __init__(self, processor='tfIdf', min_df=10, max_df=0.5, stop_words='english', ngram_range=(1,2), max_features=8000, vocabulary=None, token_pattern=r'(?u)\b\w\w+\b', binary=False):
-        self.vectorizer = TfidfVectorizer(min_df=min_df, max_df=max_df, stop_words=stop_words, ngram_range=ngram_range, max_features=max_features, vocabulary = vocabulary, tokenizer=self.createPosLemmaTokens, binary=binary) 
+        self.vectorizer = TfidfVectorizer(min_df=min_df, max_df=max_df, stop_words=stop_words, ngram_range=ngram_range, max_features=max_features, vocabulary = vocabulary, tokenizer=self.createPosLemmaTokens, binary=binary)
         if processor=='tf':
             self.vectorizer = CountVectorizer(min_df=min_df, max_df=max_df, stop_words=stop_words, ngram_range=ngram_range, max_features = max_features, tokenizer=self.createPosLemmaTokens, vocabulary=vocabulary, binary=binary)
         self.WordNet = WordNetLemmatizer()
@@ -25,7 +25,7 @@ class Preprocessor:
         wordCounts = self.vectorizer.fit_transform(docs)
         self.setVocabulary()
         return [docVec for docVec in wordCounts.toarray()]
-                                                                              
+
 
     def vectorizeDocs(self, docs):
         wordCounts = self.vectorizer.transform(docs)
@@ -41,8 +41,8 @@ class Preprocessor:
                 lemmas.append(lemma)
             else:
                 lemmas.append(token)
-        return lemmas 
-                                                                                                                             
+        return lemmas
+
     def createPosLemmaTokens(self, text):
         token_pattern = re.compile(self.token_pattern)
         tokens = token_pattern.findall(text)
@@ -108,7 +108,7 @@ class Preprocessor:
         writtenNumbers = numberDict.keys()
         return set([word for word in wordpunct_tokenize(text.lower()) if word in writtenNumbers])
 
-    
+
     def numbersInTextToDigits(self, text):
         wordNumbers = self.findNumbers(text)
         for word in wordNumbers:
@@ -116,19 +116,19 @@ class Preprocessor:
             text = re.sub(word, digitNum, text)
         return text
 
-    
+
     def cleanText(self, text):
         tokens = self.wordTokenize(text.lower())
         posTags = self.posTagging(tokens)
         lemmas = self.posLemmatize(posTags)
         return ' '.join(lemmas)
 
-    
+
     def removeHTMLtags(self, text):
-        html = BeautifulSoup(text)
+        html = BeautifulSoup(text, 'lxml')
         return html.get_text()
 
-    
+
     def removeStopwords(self, text, stopchars=None):
         if not stopchars:
             stopchars= stopwords.words('english') + list(string.punctuation) + ['--', "''", '``', "'s"]
@@ -137,4 +137,4 @@ class Preprocessor:
 
 
 
-        
+

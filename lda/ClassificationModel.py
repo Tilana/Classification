@@ -33,7 +33,7 @@ class ClassificationModel:
             self.data = data
         self.targetFeature = target
 
-    
+
     def splitDataset(self, num, random=True):
         self._generateHalfSplitIndices(num)
         if random:
@@ -65,13 +65,13 @@ class ClassificationModel:
         for trainIndex, testIndex in split.split(X,y):
             self.trainIndices = trainIndex
             self.testIndices = testIndex
-        
+
 
     def _generateHalfSplitIndices(self, num):
         self.trainIndices = self.data.index[:num]
         self.testIndices = self.data.index[num:]
 
-    
+
     def balanceDataset(self, factor=1):
         trueCases = df.getIndex(df.filterData(self.data, self.targetFeature))
         negativeCases = list(set(df.getIndex(self.data)) - set(trueCases))
@@ -85,11 +85,11 @@ class ClassificationModel:
     def getRandomSample(self, data, n):
         return random.sample(data, n)
 
-    
+
     def cleanDataset(self):
         for field in self.data.columns[self.data.dtypes==object]:
             self.data = self.data.drop(field, axis=1)
-    
+
     def object2CategoricalFeature(self, column):
         category = 0
         for value in self.data[column].unique():
@@ -157,7 +157,7 @@ class ClassificationModel:
     def trainClassifier(self, features, scaling=False, pca=False, components=10, selectFeatures=False):
         self.scaling = scaling
         self.pca = pca
-        self.selectFeatures = selectFeatures 
+        self.selectFeatures = selectFeatures
         target = self.trainTarget.tolist()
         if self.whitelist:
             self.increaseWeights(self.trainData, 'tfIdf', self.whitelist)
@@ -183,7 +183,7 @@ class ClassificationModel:
         self.validation.recall()
         self.validation.precision()
 
-    
+
     def predict(self, features):
         if self.whitelist:
             self.increaseWeights(self.testData, 'tfIdf', self.whitelist)
@@ -223,7 +223,7 @@ class ClassificationModel:
         weightsDF = pd.DataFrame(weights)
         for index in wordIndices:
             #weightsDF[index] = weightsDF[index].add(addValue)
-            weightsDF[index] = weightsDF[index].multiply(2) 
+            weightsDF[index] = weightsDF[index].multiply(2)
         data[col] = df.combineColumnValues(weightsDF, range(0,weightsDF.shape[1]))
 
 
@@ -281,18 +281,18 @@ class ClassificationModel:
 
     def getSelectedTopics(self, topicNr, selectedTopics=None):
         self.topicList = self.getTopicList(topicNr)
-        if selectedTopics != None: 
+        if selectedTopics != None:
             self.selectedTopics = [('Topic%d' % topic) for topic in selectedTopics]
             self.addUnselectedTopicsToDroplist()
 
     def getTopicList(self, topicNr):
-        return [('Topic%d' % topic) for topic in range(0, topicNr)] 
+        return [('Topic%d' % topic) for topic in range(0, topicNr)]
 
     def getSimilarDocs(self, nrDocs=5):
         return [('similarDocs%d' % docNr) for docNr in range(1, nrDocs+1)]
 
     def getRelevantWords(self, nrWords=3):
-        return [('relevantWord%d' % docNr) for docNr in range(1, nrWords+1)] 
+        return [('relevantWord%d' % docNr) for docNr in range(1, nrWords+1)]
 
     def weightFScore(self, beta):
         return make_scorer(fbeta_score, beta=beta, average='macro')
@@ -302,8 +302,8 @@ class ClassificationModel:
         testDocs = self.testData.text.tolist()
         self.testData[vecType] = preprocessor.vectorizeDocs(testDocs)
 
-    
-    
 
 
-        
+
+
+
