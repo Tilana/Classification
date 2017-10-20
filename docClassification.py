@@ -52,13 +52,14 @@ ID = 'DV'
 TARGET = 'Sexual.Assault.Manual'
 TARGET = 'Domestic.Violence.Manual'
 MODEL_PATH = './runs/' + DATASET + '_' + ID + '/'
-BATCH_SIZE = 50
-ITERATIONS = 900
-multilayer = 1
+BATCH_SIZE = 20
+ITERATIONS = 200
+nnType = 'cnn'
 
 def docClassification():
 
     data_path = os.path.join(PATH, DATASET, DATASET + '.pkl')
+    #data_path = os.path.join(PATH, DATASET, DATASET + '_evidenceSummary.pkl')
     data = pd.read_pickle(data_path)
     data.set_index('id', inplace=True, drop=False)
 
@@ -129,7 +130,7 @@ def docClassification():
     with tf.Session() as sess:
 
         nn.setSummaryWriter('runs/Test3/', tf.get_default_graph())
-        nn.buildNeuralNet(multilayer, hidden_layer_size=3, optimizerType='Adam')
+        nn.buildNeuralNet(nnType, hidden_layer_size=3, optimizerType='Adam')
 
         sess.run(tf.global_variables_initializer())
 
@@ -157,7 +158,8 @@ def docClassification():
             print 'Entropy: ' + str(entropy)
             print 'Accuracy: ' + str(acc)
 
-            if c % 100 == 0:
+            if c % 30 == 1:
+                #pdb.set_trace()
                 testData = {nn.X: X_test, nn.Y_: Y_test, nn.learning_rate: 0, nn.pkeep:1.0}
                 predictedLabels, test_summary = sess.run([nn.Y, nn.summary], feed_dict=testData)
 

@@ -4,18 +4,28 @@ import math
 
 class NeuralNet:
 
-    def __init__(self, input_size, output_size, multilayer=1, hidden_layer_size=100, optimizerType='GD'):
+    def __init__(self, input_size, output_size):
         self.input_size = input_size
         self.output_size = output_size
-        self.X = tf.placeholder(tf.float32, [None, self.input_size])
-        self.Y_ = tf.placeholder(tf.float32, [None, self.output_size])
+        print 'Input size: ' +  str(input_size)
+        print 'Output size: ' +  str(output_size)
+        #self.X = tf.placeholder(tf.float32, [None, self.input_size])
+        self.X = tf.placeholder(tf.int32, [None, self.input_size])
+        #self.Y_ = tf.placeholder(tf.float32, [None, self.output_size])
+        self.Y_ = tf.placeholder(tf.int64, [None, self.output_size])
+        #self.Y_ = tf.placeholder(tf.int64, [None,])
         self.step = tf.placeholder(tf.float32, shape=(), name='init')
         self.learning_rate = tf.placeholder(tf.float32, shape=())
         self.pkeep = tf.placeholder(tf.float32, shape=())
 
-    def buildNeuralNet(self, multilayer, hidden_layer_size, optimizerType):
-        if multilayer:
+    def buildNeuralNet(self, nnType='multi', vocab_size=None, hidden_layer_size=100, optimizerType='GD', sequence_length=None):
+        self.nnType = nnType
+        self.vocab_size = vocab_size
+        self.sequence_length = sequence_length
+        if nnType=='multi':
             self.multiLayerNN(hidden_layer_size)
+        elif nnType =='cnn':
+            self.cnn()
         else:
             self.oneLayerNN()
         self.crossEntropy()
@@ -52,6 +62,7 @@ class NeuralNet:
         self.W = tf.Variable(tf.zeros([self.input_size, self.output_size]))
         self.b = tf.Variable(tf.zeros([self.output_size]))
         self.Ylogits = tf.matmul(self.X, self.W) + self.b
+        #self.Ylogits = tf.argmax(
         self.Y = tf.nn.softmax(self.Ylogits)
 
     def multiLayerNN(self, hidden_layer_size=100):
@@ -66,9 +77,47 @@ class NeuralNet:
         self.Ylogits = tf.matmul(self.Y1d, self.W2) + self.b2
         self.Y = tf.nn.softmax(self.Ylogits)
 
+    def cnn(self, embedding_size=128, filter_sizes=[3,4,5], num_filters=128):
+        self.l2_loss = tf.constant(0.0)
+
+        # Embedding Layer
+        self.W = tf.Variable(tf.random_uniform([self.vocab_size, embedding_size], -1.0, 1.0), name='W')
+        self.embedded_chars = tf.nn.embedding_lookup(self.W, self.X)
+        self.embedded_chars_expanded = tf.expand_dims(self.embedded_chars, -1)
+
+        # Convolution + Maxpool layer
+        pooled_outputs = []
+        for i, filter_size in enumerate(filter_sizes):
+            filter_shape = [filter_size, embedding_size, 1, num_filters]
+            W_filter = tf.Variable(tf.truncated_normal(filter_shape, stddev=0.1), name="W_filter")
+            b_filter = tf.Variable(tf.constant(0.1, shape=[num_filters]), name="b_filter")
+            conv = tf.nn.conv2d(self.embedded_chars_expanded, W_filter, strides=[1, 1, 1, 1], padding="VALID", name="conv")
+            h = tf.nn.relu(tf.nn.bias_add(conv, b_filter), name="relu")
+            pooled = tf.nn.max_pool(h, ksize=[1, self.sequence_length - filter_size + 1, 1, 1], strides=[1, 1, 1, 1], padding='VALID', name="pool")
+            pooled_outputs.append(pooled)
+
+        num_filters_total = num_filters * len(filter_sizes)
+        self.h_pool = tf.concat(pooled_outputs, 3)
+        self.h_pool_flat = tf.reshape(self.h_pool, [-1, num_filters_total])
+
+        self.h_drop = tf.nn.dropout(self.h_pool_flat, self.pkeep)
+
+        W = tf.get_variable("W", shape=[num_filters_total, self.output_size], initializer=tf.contrib.layers.xavier_initializer())
+
+        self.b = tf.Variable(tf.constant(0.1, shape=[self.output_size]), name="b")
+        self.l2_loss += tf.nn.l2_loss(self.W)
+        self.l2_loss += tf.nn.l2_loss(self.b)
+        self.Ylogits = tf.nn.xw_plus_b(self.h_drop, W, self.b, name="scores")
+        self.Y = tf.argmax(self.Ylogits, 1)
+
+
     def crossEntropy(self):
         cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=self.Ylogits, labels=self.Y_)
-        self.cross_entropy = tf.reduce_mean(cross_entropy)*100
+        if self.nnType=='cnn':
+            l2_reg_lambda = 0.0
+            self.cross_entropy = tf.reduce_mean(cross_entropy) + l2_reg_lambda * self.l2_loss
+        else:
+            self.cross_entropy = tf.reduce_mean(cross_entropy)*100
 
     def optimizer(self, optimizerType='GD', learning_rate=0.003, decay=True):
         if decay:
@@ -87,7 +136,10 @@ class NeuralNet:
         self.train_step = self.optimizer.minimize(self.cross_entropy)
 
     def getAccuracy(self):
-        is_correct = tf.equal(tf.argmax(self.Y, 1), tf.argmax(self.Y_,1))
+        if self.nnType=='cnn':
+            is_correct = tf.equal(self.Y, tf.argmax(self.Y_,1))
+        else:
+            is_correct = tf.equal(tf.argmax(self.Y, 1), tf.argmax(self.Y_, 1))
         self.accuracy = tf.reduce_mean(tf.cast(is_correct, tf.float32))
 
     def learningRate(self, step, max_lr=0.003, min_lr=0.0001, decay_speed=2000):

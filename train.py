@@ -99,11 +99,24 @@ target = 'label'
 id_name = 'UPR'
 categoryOfInterest = 'Minorities'
 
+dataset = 'ICAAD'
+id_name = 'DV'
+path = '../data/ICAAD/ICAAD_evidenceSummary.pkl'
+textCol = 'evidenceText_' + id_name
+target = 'Domestic.Violence.Manual'
+
+
+
 # Load data
 print("Loading data...")
-data = pd.read_csv(path)
-data = data.rename(columns = {'Unnamed: 0': 'id'})
-data = data.rename(columns = {'Recommendation': 'text'})
+#data = pd.read_csv(path)
+
+data = pd.read_pickle(path)
+data = data.dropna(subset=[textCol])
+
+#pdb.set_trace()
+#data = data.rename(columns = {'Unnamed: 0': 'id'})
+#data = data.rename(columns = {'Recommendation': 'text'})
 
 #posSample = data[data[target]==categoryOfInterest]
 #negSample = data[data[target] == negCategory].sample(len(posSample))
@@ -114,7 +127,7 @@ labels = data[target].tolist()
 y = pd.get_dummies(labels).values
 
 #x_train, x_dev, y_train, y_dev = train_test_split(data.sentence, y, test_size=0.3, random_state=200)
-x_train, x_dev, y_train, y_dev = train_test_split(data.text, y, test_size=0.3, random_state=200)
+x_train, x_dev, y_train, y_dev = train_test_split(data[textCol], y, test_size=0.3, random_state=200)
 trainDocs = data.loc[x_train.index].id.unique()
 testDocs = data.loc[x_dev.index].id.unique()
 indices = pd.DataFrame([trainDocs, testDocs], index=['train', 'test'])
@@ -142,6 +155,8 @@ infoTarget = [infoTarget, infoClassNumber]
 
 infoTrain = summarize(y_train, 'training', categoryOfInterest)
 infoTest = summarize(y_dev, 'dev', categoryOfInterest)
+
+pdb.set_trace()
 
 
 

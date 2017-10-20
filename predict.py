@@ -47,24 +47,24 @@ def getTestData(directory, data):
 # ==================================================
 
 # Data Path
-#tf.flags.DEFINE_string("dataset", "ICAAD", "Dataset")
-tf.flags.DEFINE_string("dataset", "HRC", "Dataset")
-tf.flags.DEFINE_string("id", "Minorities", "dataset category/target")
-#tf.flags.DEFINE_string("id", "DV", "dataset category/target")
+tf.flags.DEFINE_string("dataset", "ICAAD", "Dataset")
+#tf.flags.DEFINE_string("dataset", "HRC", "Dataset")
+#tf.flags.DEFINE_string("id", "Minorities", "dataset category/target")
+tf.flags.DEFINE_string("id", "DV", "dataset category/target")
 #tf.flags.DEFINE_string("id", "SA", "dataset category/target")
-tf.flags.DEFINE_string("sentence_id", "HRC", "sentence category")
-#tf.flags.DEFINE_string("sentence_id", "DV", "sentence category")
+#tf.flags.DEFINE_string("sentence_id", "HRC", "sentence category")
+tf.flags.DEFINE_string("sentence_id", "DV", "sentence category")
 tf.flags.DEFINE_string("data_path", "../data", "Data path")
 tf.flags.DEFINE_string("model_path", "./runs", "Model path")
-tf.flags.DEFINE_string("target", "Minorities", "Target")
-#tf.flags.DEFINE_string("target", "Domestic.Violence.Manual", "Target")
+#tf.flags.DEFINE_string("target", "Minorities", "Target")
+tf.flags.DEFINE_string("target", "Domestic.Violence.Manual", "Target")
 #tf.flags.DEFINE_string("target", "Sexual.Assault.Manual", "Target")
 
-mapping = {'Disabilities':0, 'Enforced disappearances':1, 'Freedom of opinion and expression':2, 'Human rights violations by state agents':3, 'International humanitarian law':4, 'Migrants':5, 'Minorities':6, 'Poverty':7, 'Trafficking':8}
+#mapping = {'Disabilities':0, 'Enforced disappearances':1, 'Freedom of opinion and expression':2, 'Human rights violations by state agents':3, 'International humanitarian law':4, 'Migrants':5, 'Minorities':6, 'Poverty':7, 'Trafficking':8}
 
 FLAGS = tf.flags.FLAGS
 model_name  = '_'.join([FLAGS.dataset, FLAGS.id])
-model_name  = 'UPR_UPR'
+#model_name  = 'UPR_UPR'
 checkpoint_dir = os.path.join(FLAGS.model_path, model_name)
 
 # Eval Parameters
@@ -92,15 +92,21 @@ def predict(data):
     model.targetFeature = FLAGS.target
     model.classifierType = 'CNN sentences'
     model.classificationType = 'binary'
+
+    pdb.set_trace()
+
+    #pdb.set_trace()
     #data = data[:10]
 
-    preprocessor = Preprocessor()
-    data.text = data.text.apply(preprocessor.removeHTMLtags)
+    #preprocessor = Preprocessor()
+    #data.text = data.text.apply(preprocessor.removeHTMLtags)
 
-    sentenceDF = textToSentenceData(data, 'Symbol')
-    sentenceDF['sentences'] = sentenceDF.sentences.apply(clean_str)
+    #sentenceDF = textToSentenceData(data, 'Symbol')
+    #sentenceDF['sentences'] = sentenceDF.sentences.apply(clean_str)
 
-    x_raw = sentenceDF.sentences.tolist()
+    #x_raw = sentenceDF.sentences.tolist()
+
+    x_raw = data.evidenceText_DV.tolist()
 
     vocab_processor = loadProcessor(FLAGS.checkpoint_dir)
     x_test = np.array(list(vocab_processor.transform(x_raw)))
@@ -192,13 +198,16 @@ def predict(data):
 
 
 if __name__=='__main__':
+    textCol = 'evidenceText_' + FLAGS.id
     data_name = FLAGS.dataset + '.pkl'
-    data_name = FLAGS.dataset + '.csv'
+    data_name = FLAGS.dataset + '_evidenceSummary.pkl'
+    #data_name = FLAGS.dataset + '.csv'
     data_path = os.path.join(FLAGS.data_path, FLAGS.dataset, data_name)
 
-    #data = pd.read_pickle(data_path)
-    data = pd.read_csv(data_path, encoding='utf8')
-    data = data.dropna(subset=['text'])
+    data = pd.read_pickle(data_path)
+    #data = pd.read_csv(data_path, encoding='utf8')
+    #data = data.dropna(subset=['text'])
+    data = data.dropna(subset=[textCol])
     data['id'] = data.index
 
 

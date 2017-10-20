@@ -57,8 +57,9 @@ MODEL_PATH = './runs/' + DATASET + '_' + ID + '/'
 BATCH_SIZE = 50
 ITERATIONS = 900
 multilayer = 1
+storeEvidenceText = True
 
-def docClassification():
+def docStandardClassification():
 
     data_path = os.path.join(PATH, DATASET, DATASET + '.pkl')
     data = pd.read_pickle(data_path)
@@ -85,16 +86,28 @@ def docClassification():
 
 
     trainSentences['prediction'] = trainSentences['3'] > trainSentences['2']
-    #trainSentences = trainSentences[trainSentences['prediction']==1]
+    trainSentences = trainSentences[trainSentences['prediction']==1]
 
     testSentences['prediction'] = testSentences['3'] > testSentences['2']
-    #testSentences = testSentences[testSentences['prediction']==1]
+    testSentences = testSentences[testSentences['prediction']==1]
     testSentences.sort_values('id', inplace=True)
     #testSentences.sort_values('maxActivation', inplace=True)
     #trainSentences.sort_values('maxActivation', inplace=True)
 
     train_docs = trainSentences.groupby('id')
     test_docs = testSentences.groupby('id')
+
+    #pdb.set_trace()
+
+    # combine evidence sentences
+    if storeEvidenceText:
+        evidenceText = train_docs.sentences.apply(' '.join)
+        evidenceText = evidenceText.append(test_docs.sentences.apply(' '.join))
+        evidenceText = pd.DataFrame(evidenceText.rename('evidenceText_'+ID))
+
+        data = data.merge(evidenceText, how='left', left_on='id', right_index=True)
+        path_evidenceText = os.path.join(PATH, DATASET, DATASET + '_evidenceSummary.pkl')
+        data.to_pickle(path_evidenceText)
 
     maxNumberEvidenceSentences = max(train_docs.apply(len))
     #maxNumberEvidenceSentences = 100
@@ -172,5 +185,5 @@ def docClassification():
 
 
 if __name__=='__main__':
-    docClassification()
+    docStandardClassification()
 
