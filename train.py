@@ -104,6 +104,7 @@ id_name = 'DV'
 path = '../data/ICAAD/ICAAD_evidenceSummary.pkl'
 textCol = 'evidenceText_' + id_name
 target = 'Domestic.Violence.Manual'
+categoryOfInterest = 1
 
 
 
@@ -113,6 +114,7 @@ print("Loading data...")
 
 data = pd.read_pickle(path)
 data = data.dropna(subset=[textCol])
+data.drop_duplicates(subset='id', inplace=True)
 
 #pdb.set_trace()
 #data = data.rename(columns = {'Unnamed: 0': 'id'})
@@ -135,10 +137,16 @@ indices = pd.DataFrame([trainDocs, testDocs], index=['train', 'test'])
 # Build vocabulary
 max_document_length = max([len(x.split(" ")) for x in x_train])
 infoSentenceLength = 'Maximal sentence Length: {:d}'.format(max_document_length)
+print infoSentenceLength
 
 vocab_processor = learn.preprocessing.VocabularyProcessor(max_document_length)
 x_train = np.array(list(vocab_processor.fit_transform(x_train)))
 x_dev = np.array(list(vocab_processor.transform(x_dev)))
+
+
+vocabulary = vocab_processor.vocabulary_
+
+#pdb.set_trace()
 
 vocabulary = vocab_processor.vocabulary_._mapping
 
@@ -156,7 +164,7 @@ infoTarget = [infoTarget, infoClassNumber]
 infoTrain = summarize(y_train, 'training', categoryOfInterest)
 infoTest = summarize(y_dev, 'dev', categoryOfInterest)
 
-pdb.set_trace()
+#pdb.set_trace()
 
 
 
@@ -273,6 +281,7 @@ with tf.Graph().as_default():
         # Training loop. For each batch...
         for batch in batches:
             x_batch, y_batch = zip(*batch)
+            #pdb.set_trace()
             train_step(x_batch, y_batch)
             current_step = tf.train.global_step(sess, global_step)
             #pdb.set_trace()
