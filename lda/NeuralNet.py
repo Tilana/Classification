@@ -31,6 +31,8 @@ class NeuralNet:
         self.crossEntropy()
         self.optimizer(optimizerType)
         self.getAccuracy()
+        self.getPrecision()
+        self.getRecall()
         self.trainStep()
         self.evaluationSummary()
         self.gradients()
@@ -62,7 +64,6 @@ class NeuralNet:
         self.W = tf.Variable(tf.zeros([self.input_size, self.output_size]))
         self.b = tf.Variable(tf.zeros([self.output_size]))
         self.Ylogits = tf.matmul(self.X, self.W) + self.b
-        #self.Ylogits = tf.argmax(
         self.Y = tf.nn.softmax(self.Ylogits)
 
     def multiLayerNN(self, hidden_layer_size=100):
@@ -81,9 +82,10 @@ class NeuralNet:
         self.l2_loss = tf.constant(0.0)
 
         # Embedding Layer
-        self.W = tf.Variable(tf.random_uniform([self.vocab_size, embedding_size], -1.0, 1.0), name='W')
-        self.embedded_chars = tf.nn.embedding_lookup(self.W, self.X)
-        self.embedded_chars_expanded = tf.expand_dims(self.embedded_chars, -1)
+        with tf.device('/cpu:0'), tf.name_scope("embedding"):
+            self.W = tf.Variable(tf.random_uniform([self.vocab_size, embedding_size], -1.0, 1.0), name='W')
+            self.embedded_chars = tf.nn.embedding_lookup(self.W, self.X)
+            self.embedded_chars_expanded = tf.expand_dims(self.embedded_chars, -1)
 
         # Convolution + Maxpool layer
         pooled_outputs = []
@@ -109,17 +111,19 @@ class NeuralNet:
         self.l2_loss += tf.nn.l2_loss(self.b)
         self.Ylogits = tf.nn.xw_plus_b(self.h_drop, W, self.b, name="scores")
         self.Y = tf.argmax(self.Ylogits, 1)
+        self.predictions = tf.argmax(self.Ylogits, 1, name='predictions')
 
 
     def crossEntropy(self):
         cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=self.Ylogits, labels=self.Y_)
         if self.nnType=='cnn':
             l2_reg_lambda = 0.0
-            self.cross_entropy = tf.reduce_mean(cross_entropy) + l2_reg_lambda * self.l2_loss
+            #self.cross_entropy = tf.reduce_mean(cross_entropy) + l2_reg_lambda * self.l2_loss
+            self.cross_entropy = tf.reduce_mean(cross_entropy) #+ l2_reg_lambda * self.l2_loss
         else:
             self.cross_entropy = tf.reduce_mean(cross_entropy)*100
 
-    def optimizer(self, optimizerType='GD', learning_rate=0.003, decay=True):
+    def optimizer(self, optimizerType='GD', learning_rate=1e-3, decay=False):
         if decay:
             learning_rate = self.learning_rate
         if optimizerType == 'GD':
@@ -141,6 +145,28 @@ class NeuralNet:
         else:
             is_correct = tf.equal(tf.argmax(self.Y, 1), tf.argmax(self.Y_, 1))
         self.accuracy = tf.reduce_mean(tf.cast(is_correct, tf.float32))
+
+    def getPrecision(self):
+        #if self.nnType=='cnn':
+        #    is_correct = tf.equal(self.Y, tf.argmax(self.Y_,1))
+        #else:
+        #    is_correct = tf.equal(tf.argmax(self.Y, 1), tf.argmax(self.Y_, 1))
+        #self.precision = tf.argmax(self.Y_, 1)
+        #self.precision = tf.equal(tf.argmax(self.Y_, 1), self.Y)
+        true_labels = tf.argmax(self.Y_, 1)
+        precision = tf.metrics.precision(true_labels, self.predictions)
+        self.precision = tf.reduce_mean(precision, name="precision")
+        #self.precision = tf.metrics.precision(tf.argmax(self.Y_,1), self.Y)
+        #self.precision = tf.reduce_mean(tf.cast(precision, tf.float32))
+
+    def getRecall(self):
+        #if self.nnType=='cnn':
+        #    is_correct = tf.equal(self.Y, tf.argmax(self.Y_,1))
+        #else:
+        #    is_correct = tf.equal(tf.argmax(self.Y, 1), tf.argmax(self.Y_, 1))
+        recall = tf.metrics.recall(tf.argmax(self.Y_,1), self.Y)
+        self.recall = tf.reduce_mean(recall)
+
 
     def learningRate(self, step, max_lr=0.003, min_lr=0.0001, decay_speed=2000):
         return min_lr + (max_lr - min_lr) * math.exp(-step/decay_speed)
