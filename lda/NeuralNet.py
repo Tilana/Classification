@@ -1,6 +1,7 @@
 import tensorflow as tf
 import osHelper
 import math
+from sklearn.metrics import precision_score, recall_score
 
 class NeuralNet:
 
@@ -9,11 +10,8 @@ class NeuralNet:
         self.output_size = output_size
         print 'Input size: ' +  str(input_size)
         print 'Output size: ' +  str(output_size)
-        #self.X = tf.placeholder(tf.float32, [None, self.input_size])
         self.X = tf.placeholder(tf.int32, [None, self.input_size])
-        #self.Y_ = tf.placeholder(tf.float32, [None, self.output_size])
         self.Y_ = tf.placeholder(tf.int64, [None, self.output_size])
-        #self.Y_ = tf.placeholder(tf.int64, [None,])
         self.step = tf.placeholder(tf.float32, shape=(), name='init')
         self.learning_rate = tf.placeholder(tf.float32, shape=())
         self.pkeep = tf.placeholder(tf.float32, shape=())
@@ -31,8 +29,7 @@ class NeuralNet:
         self.crossEntropy()
         self.optimizer(optimizerType)
         self.getAccuracy()
-        self.getPrecision()
-        self.getRecall()
+        self.getConfusionMatrix()
         self.trainStep()
         self.evaluationSummary()
         self.gradients()
@@ -78,7 +75,7 @@ class NeuralNet:
         self.Ylogits = tf.matmul(self.Y1d, self.W2) + self.b2
         self.Y = tf.nn.softmax(self.Ylogits)
 
-    def cnn(self, embedding_size=128, filter_sizes=[3,4,5], num_filters=128):
+    def cnn(self, embedding_size=128, filter_sizes=[4,5,6], num_filters=128):
         self.l2_loss = tf.constant(0.0)
 
         # Embedding Layer
@@ -146,26 +143,9 @@ class NeuralNet:
             is_correct = tf.equal(tf.argmax(self.Y, 1), tf.argmax(self.Y_, 1))
         self.accuracy = tf.reduce_mean(tf.cast(is_correct, tf.float32))
 
-    def getPrecision(self):
-        #if self.nnType=='cnn':
-        #    is_correct = tf.equal(self.Y, tf.argmax(self.Y_,1))
-        #else:
-        #    is_correct = tf.equal(tf.argmax(self.Y, 1), tf.argmax(self.Y_, 1))
-        #self.precision = tf.argmax(self.Y_, 1)
-        #self.precision = tf.equal(tf.argmax(self.Y_, 1), self.Y)
-        true_labels = tf.argmax(self.Y_, 1)
-        precision = tf.metrics.precision(true_labels, self.predictions)
-        self.precision = tf.reduce_mean(precision, name="precision")
-        #self.precision = tf.metrics.precision(tf.argmax(self.Y_,1), self.Y)
-        #self.precision = tf.reduce_mean(tf.cast(precision, tf.float32))
 
-    def getRecall(self):
-        #if self.nnType=='cnn':
-        #    is_correct = tf.equal(self.Y, tf.argmax(self.Y_,1))
-        #else:
-        #    is_correct = tf.equal(tf.argmax(self.Y, 1), tf.argmax(self.Y_, 1))
-        recall = tf.metrics.recall(tf.argmax(self.Y_,1), self.Y)
-        self.recall = tf.reduce_mean(recall)
+    def getConfusionMatrix(self):
+        self.confusion_matrix = tf.confusion_matrix(tf.argmax(self.Y_,1), self.Y)
 
 
     def learningRate(self, step, max_lr=0.003, min_lr=0.0001, decay_speed=2000):

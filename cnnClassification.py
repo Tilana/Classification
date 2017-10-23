@@ -3,12 +3,10 @@ import pandas as pd
 import tensorflow as tf
 import numpy as np
 import os
-import time
 from datetime import datetime
 import data_helpers
-from text_cnn import TextCNN
 from tensorflow.contrib import learn
-from lda import ClassificationModel, Viewer, NeuralNet
+from lda import ClassificationModel, Viewer, NeuralNet, Evaluation
 import pdb
 from tensorflow.python import debug as tf_debug
 from sklearn.model_selection import train_test_split
@@ -22,7 +20,7 @@ TARGET = 'Sexual.Assault.Manual'
 TARGET = 'Domestic.Violence.Manual'
 MODEL_PATH = './runs/' + DATASET + '_' + ID + '/'
 BATCH_SIZE = 64
-ITERATIONS = 100
+ITERATIONS = 50
 cnnType = 'cnn'
 textCol = 'evidenceText_'+ID
 
@@ -57,9 +55,8 @@ def cnnClassification():
     model.split()
 
     max_document_length = max([len(x.split(" ")) for x in model.trainData[textCol]])
+    max_document_length = 2000
     print 'Maximal sentence length ' + str(max_document_length)
-
-    #max_document_length = 300
     vocab_processor = learn.preprocessing.VocabularyProcessor(max_document_length)
 
     X_train = np.array(list(vocab_processor.fit_transform(model.trainData[textCol].tolist())))
@@ -90,48 +87,45 @@ def cnnClassification():
         for batch in batches:
 
             x_batch, y_batch = zip(*batch)
-            #x_batch = np.array(x_batch)
-            #y_batch = np.array(y_batch)
-
-            #pdb.set_trace()
 
             #learning_rate = nn.learningRate(c)
             learning_rate =1e-3
-            #print 'Learning Rate:' + str(learning_rate)
 
             train_data = {nn.X: x_batch, nn.Y_: y_batch, nn.step:c, nn.learning_rate: learning_rate, nn.pkeep:dropout}
-            _, train_summary, grad_summary = sess.run([nn.train_step, nn.summary, nn.grad_summaries], feed_dict=train_data)
+
+            _, train_summary, grad_summary, entropy, acc, predLabels = sess.run([nn.train_step, nn.summary, nn.grad_summaries, nn.cross_entropy, nn.accuracy, nn.Y], feed_dict=train_data)
+
+            evaluation = Evaluation(np.argmax(y_batch,1), predLabels)
+            evaluation.computeMeasures()
 
             nn.writeSummary(train_summary, c)
             nn.writeSummary(grad_summary, c)
 
-            entropy = sess.run(nn.cross_entropy, feed_dict=train_data)
-            #acc = sess.run([nn.accuracy], feed_dict=train_data)
-            #prec = sess.run([nn.precision], feed_dict=train_data)
-            acc, prec, rec  = sess.run([nn.accuracy, nn.precision, nn.recall], feed_dict=train_data)
             print('Train step:')
-            print('{}: step {}, loss {:g}, acc {:g}, prec {:g}, rec {:g}'.format(datetime.now().isoformat(), c, entropy, acc, prec, rec))
-            #print('acc' + str(acc))
-            #print('prec' + str(prec))
-
+            print('{}: step {}, loss {:g}, acc {:g}, precision {:g}, recall {:g}'.format(datetime.now().isoformat(), c, entropy, acc, evaluation.precision, evaluation.recall))
 
             if c % 50 == 0:
                 testData = {nn.X: X_test, nn.Y_: Y_test, nn.learning_rate: 0, nn.pkeep:1.0}
-                predictedLabels, test_summary = sess.run([nn.Y, nn.summary], feed_dict=testData)
+                predLabels, test_summary = sess.run([nn.Y, nn.summary], feed_dict=testData)
                 nn.writeSummary(test_summary, c, 'test')
+
+                evaluation = Evaluation(np.argmax(Y_test,1), predLabels)
+                evaluation.computeMeasures()
+
+                print('Test step:')
+                print('{}: step {}, loss {:g}, acc {:g}, precision {:g}, recall {:g}'.format(datetime.now().isoformat(), c, entropy, acc, evaluation.precision, evaluation.recall))
 
             c = c + 1
 
 
-        predictedLabels = sess.run(nn.Y, feed_dict=testData)
-        model.testData['predictedLabel'] = predictedLabels
-        #model.testData['probability'] = np.max(predictedLabels, 1)
-        #test_accuracy = sess.run(nn.accuracy, feed_dict=testData)
-        #print 'Test Accuracy: ' + str(test_accuracy)
+        predLabels, entropy, accuracy = sess.run([nn.Y, nn.cross_entropy, nn.accuracy], feed_dict=testData)
+        evaluation = Evaluation(np.argmax(Y_test,1), predLabels)
+        evaluation.computeMeasures()
 
-        acc, prec, rec  = sess.run([nn.accuracy, nn.precision, nn.recall], feed_dict=testData)
-        print('Evaluation:')
-        print('{}: step {}, acc {:g}, prec {:g}, rec {:g}'.format(datetime.now().isoformat(), c, acc, prec, rec))
+        print('Evaluation 2:')
+        print('{}: step {}, entropy {:}, acc {:g}, precision {:g}, recall {:g}'.format(datetime.now().isoformat(), c, entropy, accuracy, evaluation.precision, evaluation.recall))
+
+        model.testData['predictedLabel'] = predLabels
 
 
     model.testTarget = model.testTarget.tolist()

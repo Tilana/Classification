@@ -12,6 +12,11 @@ class Evaluation:
         self.n = len(self.target)
         self.average = average
 
+    def computeMeasures(self):
+        self.accuracy()
+        self.recall()
+        self.precision()
+
     def accuracy(self):
         self.accuracy = accuracy_score(self.target, self.prediction)
 
