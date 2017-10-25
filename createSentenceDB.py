@@ -1,12 +1,13 @@
 import pandas as pd
 from ast import literal_eval
 from nltk.tokenize import sent_tokenize, word_tokenize
-
+from lda import Viewer
 
 EvidenceSA = 'Evidence.of.SA'
 EvidenceDV = 'Evidence.of.DV'
 CATEGORIES = [EvidenceSA, EvidenceDV]
-
+TARGETS = ['Sexual.Assault.Manual', 'Domestic.Violence.Manual']
+FOLDER = ['EvidenceSA', 'EvidenceDV']
 
 def splitInSentences(text, docId):
     sentences = sent_tokenize(text)
@@ -49,10 +50,25 @@ def createSentenceDB():
     evidence = []
     nrSample = 0
 
+
     # collect evidence sentences for SA/DV cases
-    for category in CATEGORIES:
+    for ind, category in enumerate(CATEGORIES):
+
+        category = CATEGORIES[ind]
+        target = TARGETS[ind]
+        foldername = FOLDER[ind]
 
         subData = data.dropna(subset=[category])
+
+        ## Check labels
+        FPs = subData[subData[target]==0]
+        TPs = subData[subData[target]==1]
+        viewer = Viewer(foldername)
+        features = ['id', target, category]
+        viewer.printDocuments(FPs, features, folder='FalsePositives')
+        viewer.printDocuments(TPs, features, folder='TruePositives')
+
+
         subData[category] = subData[category].str.lower()
         subData[category] = subData[category].apply(string2list)
         subData['sentences'] = subData.apply(lambda x: splitRow(x[category], x.id), axis=1)
@@ -60,6 +76,10 @@ def createSentenceDB():
         currDF = toDataFrame(sentences, ['id', 'label', 'sentence'])
         currDF['category'] = category
         currDF = currDF[currDF.sentence.map(filterSentenceLength)]
+
+        groups = currDF.groupby('label')
+        for group in groups:
+            print group[0] + ': ' + str(len(group[1]['id'].unique()))
 
         nrSample = nrSample + len(currDF)
         evidence.append(currDF)
