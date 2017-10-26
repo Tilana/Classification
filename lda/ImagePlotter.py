@@ -6,9 +6,9 @@ import pdb
 class ImagePlotter:
 
     def __init__(self, show=False):
-        self.show = show 
+        self.show = show
 
-    
+
     def plotHistogram(self, data, title='', path=None, xlabel='', ylabel='', log=False, start=None, end=None, bins=10, open=False, replaceNAN=False):
         if replaceNAN:
             data = [elem if not np.isnan(elem) else -1 for elem in data]
@@ -19,7 +19,8 @@ class ImagePlotter:
         if end == None:
             end = max(data)
         self.createFigure()
-        plt.hist(data, bins+1, range=(start,end), log=log)
+        #plt.hist(data, bins+1, range=(start,end), log=log)
+        plt.hist(data, bins, range=(start,end), log=log)
         self.labelFigure(title, xlabel, ylabel)
         self.showFigure()
         self.save(path)
@@ -34,15 +35,15 @@ class ImagePlotter:
             item.set_rotation(90)
         self.showFigure()
         self.save(path)
-    
-    
+
+
     def boxplot(self, data):
-        self.createFigure() 
+        self.createFigure()
         plt.boxplot(data)
         self.showFigure()
         self.closeFigure()
-    
-    
+
+
     def barplot(self, data, title='', xlabel='', ylabel='', xticks=None, path=''):
         self.createFigure()
         if not xticks:
@@ -65,6 +66,7 @@ class ImagePlotter:
 
     def save(self, path):
         try:
+            self.figure.savefig(path)
             self.figure.savefig(path, bbox_inches='tight')
         except:
             print 'Error ImagePlotter: Figure cannot be saved'
@@ -79,4 +81,4 @@ class ImagePlotter:
         plt.ylabel(ylabel)
 
 
-    
+
