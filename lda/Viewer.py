@@ -216,7 +216,8 @@ class Viewer:
         docID = int(doc.id)
         path = self.path + '/Documents'
         if folder:
-            path = self.path + '/' + folder + '/Documents'
+            #path = self.path + '/' + folder + '/Documents'
+            path = self.path + '/' + folder
         self.createFolder(path)
         pagename = path + '/doc%02d.html' % docID
         f = open(pagename, 'w')
