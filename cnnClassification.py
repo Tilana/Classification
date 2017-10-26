@@ -6,34 +6,64 @@ import os
 from datetime import datetime
 import data_helpers
 from tensorflow.contrib import learn
-from lda import ClassificationModel, Viewer, NeuralNet, Evaluation
+from lda import ClassificationModel, Viewer, NeuralNet, Evaluation, ImagePlotter
 import pdb
 from tensorflow.python import debug as tf_debug
 from sklearn.model_selection import train_test_split
+from nltk.tokenize import word_tokenize
 
 
 PATH = '../data/'
+#DATASET = 'ICAAD'
+#ID = 'SA'
+#ID = 'DV'
+#TARGET = 'Sexual.Assault.Manual'
+#TARGET = 'Domestic.Violence.Manual'
+#MODEL_PATH = './runs/' + DATASET + '_' + ID + '/'
+#
+#
+analyze = 0
+
 DATASET = 'ICAAD'
-ID = 'SA'
 ID = 'DV'
-TARGET = 'Sexual.Assault.Manual'
-TARGET = 'Domestic.Violence.Manual'
-MODEL_PATH = './runs/' + DATASET + '_' + ID + '/'
-BATCH_SIZE = 64
-ITERATIONS = 50
+#ID = 'SA'
+#ID = 'noSADV'
+data_path = '../data/ICAAD/sentences_ICAAD.csv'
+TARGET = 'category'
+categoryOfInterest = 'Evidence.of.{:s}'.format(ID)
+#categoryOfInterest = 'Evidence.no.SADV'
+negCategory = 'Evidence.no.SADV'
+textCol = 'sentence'
+
+
+BATCH_SIZE = 50
+ITERATIONS = 10
 cnnType = 'cnn'
-textCol = 'evidenceText_'+ID
+#textCol = 'evidenceText_'+ID
+#
+
+#DATASET = 'Manifesto'
+#data_path = '../data/Manifesto/manifesto_United Kingdom.csv'
 
 def cnnClassification():
 
-    data_path = os.path.join(PATH, DATASET, DATASET + '_evidenceSummary.pkl')
-    data = pd.read_pickle(data_path)
-    data.set_index('id', inplace=True, drop=False)
+    #data_path = os.path.join(PATH, DATASET, DATASET + '_evidenceSummary.pkl')
+    #data_path = os.path.join(PATH, DATASET, DATASET + '.pkl')
+    #data = pd.read_pickle(data_path)
+    data = pd.read_csv(data_path)
+    #data.set_index('id', inplace=True, drop=False)
+
+    #pdb.set_trace()
+
+    posSample = data[data[TARGET]==categoryOfInterest]
+    negSample = data[data[TARGET] == negCategory].sample(len(posSample))
+    data = pd.concat([posSample, negSample])
 
     model = ClassificationModel()
     model.data = data
-    model.data.dropna(subset=[textCol], inplace=True)
-    model.data.drop_duplicates(subset='id', inplace=True)
+
+    #model.data.dropna(subset=[textCol], inplace=True)
+    #model.data.drop_duplicates(subset='id', inplace=True)
     model.targetFeature = TARGET
     model.target = data[TARGET]
     model.classificationType = 'binary'
@@ -54,8 +84,21 @@ def cnnClassification():
     model.testIndices = x_test.index
     model.split()
 
+    if analyze:
+        #document_lengths = [len(x.split(" ")) for x in model.trainData[textCol]]
+        coi = model.data[model.data.category==categoryOfInterest]
+        document_lengths = [len(word_tokenize(sentence)) for sentence in coi.sentence]
+        plotter = ImagePlotter(False)
+        figure_path = path=os.path.join(PATH, DATASET, 'figures', ID + '_evidenceSentences' + '.png')
+
+        bins = range(1,100)
+        plotter.plotHistogram(document_lengths, log=False, title= ID + ' frequency of evidence sentences length', xlabel='sentence length', ylabel='frequency', bins=bins, path=figure_path)
+        print 'max: ' + str(max(document_lengths))
+        print 'min: ' + str(min(document_lengths))
+        print 'median: ' + str(np.median(document_lengths))
+
     max_document_length = max([len(x.split(" ")) for x in model.trainData[textCol]])
-    max_document_length = 2000
+    max_document_length = 600
     print 'Maximal sentence length ' + str(max_document_length)
     vocab_processor = learn.preprocessing.VocabularyProcessor(max_document_length)
 
@@ -126,6 +169,8 @@ def cnnClassification():
         print('{}: step {}, entropy {:}, acc {:g}, precision {:g}, recall {:g}'.format(datetime.now().isoformat(), c, entropy, accuracy, evaluation.precision, evaluation.recall))
 
         model.testData['predictedLabel'] = predLabels
+
+    pdb.set_trace()
 
 
     model.testTarget = model.testTarget.tolist()

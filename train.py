@@ -81,48 +81,52 @@ def summarize(y, name, categoryOfInterest):
 import pandas as pd
 
 dataset = 'ICAAD'
-id_name = 'SA'
+id_name = 'DV'
 path = '../data/ICAAD/sentences_ICAAD.csv'
 target = 'category'
 categoryOfInterest = 'Evidence.of.{:s}'.format(id_name)
 negCategory = 'Evidence.no.SADV'
+textCol = 'sentence'
 
-dataset = 'Manifesto'
-path = '../data/Manifesto/manifesto_United Kingdom.csv'
-target = 'cmp_code'
-id_name = 'cmp_code'
-categoryOfInterest = 110
 
-dataset = 'UPR'
-path = '../data/UPR/UPR_DATABASE.csv'
-target = 'label'
-id_name = 'UPR'
-categoryOfInterest = 'Minorities'
+#dataset = 'Manifesto'
+#path = '../data/Manifesto/manifesto_United Kingdom.csv'
+#target = 'cmp_code'
+#id_name = 'cmp_code'
+#categoryOfInterest = 110
+#
+#dataset = 'UPR'
+#path = '../data/UPR/UPR_DATABASE.csv'
+#target = 'label'
+#id_name = 'UPR'
+#categoryOfInterest = 'Minorities'
 
-dataset = 'ICAAD'
-id_name = 'DV'
-path = '../data/ICAAD/ICAAD_evidenceSummary.pkl'
-textCol = 'evidenceText_' + id_name
-target = 'Domestic.Violence.Manual'
-categoryOfInterest = 1
+#dataset = 'ICAAD'
+#id_name = 'DV'
+#path = '../data/ICAAD/ICAAD_evidenceSummary.pkl'
+#textCol = 'evidenceText_' + id_name
+#target = 'Domestic.Violence.Manual'
+#categoryOfInterest = 1
 
 
 
 # Load data
 print("Loading data...")
-#data = pd.read_csv(path)
+data = pd.read_csv(path)
 
-data = pd.read_pickle(path)
-data = data.dropna(subset=[textCol])
-data.drop_duplicates(subset='id', inplace=True)
+#pdb.set_trace()
+
+#data = pd.read_pickle(path)
+#data = data.dropna(subset=[textCol])
+#data.drop_duplicates(subset='id', inplace=True)
 
 #pdb.set_trace()
 #data = data.rename(columns = {'Unnamed: 0': 'id'})
 #data = data.rename(columns = {'Recommendation': 'text'})
 
-#posSample = data[data[target]==categoryOfInterest]
-#negSample = data[data[target] == negCategory].sample(len(posSample))
-#data = pd.concat([posSample, negSample])
+posSample = data[data[target]==categoryOfInterest]
+negSample = data[data[target] == negCategory].sample(len(posSample))
+data = pd.concat([posSample, negSample])
 
 # Randomly split data in training and test set
 labels = data[target].tolist()
@@ -139,15 +143,14 @@ max_document_length = max([len(x.split(" ")) for x in x_train])
 infoSentenceLength = 'Maximal sentence Length: {:d}'.format(max_document_length)
 print infoSentenceLength
 
+pdb.set_trace()
+
 vocab_processor = learn.preprocessing.VocabularyProcessor(max_document_length)
 x_train = np.array(list(vocab_processor.fit_transform(x_train)))
 x_dev = np.array(list(vocab_processor.transform(x_dev)))
 
 
 vocabulary = vocab_processor.vocabulary_
-
-#pdb.set_trace()
-
 vocabulary = vocab_processor.vocabulary_._mapping
 
 infoDatabase = "Database: {:s}".format(dataset)
