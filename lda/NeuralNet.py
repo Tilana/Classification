@@ -75,7 +75,7 @@ class NeuralNet:
         self.Ylogits = tf.matmul(self.Y1d, self.W2) + self.b2
         self.Y = tf.nn.softmax(self.Ylogits)
 
-    def cnn(self, embedding_size=128, filter_sizes=[4,5,6], num_filters=128):
+    def cnn(self, embedding_size=128, filter_sizes=[3,4,5], num_filters=128):
         self.l2_loss = tf.constant(0.0)
 
         # Embedding Layer
