@@ -2,6 +2,7 @@ import pandas as pd
 from ast import literal_eval
 from nltk.tokenize import sent_tokenize, word_tokenize
 from lda import Viewer
+import pdb
 
 EvidenceSA = 'Evidence.of.SA'
 EvidenceDV = 'Evidence.of.DV'
@@ -31,12 +32,14 @@ def splitList(evidenceList, docId):
 def flattenList(listOfLists):
     return sum(listOfLists, [])
 
-def filterSentenceLength(sentence, minLength=4, maxLength=100):
-    wordTokens = word_tokenize(sentence)
-    if len(wordTokens) > minLength and len(wordTokens) < maxLength:
+def filterSentenceLength(length, minLength=4, maxLength=100):
+    if length > minLength and length < maxLength:
         return True
     else:
         return False
+
+def setSentenceLength(sentence):
+    return len(word_tokenize(sentence))
 
 def toDataFrame(data, labels=None):
     return pd.DataFrame(data, columns=labels)
@@ -75,7 +78,9 @@ def createSentenceDB():
         sentences = flattenList(subData['sentences'].tolist())
         currDF = toDataFrame(sentences, ['id', 'label', 'sentence'])
         currDF['category'] = category
-        currDF = currDF[currDF.sentence.map(filterSentenceLength)]
+
+        currDF['sentenceLength'] = currDF.sentence.map(setSentenceLength)
+        currDF = currDF[currDF.sentenceLength.map(filterSentenceLength)]
 
         groups = currDF.groupby('label')
         for group in groups:
@@ -92,7 +97,10 @@ def createSentenceDB():
     currDF = toDataFrame(sentences, ['id', 'sentence'])
     currDF['category'] = 'Evidence.no.SADV'
     currDF['label'] = 'Evidence.no.SADV'
-    currDF = currDF[currDF.sentence.map(filterSentenceLength)]
+
+    currDF['sentenceLength'] = currDF.sentence.map(setSentenceLength)
+    currDF = currDF[currDF.sentenceLength.map(filterSentenceLength)]
+
     currDF['sentence'] = currDF['sentence'].str.lower()
     evidence.append(currDF.sample(nrSample))
 
