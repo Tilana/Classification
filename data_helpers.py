@@ -55,7 +55,7 @@ def load_data_and_labels(positive_data_file, negative_data_file):
     return [x_text, y]
 
 
-def batch_iter(data, batch_size, num_epochs, shuffle=False):
+def batch_iter(data, batch_size, num_epochs, shuffle=True):
     """
     Generates a batch iterator for a dataset.
     """
