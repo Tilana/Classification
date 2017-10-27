@@ -25,12 +25,14 @@ classifierParams = {'DecisionTree': {'min_samples_leaf': [2,5], 'max_depth':[3,5
 
 class ClassificationModel:
 
-    def __init__(self, path=None, target=None, data=None):
+    def __init__(self, path=None, target=None, data=None, labelOfInterest=None):
         self.data = []
         if path:
             self.data = pd.read_pickle(path)
         if data is not None:
             self.data = data
+        if labelOfInterest is not None:
+            self.labelOfInterest = labelOfInterest
         self.targetFeature = target
 
 
@@ -91,12 +93,12 @@ class ClassificationModel:
             self.data = self.data.drop(field, axis=1)
 
     def object2CategoricalFeature(self, column):
-        category = 0
-        for value in self.data[column].unique():
-            rowIndex = self.data[self.data[column]==value].index.tolist()
-            self.data.loc[rowIndex, column] = category
-            category += 1
-        self.toNumeric(column)
+        categoricalData = self.data[column].astype('category')
+        self.targetCategories = categoricalData.cat.categories.tolist()
+        if self.classificationType =='binary' and self.labelOfInterest:
+            negCategory = [category for category in self.targetCategories if category != self.labelOfInterest][0]
+            categoricalData.cat.set_categories([negCategory, column])
+        self.data[column] = categoricalData.cat.codes
 
 
     def createTarget(self):

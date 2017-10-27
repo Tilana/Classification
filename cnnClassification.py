@@ -20,8 +20,6 @@ PATH = '../data/'
 #TARGET = 'Sexual.Assault.Manual'
 #TARGET = 'Domestic.Violence.Manual'
 #MODEL_PATH = './runs/' + DATASET + '_' + ID + '/'
-#
-#
 analyze = 0
 
 DATASET = 'ICAAD'
@@ -34,13 +32,13 @@ categoryOfInterest = 'Evidence.of.{:s}'.format(ID)
 #categoryOfInterest = 'Evidence.no.SADV'
 negCategory = 'Evidence.no.SADV'
 textCol = 'sentence'
+checkpoint_dir = 'runs/' + DATASET
 
 
-BATCH_SIZE = 50
-ITERATIONS = 10
+BATCH_SIZE = 30
+ITERATIONS = 50
 cnnType = 'cnn'
 #textCol = 'evidenceText_'+ID
-#
 
 #DATASET = 'Manifesto'
 #data_path = '../data/Manifesto/manifesto_United Kingdom.csv'
@@ -57,7 +55,7 @@ def cnnClassification():
     negSample = data[data[TARGET] == negCategory].sample(len(posSample))
     data = pd.concat([posSample, negSample])
 
-    model = ClassificationModel(target=TARGET)
+    model = ClassificationModel(target=TARGET, labelOfInterest=categoryOfInterest)
     model.data = data
     model.createTarget()
 
@@ -140,7 +138,7 @@ def cnnClassification():
             print('Train step:')
             print('{}: step {}, loss {:g}, acc {:g}, precision {:g}, recall {:g}'.format(datetime.now().isoformat(), c, entropy, acc, evaluation.precision, evaluation.recall))
 
-            if c % 50 == 0:
+            if c % 100 == 0:
                 testData = {nn.X: X_test, nn.Y_: Y_test, nn.learning_rate: 0, nn.pkeep:1.0}
                 predLabels, test_summary = sess.run([nn.Y, nn.summary], feed_dict=testData)
                 nn.writeSummary(test_summary, c, 'test')
