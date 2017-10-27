@@ -46,12 +46,16 @@ class Viewer:
         f.write('</div>')
 
     def printLinkedDocuments(self, f, title, data, folder):
-        path = self.path + '/' + folder + '/Documents'
-        print path
+        #path = self.path + '/' + folder + '/Documents'
+        path = self.path + '/' + folder
         f.write('<div>')
         f.write('<h4>%s</h4><table>' % title.encode('utf8'))
         for ind, doc in data.iterrows():
-            f.write("<tr><td><a href='../../../%s/doc%02d.html'> %s </a></td></tr>" % (path, doc['id'], doc.title.encode('utf8')))
+            if hasattr(doc, 'title'):
+                f.write("<tr><td><a href='../../../%s/doc%02d.html'> %s </a></td></tr>" % (path, doc['id'], doc.title.encode('utf8')))
+            else:
+                f.write("<tr><td><a href='../../../%s/doc%02d.html'> Document %02d </a></td></tr>" % (path, doc['id'], doc['id']))
+
 
         f.write('</table>')
         f.write('</div>')
@@ -222,7 +226,10 @@ class Viewer:
         pagename = path + '/doc%02d.html' % docID
         f = open(pagename, 'w')
         f.write('<html>')
-        self.writeHead(f, 'Document {:6d} - {}'.format(docID, doc.title.encode('utf8')))
+        if hasattr(doc, 'title'):
+            self.writeHead(f, 'Document {:6d} - {}'.format(docID, doc.title.encode('utf8')))
+        else:
+            self.writeHead(f, 'Document {:6d}'.format(docID))
         f.write('<body><div style="width:100%;"><div style="float:right; width:40%;">')
         f.write('<h4> Properties: </h4>')
         for elem in features:
