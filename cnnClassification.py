@@ -53,28 +53,21 @@ def cnnClassification():
     data = pd.read_csv(data_path)
     #data.set_index('id', inplace=True, drop=False)
 
-    #pdb.set_trace()
-
     posSample = data[data[TARGET]==categoryOfInterest]
     negSample = data[data[TARGET] == negCategory].sample(len(posSample))
     data = pd.concat([posSample, negSample])
 
-    model = ClassificationModel()
+    model = ClassificationModel(target=TARGET)
     model.data = data
+    model.createTarget()
 
     #model.data.dropna(subset=[textCol], inplace=True)
     #model.data.drop_duplicates(subset='id', inplace=True)
-    model.targetFeature = TARGET
-    model.target = data[TARGET]
-    model.classificationType = 'binary'
-
     #indices = pd.read_csv(MODEL_PATH + 'trainTest_split.csv', index_col=0)
 
     numTrainingDocs = int(len(model.data)*0.7)
 
-    #pdb.set_trace()
     y = pd.get_dummies(model.target).values
-
     x_train, x_test, y_train, y_dev = train_test_split(model.data[textCol], y, test_size=0.3, random_state=200)
 
     #model.splitDataset(numTrainingDocs, random=False)
@@ -170,15 +163,14 @@ def cnnClassification():
 
         model.testData['predictedLabel'] = predLabels
 
-    pdb.set_trace()
-
-
     model.testTarget = model.testTarget.tolist()
     model.evaluate()
     model.evaluation.confusionMatrix()
     model.classifierType = 'CNN Docs'
 
-    viewer = Viewer('DocsCNN', 'testModu')
+    model.testData['text'] = model.testData['sentence']
+
+    viewer = Viewer('DocsCNN', 'newTestTest')
 
     displayFeatures = ['Court', 'Year', 'Sexual.Assault.Manual', 'Domestic.Violence.Manual', 'predictedLabel', 'tag', 'Family.Member.Victim', 'probability', 'Age', 'evidence', textCol]
     viewer.printDocuments(model.testData, displayFeatures, TARGET)
