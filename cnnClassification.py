@@ -32,11 +32,19 @@ categoryOfInterest = 'Evidence.of.{:s}'.format(ID)
 #categoryOfInterest = 'Evidence.no.SADV'
 negCategory = 'Evidence.no.SADV'
 textCol = 'sentence'
-checkpoint_dir = 'runs/' + DATASET
+classifierType = 'CNN_sentences'
+
+out_folder = '_'.join([DATASET, ID, classifierType]) + '/'
+output_dir = os.path.join(os.path.curdir, 'runs', out_folder)
+checkpoint_dir = os.path.join(output_dir, 'checkpoints')
+checkpoint_prefix = os.path.join(checkpoint_dir, 'model')
+
+if not os.path.exists(checkpoint_dir):
+    os.makedirs(checkpoint_dir)
 
 
 BATCH_SIZE = 30
-ITERATIONS = 50
+ITERATIONS = 30
 cnnType = 'cnn'
 #textCol = 'evidenceText_'+ID
 
@@ -58,6 +66,9 @@ def cnnClassification():
     model = ClassificationModel(target=TARGET, labelOfInterest=categoryOfInterest)
     model.data = data
     model.createTarget()
+    #model.createCheckpointFolder(output_dir)
+
+    #pdb.set_trace()
 
     #model.data.dropna(subset=[textCol], inplace=True)
     #model.data.drop_duplicates(subset='id', inplace=True)
@@ -89,7 +100,7 @@ def cnnClassification():
         print 'median: ' + str(np.median(document_lengths))
 
     max_document_length = max([len(x.split(" ")) for x in model.trainData[textCol]])
-    max_document_length = 600
+    #max_document_length = 600
     print 'Maximal sentence length ' + str(max_document_length)
     vocab_processor = learn.preprocessing.VocabularyProcessor(max_document_length)
 
@@ -104,14 +115,18 @@ def cnnClassification():
     nrClasses = Y_train.shape[1]
     nn = NeuralNet(X_train.shape[1], nrClasses)
 
+    session_config = tf.ConfigProto(allow_soft_placement=True, log_device_placement=False)
+    sess = tf.Session(config=session_config)
 
-    with tf.Session() as sess:
+    with sess.as_default():
 
-        nn.setSummaryWriter('runs/Test3/', tf.get_default_graph())
+        nn.setSummaryWriter(output_dir, tf.get_default_graph())
         nn.buildNeuralNet(cnnType, sequence_length=max_document_length, vocab_size=len(vocabulary), optimizerType='Adam')
 
         sess.run(tf.global_variables_initializer())
         sess.run(tf.local_variables_initializer())
+
+        nn.setSaver()
 
         batches = data_helpers.batch_iter(list(zip(X_train, Y_train)), BATCH_SIZE, ITERATIONS)
 
@@ -141,6 +156,7 @@ def cnnClassification():
             if c % 100 == 0:
                 testData = {nn.X: X_test, nn.Y_: Y_test, nn.learning_rate: 0, nn.pkeep:1.0}
                 predLabels, test_summary = sess.run([nn.Y, nn.summary], feed_dict=testData)
+
                 nn.writeSummary(test_summary, c, 'test')
 
                 evaluation = Evaluation(np.argmax(Y_test,1), predLabels)
@@ -152,9 +168,11 @@ def cnnClassification():
             c = c + 1
 
 
+
         predLabels, entropy, accuracy = sess.run([nn.Y, nn.cross_entropy, nn.accuracy], feed_dict=testData)
         evaluation = Evaluation(np.argmax(Y_test,1), predLabels)
         evaluation.computeMeasures()
+        nn.saveCheckpoint(sess, checkpoint_prefix, c)
 
         print('Evaluation 2:')
         print('{}: step {}, entropy {:}, acc {:g}, precision {:g}, recall {:g}'.format(datetime.now().isoformat(), c, entropy, accuracy, evaluation.precision, evaluation.recall))
@@ -164,7 +182,7 @@ def cnnClassification():
     model.testTarget = model.testTarget.tolist()
     model.evaluate()
     model.evaluation.confusionMatrix()
-    model.classifierType = 'CNN Docs'
+    model.classifierType = classifierType
 
     model.testData['text'] = model.testData['sentence']
 
@@ -174,6 +192,19 @@ def cnnClassification():
     viewer.printDocuments(model.testData, displayFeatures, TARGET)
     viewer.classificationResults(model, normalized=False)
 
+
+    # Prediction Phase
+    graph = tf.Graph()
+    with graph.as_default():
+        session_config = tf.ConfigProto(allow_soft_placement=True, log_device_placement=False)
+        sess = tf.Session(config=session_config)
+        with sess.as_default():
+
+            nn2 = NeuralNet(X_train.shape[1], nrClasses)
+            nn2.loadCheckpoint(graph, sess, checkpoint_dir)
+
+            testData = {nn2.X: X_test, nn2.Y_: Y_test, nn2.learning_rate: 0, nn2.pkeep:1.0}
+            predLabels = sess.run([nn2.Y], feed_dict=testData)
 
     pdb.set_trace()
 

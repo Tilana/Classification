@@ -5,16 +5,17 @@ from sklearn.metrics import precision_score, recall_score
 
 class NeuralNet:
 
-    def __init__(self, input_size, output_size):
+    def __init__(self, input_size=None, output_size=None):
         self.input_size = input_size
-        self.output_size = output_size
         print 'Input size: ' +  str(input_size)
+        self.X = tf.placeholder(tf.int32, [None, self.input_size], name='X')
+        self.output_size = output_size
         print 'Output size: ' +  str(output_size)
-        self.X = tf.placeholder(tf.int32, [None, self.input_size])
-        self.Y_ = tf.placeholder(tf.int64, [None, self.output_size])
-        self.step = tf.placeholder(tf.float32, shape=(), name='init')
+        self.Y_ = tf.placeholder(tf.int64, [None, self.output_size], name='Y')
         self.learning_rate = tf.placeholder(tf.float32, shape=())
-        self.pkeep = tf.placeholder(tf.float32, shape=())
+        self.pkeep = tf.placeholder(tf.float32, shape=(), name='pkeep')
+        self.step = tf.placeholder(tf.float32, shape=())
+
 
     def buildNeuralNet(self, nnType='multi', vocab_size=None, hidden_layer_size=100, optimizerType='GD', sequence_length=None):
         self.nnType = nnType
@@ -34,6 +35,11 @@ class NeuralNet:
         self.evaluationSummary()
         self.gradients()
         self.gradientSummary()
+
+
+    def setSaver(self):
+        self.saver = tf.train.Saver(tf.global_variables())
+
 
     def setSummaryWriter(self, path, graph):
         states = ['train', 'test']
@@ -170,3 +176,18 @@ class NeuralNet:
         tf.summary.scalar('max', tf.reduce_max(var))
         tf.summary.scalar('min', tf.reduce_min(var))
         tf.summary.histogram('histogram', var)
+
+    def saveCheckpoint(self, session, path, step):
+        self.saver.save(session, path, global_step=step)
+
+    def loadCheckpoint(self, graph, session, checkpoint_path):
+        checkpoint_file = tf.train.latest_checkpoint(checkpoint_path)
+        self.saver = tf.train.import_meta_graph('{}.meta'.format(checkpoint_file))
+        self.saver.restore(session, checkpoint_file)
+
+        self.X = graph.get_operation_by_name("X").outputs[0]
+        self.Y = graph.get_operation_by_name("Y").outputs[0]
+        self.pkeep = graph.get_operation_by_name("pkeep").outputs[0]
+
+        self.predictions = graph.get_operation_by_name("predictions").outputs[0]
+        self.scores = graph.get_operation_by_name("scores").outputs[0]
