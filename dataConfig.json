@@ -1,0 +1,25 @@
+{
+    "ICAAD_DV_sentences":{
+        "DATASET":"ICAAD",
+        "ID":"DV",
+        "data_path":"../data/ICAAD/sentences_ICAAD.csv", 
+        "TARGET":"category", 
+        "categoryOfInterest":"Evidence.of.DV",
+        "negCategory":"Evidence.no.SADV", 
+        "textCol":"sentence",
+        "features":["category", "id", "label", "sentenceLength", "predictedLabel", "tag"]
+    },
+    
+    "ICAAD_SA_sentences":{
+        "DATASET":"ICAAD",
+        "ID":"SA",
+        "data_path":"../data/ICAAD/sentences_ICAAD.csv", 
+        "TARGET":"category", 
+        "categoryOfInterest":"Evidence.of.SA",
+        "negCategory":"Evidence.no.SADV", 
+        "textCol":"sentence",
+        "features":["category", "id", "label", "sentenceLength", "predictedLabel", "tag"]
+    }
+}
+
+

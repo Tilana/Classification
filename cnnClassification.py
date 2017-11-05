@@ -11,30 +11,21 @@ import pdb
 from tensorflow.python import debug as tf_debug
 from sklearn.model_selection import train_test_split
 from nltk.tokenize import word_tokenize
+import json
 
 
-PATH = '../data/'
-#DATASET = 'ICAAD'
-#ID = 'SA'
-#ID = 'DV'
-#TARGET = 'Sexual.Assault.Manual'
-#TARGET = 'Domestic.Violence.Manual'
-#MODEL_PATH = './runs/' + DATASET + '_' + ID + '/'
+configFile = 'dataConfig.json'
+config_name = 'ICAAD_DV_sentences'
+
+with open(configFile) as data_file:
+    data_config = json.load(data_file)[config_name]
+
 analyze = 0
 
-DATASET = 'ICAAD'
-ID = 'DV'
-#ID = 'SA'
-#ID = 'noSADV'
-data_path = '../data/ICAAD/sentences_ICAAD.csv'
-TARGET = 'category'
-categoryOfInterest = 'Evidence.of.{:s}'.format(ID)
-#categoryOfInterest = 'Evidence.no.SADV'
-negCategory = 'Evidence.no.SADV'
-textCol = 'sentence'
-classifierType = 'CNN_sentences'
+classifierType = 'CNN'
 
-out_folder = '_'.join([DATASET, ID, classifierType]) + '/'
+
+out_folder = '_'.join([data_config['DATASET'], data_config['ID'], classifierType]) + '/'
 output_dir = os.path.join(os.path.curdir, 'runs', out_folder)
 checkpoint_dir = os.path.join(output_dir, 'checkpoints')
 checkpoint_prefix = os.path.join(checkpoint_dir, 'model')
@@ -54,16 +45,17 @@ cnnType = 'cnn'
 def cnnClassification():
 
     #data_path = os.path.join(PATH, DATASET, DATASET + '_evidenceSummary.pkl')
-    #data_path = os.path.join(PATH, DATASET, DATASET + '.pkl')
+    #data_conf['data_path'] = os.path.join(PATH, DATASET, DATASET + '.pkl')
     #data = pd.read_pickle(data_path)
-    data = pd.read_csv(data_path)
+    data = pd.read_csv(data_config['data_path'])
+    #data = data[3000:5000]
     #data.set_index('id', inplace=True, drop=False)
 
-    posSample = data[data[TARGET]==categoryOfInterest]
-    negSample = data[data[TARGET] == negCategory].sample(len(posSample))
+    posSample = data[data[data_config['TARGET']]==data_config['categoryOfInterest']]
+    negSample = data[data[data_config['TARGET']] == data_config['negCategory']].sample(len(posSample))
     data = pd.concat([posSample, negSample])
 
-    model = ClassificationModel(target=TARGET, labelOfInterest=categoryOfInterest)
+    model = ClassificationModel(target=data_config['TARGET'], labelOfInterest=data_config['categoryOfInterest'])
     model.data = data
     model.createTarget()
     #model.createCheckpointFolder(output_dir)
@@ -77,7 +69,7 @@ def cnnClassification():
     numTrainingDocs = int(len(model.data)*0.7)
 
     y = pd.get_dummies(model.target).values
-    x_train, x_test, y_train, y_dev = train_test_split(model.data[textCol], y, test_size=0.3, random_state=200)
+    x_train, x_test, y_train, y_dev = train_test_split(model.data[data_config['textCol']], y, test_size=0.3, random_state=200)
 
     #model.splitDataset(numTrainingDocs, random=False)
     #model.trainIndices = indices.loc['train'].dropna()
@@ -87,11 +79,10 @@ def cnnClassification():
     model.split()
 
     if analyze:
-        #document_lengths = [len(x.split(" ")) for x in model.trainData[textCol]]
-        coi = model.data[model.data.category==categoryOfInterest]
+        coi = model.data[model.data.category==data_config['categoryOfInterest']]
         document_lengths = [len(word_tokenize(sentence)) for sentence in coi.sentence]
         plotter = ImagePlotter(False)
-        figure_path = path=os.path.join(PATH, DATASET, 'figures', ID + '_evidenceSentences' + '.png')
+        figure_path = path=os.path.join(PATH, data_config['DATASET'], 'figures', data_config['ID'] + '_evidenceSentences' + '.png')
 
         bins = range(1,100)
         plotter.plotHistogram(document_lengths, log=False, title= ID + ' frequency of evidence sentences length', xlabel='sentence length', ylabel='frequency', bins=bins, path=figure_path)
@@ -99,13 +90,13 @@ def cnnClassification():
         print 'min: ' + str(min(document_lengths))
         print 'median: ' + str(np.median(document_lengths))
 
-    max_document_length = max([len(x.split(" ")) for x in model.trainData[textCol]])
+    max_document_length = max([len(x.split(" ")) for x in model.trainData[data_config['textCol']]])
     #max_document_length = 600
     print 'Maximal sentence length ' + str(max_document_length)
     vocab_processor = learn.preprocessing.VocabularyProcessor(max_document_length)
 
-    X_train = np.array(list(vocab_processor.fit_transform(model.trainData[textCol].tolist())))
-    X_test = np.array(list(vocab_processor.fit_transform(model.testData[textCol].tolist())))
+    X_train = np.array(list(vocab_processor.fit_transform(model.trainData[data_config['textCol']].tolist())))
+    X_test = np.array(list(vocab_processor.fit_transform(model.testData[data_config['textCol']].tolist())))
 
     vocabulary = vocab_processor.vocabulary_
 
@@ -186,10 +177,10 @@ def cnnClassification():
 
     model.testData['text'] = model.testData['sentence']
 
-    viewer = Viewer('DocsCNN', 'newTestTest')
+    viewer = Viewer(config_name, 'newTestTest')
 
-    displayFeatures = ['Court', 'Year', 'Sexual.Assault.Manual', 'Domestic.Violence.Manual', 'predictedLabel', 'tag', 'Family.Member.Victim', 'probability', 'Age', 'evidence', textCol]
-    viewer.printDocuments(model.testData, displayFeatures, TARGET)
+    #displayFeatures = ['Court', 'Year', 'Sexual.Assault.Manual', 'Domestic.Violence.Manual', 'predictedLabel', 'tag', 'Family.Member.Victim', 'probability', 'Age', 'evidence', data_config['textCol']]
+    viewer.printDocuments(model.testData, data_config['features'], data_config['TARGET'])
     viewer.classificationResults(model, normalized=False)
 
 
