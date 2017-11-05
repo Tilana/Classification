@@ -7,7 +7,7 @@
         "categoryOfInterest":"Evidence.of.DV",
         "negCategory":"Evidence.no.SADV", 
         "textCol":"sentence",
-        "features":["category", "id", "label", "sentenceLength", "predictedLabel", "tag"]
+        "features":["category", "docID", "label", "sentenceLength", "predictedLabel", "tag"]
     },
     
     "ICAAD_SA_sentences":{
@@ -18,7 +18,18 @@
         "categoryOfInterest":"Evidence.of.SA",
         "negCategory":"Evidence.no.SADV", 
         "textCol":"sentence",
-        "features":["category", "id", "label", "sentenceLength", "predictedLabel", "tag"]
+        "features":["category", "docID", "label", "sentenceLength", "predictedLabel", "tag"]
+    },
+    
+    "Manifesto_Minorities":{
+        "DATASET":"Manifesto",
+        "ID":"Minorities",
+        "data_path":"../data/Manifesto/manifesto_United Kingdom.csv", 
+        "TARGET":"cmp_code", 
+        "categoryOfInterest":411,
+        "negCategory":506, 
+        "textCol":"text",
+        "features":["cmp_code", "eu_code", "id", "textLength", "predictedLabel", "tag"]
     }
 }
 
