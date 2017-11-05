@@ -16,6 +16,8 @@ import json
 
 configFile = 'dataConfig.json'
 config_name = 'ICAAD_DV_sentences'
+config_name = 'ICAAD_SA_sentences'
+config_name = 'Manifesto_Minorities'
 
 with open(configFile) as data_file:
     data_config = json.load(data_file)[config_name]
@@ -35,10 +37,10 @@ if not os.path.exists(checkpoint_dir):
 
 
 BATCH_SIZE = 30
-ITERATIONS = 30
+ITERATIONS = 3
 cnnType = 'cnn'
-#textCol = 'evidenceText_'+ID
 
+#textCol = 'evidenceText_'+ID
 #DATASET = 'Manifesto'
 #data_path = '../data/Manifesto/manifesto_United Kingdom.csv'
 
@@ -47,9 +49,10 @@ def cnnClassification():
     #data_path = os.path.join(PATH, DATASET, DATASET + '_evidenceSummary.pkl')
     #data_conf['data_path'] = os.path.join(PATH, DATASET, DATASET + '.pkl')
     #data = pd.read_pickle(data_path)
-    data = pd.read_csv(data_config['data_path'])
+    data = pd.read_csv(data_config['data_path'], encoding ='utf8')
     #data = data[3000:5000]
     #data.set_index('id', inplace=True, drop=False)
+    #pdb.set_trace()
 
     posSample = data[data[data_config['TARGET']]==data_config['categoryOfInterest']]
     negSample = data[data[data_config['TARGET']] == data_config['negCategory']].sample(len(posSample))
@@ -68,8 +71,11 @@ def cnnClassification():
 
     numTrainingDocs = int(len(model.data)*0.7)
 
+    #pdb.set_trace()
+
     y = pd.get_dummies(model.target).values
-    x_train, x_test, y_train, y_dev = train_test_split(model.data[data_config['textCol']], y, test_size=0.3, random_state=200)
+    x_train, x_test, y_train, y_test = train_test_split(model.data[data_config['textCol']], y, test_size=0.4, random_state=200)
+    x_test, x_val, y_test, y_val = train_test_split(x_test, y_test, test_size=0.5, random_state=200)
 
     #model.splitDataset(numTrainingDocs, random=False)
     #model.trainIndices = indices.loc['train'].dropna()
@@ -77,6 +83,10 @@ def cnnClassification():
     model.trainIndices = x_train.index
     model.testIndices = x_test.index
     model.split()
+
+    model.validationIndex = x_val.index
+    model.validationData = model.data.loc[model.validationIndex]
+    model.validationTarget = model.target.loc[model.validationIndex]
 
     if analyze:
         coi = model.data[model.data.category==data_config['categoryOfInterest']]
@@ -96,12 +106,16 @@ def cnnClassification():
     vocab_processor = learn.preprocessing.VocabularyProcessor(max_document_length)
 
     X_train = np.array(list(vocab_processor.fit_transform(model.trainData[data_config['textCol']].tolist())))
-    X_test = np.array(list(vocab_processor.fit_transform(model.testData[data_config['textCol']].tolist())))
+    X_test = np.array(list(vocab_processor.transform(model.testData[data_config['textCol']].tolist())))
+    X_validation = np.array(list(vocab_processor.transform(model.validationData[data_config['textCol']].tolist())))
+
+    #pdb.set_trace()
 
     vocabulary = vocab_processor.vocabulary_
 
     Y_train = pd.get_dummies(model.trainTarget.tolist()).as_matrix()
     Y_test = pd.get_dummies(model.testTarget.tolist()).as_matrix()
+    Y_validation = pd.get_dummies(model.validationTarget.tolist()).as_matrix()
 
     nrClasses = Y_train.shape[1]
     nn = NeuralNet(X_train.shape[1], nrClasses)
@@ -158,7 +172,7 @@ def cnnClassification():
 
             c = c + 1
 
-
+        #pdb.set_trace()
 
         predLabels, entropy, accuracy = sess.run([nn.Y, nn.cross_entropy, nn.accuracy], feed_dict=testData)
         evaluation = Evaluation(np.argmax(Y_test,1), predLabels)
@@ -175,11 +189,8 @@ def cnnClassification():
     model.evaluation.confusionMatrix()
     model.classifierType = classifierType
 
-    model.testData['text'] = model.testData['sentence']
-
     viewer = Viewer(config_name, 'newTestTest')
 
-    #displayFeatures = ['Court', 'Year', 'Sexual.Assault.Manual', 'Domestic.Violence.Manual', 'predictedLabel', 'tag', 'Family.Member.Victim', 'probability', 'Age', 'evidence', data_config['textCol']]
     viewer.printDocuments(model.testData, data_config['features'], data_config['TARGET'])
     viewer.classificationResults(model, normalized=False)
 
@@ -194,8 +205,29 @@ def cnnClassification():
             nn2 = NeuralNet(X_train.shape[1], nrClasses)
             nn2.loadCheckpoint(graph, sess, checkpoint_dir)
 
-            testData = {nn2.X: X_test, nn2.Y_: Y_test, nn2.learning_rate: 0, nn2.pkeep:1.0}
-            predLabels = sess.run([nn2.Y], feed_dict=testData)
+            validationData = {nn2.X: X_validation, nn2.Y_: Y_validation, nn2.learning_rate: 0, nn2.pkeep:1.0}
+            predLabels = sess.run(nn2.Y, feed_dict=validationData)
+            predLabels = np.argmax(predLabels, 1)
+
+            model.validationData['predictedLabel'] = predLabels
+            model.validationTarget = model.validationTarget.tolist()
+
+
+            model.evaluate(subset='validation')
+            model.evaluation.confusionMatrix()
+            model.classifierType = classifierType
+
+            viewer = Viewer(config_name, 'newTestTest')
+
+            viewer.printDocuments(model.testData, data_config['features'], data_config['TARGET'])
+            viewer.classificationResults(model, normalized=False)
+
+
+
+
+
+
+
 
     pdb.set_trace()
 

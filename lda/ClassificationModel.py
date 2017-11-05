@@ -103,8 +103,8 @@ class ClassificationModel:
 
     def createTarget(self):
         self.setClassificationType(self.targetFeature)
-        if self.isObject(self.targetFeature):
-            self.object2CategoricalFeature(self.targetFeature)
+        #if self.isObject(self.targetFeature):
+        self.object2CategoricalFeature(self.targetFeature)
         self.target = self.data[self.targetFeature]
         self.dropNANRows(self.targetFeature)
 
@@ -202,9 +202,12 @@ class ClassificationModel:
             self.testData['probability'] = np.max(probabilities, axis=1)
 
 
-    def evaluate(self, avgType='macro'):
+    def evaluate(self, subset='test', avgType='macro'):
         self.setEvaluationAverage(avgType)
-        self.evaluation = Evaluation(self.testTarget, self.testData.predictedLabel.tolist(),self.evaluationAverage)
+        if subset=='test':
+            self.evaluation = Evaluation(self.testTarget, self.testData.predictedLabel.tolist(),self.evaluationAverage)
+        elif subset=='validation':
+            self.evaluation = Evaluation(self.validationTarget, self.validationData.predictedLabel.tolist(),self.evaluationAverage)
         self.evaluation.setAllTags()
         self.tagTestData()
 
@@ -303,6 +306,9 @@ class ClassificationModel:
     def preprocessTestData(self, preprocessor, vecType='tfIdf'):
         testDocs = self.testData.text.tolist()
         self.testData[vecType] = preprocessor.vectorizeDocs(testDocs)
+
+    def createResultFolder(self, dataset, id_name, classifierType):
+        pass
 
 
 
