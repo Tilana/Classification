@@ -6,7 +6,7 @@
         "TARGET":"category", 
         "categoryOfInterest":"Evidence.of.DV",
         "negCategory":"Evidence.no.SADV", 
-        "textCol":"sentence",
+        "textCol":"text",
         "features":["category", "docID", "label", "sentenceLength", "predictedLabel", "tag"]
     },
     
@@ -17,7 +17,7 @@
         "TARGET":"category", 
         "categoryOfInterest":"Evidence.of.SA",
         "negCategory":"Evidence.no.SADV", 
-        "textCol":"sentence",
+        "textCol":"text",
         "features":["category", "docID", "label", "sentenceLength", "predictedLabel", "tag"]
     },
     
