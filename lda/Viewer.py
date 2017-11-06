@@ -10,6 +10,7 @@ class Viewer:
         self.createFolder(self.path)
         if folder:
             self.createFolder(self.path + '/' + folder)
+            self.path = self.path + '/' + folder
 
     def createFolder(self, path):
         try:
@@ -45,9 +46,10 @@ class Viewer:
         self.listToHtmlTable(f, title + '- %d' % len(l), l)
         f.write('</div>')
 
-    def printLinkedDocuments(self, f, title, data, folder):
+    def printLinkedDocuments(self, f, title, data, folder='Documents'):
         #path = self.path + '/' + folder + '/Documents'
         path = self.path + '/' + folder
+        #path = self.path
         f.write('<div>')
         f.write('<h4>%s</h4><table>' % title.encode('utf8'))
         for ind, doc in data.iterrows():
@@ -217,6 +219,7 @@ class Viewer:
         data.apply(lambda row: self.printDocument(row, features, folder, openHtml), axis=1)
 
     def printDocument(self, doc, features, folder, openHtml):
+        #pdb.set_trace()
         docID = int(doc.id)
         path = self.path + '/Documents'
         if folder:
@@ -301,10 +304,16 @@ class Viewer:
         f.write('</table>')
         f.write('</div>')
 
-    def classificationResults(self, model, normalized = False):
-        targetFolder = self.path + '/' + model.targetFeature
-        self.createFolder(targetFolder)
-        pagename = targetFolder + '/' + model.classifierType + '.html'
+    def classificationResults(self, model, subset='test', normalized = False):
+        #targetFolder = self.path + '/' + model.targetFeature
+        #self.createFolder(targetFolder)
+        #pagename = targetFolder + '/' + model.classifierType + '.html'
+        if subset == 'test':
+            data = model.testData
+        elif subset == 'validation':
+            data = model.validationData
+
+        pagename = self.path + '/' + model.classifierType + '.html'
         f = open(pagename, 'w')
         title = '%s Classification - %s' % (model.classifierType, model.targetFeature)
         f.write('<html>')
@@ -312,7 +321,7 @@ class Viewer:
         f.write('<body><div style="width:100%;">')
         f.write(' <p><b> Classifier: </b> %s </p> ' % model.classifierType)
         #f.write(' <p><b> Size of Training Data: </b> %s </p> ' % len(model.trainData))
-        f.write(' <p><b> Size of Test Data: </b> %s </p>' % len(model.testData))
+        f.write(' <p><b> Size of Test Data: </b> %s </p>' % len(data))
         f.write('<p><b> Frequency Distribution: </b></p>')
         f.write('<img src="frequencyDistribution.jpg" alt="plot not available" height="280">')
         f.write(' <h3> Evaluation: </h3>')
@@ -340,12 +349,14 @@ class Viewer:
         f.write('<style type="text/css"> body>div {width: 23%; float: left; border: 1px solid} </style></head>')
         if model.classificationType == 'binary':
             for tag in ['TP','FP','FN','TN']:
-                docs = model.testData[model.testData.tag == tag]
-                self.printLinkedDocuments(f, tag, docs, model.targetFeature)
+                docs = data[data.tag == tag]
+                #self.printLinkedDocuments(f, tag, docs, model.targetFeature)
+                self.printLinkedDocuments(f, tag, docs)
         else:
             for tag in ['T', 'F']:
-                docs = model.testData[model.testData.tag == tag]
-                self.printLinkedDocuments(f, tag, docs, model.targetFeature)
+                docs = data[data.tag == tag]
+                #self.printLinkedDocuments(f, tag, docs, model.targetFeature)
+                self.printLinkedDocuments(f, tag, docs)
 
         f.write('</body></html>')
         f.close()
