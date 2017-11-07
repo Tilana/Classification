@@ -320,7 +320,7 @@ class Viewer:
         self.writeHead(f, title)
         f.write('<body><div style="width:100%;">')
         f.write(' <p><b> Classifier: </b> %s </p> ' % model.classifierType)
-        #f.write(' <p><b> Size of Training Data: </b> %s </p> ' % len(model.trainData))
+        f.write(' <p><b> Size of Training Data: </b> %s </p> ' % len(model.trainData))
         f.write(' <p><b> Size of Test Data: </b> %s </p>' % len(data))
         f.write('<p><b> Frequency Distribution: </b></p>')
         f.write('<img src="frequencyDistribution.jpg" alt="plot not available" height="280">')
