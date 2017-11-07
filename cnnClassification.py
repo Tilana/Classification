@@ -10,14 +10,18 @@ from lda import ClassificationModel, Viewer, NeuralNet, Evaluation, ImagePlotter
 import pdb
 from tensorflow.python import debug as tf_debug
 from sklearn.model_selection import train_test_split
-from nltk.tokenize import word_tokenize
+from nltk.tokenize import word_tokenize, sent_tokenize
 import json
 
 
 configFile = 'dataConfig.json'
 config_name = 'ICAAD_DV_sentences'
-#config_name = 'ICAAD_SA_sentences'
+config_name = 'ICAAD_SA_sentences'
 #config_name = 'Manifesto_Minorities'
+config_name = 'ICAAD_DV_summaries'
+#config_name = 'ICAAD_SA_summaries'
+
+splitValidationDataInSentences = False
 
 with open(configFile) as data_file:
     data_config = json.load(data_file)[config_name]
@@ -36,8 +40,8 @@ if not os.path.exists(checkpoint_dir):
     os.makedirs(checkpoint_dir)
 
 
-BATCH_SIZE = 30
-ITERATIONS = 2
+BATCH_SIZE = 100
+ITERATIONS = 50
 cnnType = 'cnn'
 
 
@@ -47,11 +51,11 @@ def cnnClassification():
     #data_conf['data_path'] = os.path.join(PATH, DATASET, DATASET + '.pkl')
     #data = pd.read_pickle(data_path)
     data = pd.read_csv(data_config['data_path'], encoding ='utf8')
-    #data.set_index('id', inplace=True, drop=False)
 
-    posSample = data[data[data_config['TARGET']]==data_config['categoryOfInterest']]
-    negSample = data[data[data_config['TARGET']] == data_config['negCategory']].sample(len(posSample))
-    data = pd.concat([posSample, negSample])
+    if data_config['balanceData']:
+        posSample = data[data[data_config['TARGET']]==data_config['categoryOfInterest']]
+        negSample = data[data[data_config['TARGET']] == data_config['negCategory']].sample(len(posSample))
+        data = pd.concat([posSample, negSample])
 
     model = ClassificationModel(target=data_config['TARGET'], labelOfInterest=data_config['categoryOfInterest'])
     model.data = data
@@ -61,13 +65,19 @@ def cnnClassification():
     #model.data.drop_duplicates(subset='id', inplace=True)
     #indices = pd.read_csv(MODEL_PATH + 'trainTest_split.csv', index_col=0)
 
-    numTrainingDocs = int(len(model.data)*0.1)
-
     y = pd.get_dummies(model.target).values
-    #x_train, x_test, y_train, y_test = train_test_split(model.data[data_config['textCol']], y, test_size=0.4, random_state=200)
-    x_train, x_test, y_train, y_test = train_test_split(model.data[data_config['textCol']], y, test_size=0.4)
-    #x_test, x_val, y_test, y_val = train_test_split(x_test, y_test, test_size=0.5, random_state=200)
-    x_test, x_val, y_test, y_val = train_test_split(x_test, y_test, test_size=0.5)
+
+    if data_config['validation']:
+        x_train, x_test, y_train, y_test = train_test_split(model.data[data_config['textCol']], y, test_size=0.60, random_state=10)
+        x_test, x_val, y_test, y_val = train_test_split(x_test, y_test, test_size=0.7, random_state=20)
+
+        model.validationIndices = x_val.index
+        model.validationData = model.data.loc[model.validationIndices]
+        model.validationTarget = model.target.loc[model.validationIndices]
+
+    else:
+        x_train, x_test, y_train, y_test = train_test_split(model.data[data_config['textCol']], y, test_size=0.50, random_state=10)
+
 
     #model.splitDataset(numTrainingDocs, random=False)
     #model.trainIndices = indices.loc['train'].dropna()
@@ -76,38 +86,35 @@ def cnnClassification():
     model.testIndices = x_test.index
     model.split()
 
-    model.validationIndices = x_val.index
-    model.validationData = model.data.loc[model.validationIndices]
-    model.validationTarget = model.target.loc[model.validationIndices]
 
     if analyze:
-        coi = model.data[model.data.category==data_config['categoryOfInterest']]
-        document_lengths = [len(word_tokenize(sentence)) for sentence in coi.sentence]
-        plotter = ImagePlotter(False)
-        figure_path = path=os.path.join(PATH, data_config['DATASET'], 'figures', data_config['ID'] + '_evidenceSentences' + '.png')
+        coi = model.data[model.data[data_config['TARGET']]==data_config['categoryOfInterest']]
+        document_lengths = [len(word_tokenize(sentence)) for sentence in coi[data_config['textCol']]]
+        plotter = ImagePlotter(True)
+        #figure_path = path=os.path.join(PATH, data_config['DATASET'], 'figures', data_config['ID'] + '_evidenceSentences' + '.png')
 
         bins = range(1,100)
-        plotter.plotHistogram(document_lengths, log=False, title= ID + ' frequency of evidence sentences length', xlabel='sentence length', ylabel='frequency', bins=bins, path=figure_path)
+        plotter.plotHistogram(document_lengths, log=False, title= data_config['ID'] + ' frequency of evidence sentences length', xlabel='sentence length', ylabel='frequency', bins=bins, path=None)
         print 'max: ' + str(max(document_lengths))
         print 'min: ' + str(min(document_lengths))
         print 'median: ' + str(np.median(document_lengths))
 
     max_document_length = max([len(x.split(" ")) for x in model.trainData[data_config['textCol']]])
-    #max_document_length = 600
+    #max_document_length = 500
     print 'Maximal sentence length ' + str(max_document_length)
     vocab_processor = learn.preprocessing.VocabularyProcessor(max_document_length)
 
     X_train = np.array(list(vocab_processor.fit_transform(model.trainData[data_config['textCol']].tolist())))
     X_test = np.array(list(vocab_processor.transform(model.testData[data_config['textCol']].tolist())))
-    X_validation = np.array(list(vocab_processor.transform(model.validationData[data_config['textCol']].tolist())))
-
-    #pdb.set_trace()
-
-    vocabulary = vocab_processor.vocabulary_
 
     Y_train = pd.get_dummies(model.trainTarget.tolist()).as_matrix()
     Y_test = pd.get_dummies(model.testTarget.tolist()).as_matrix()
-    Y_validation = pd.get_dummies(model.validationTarget.tolist()).as_matrix()
+
+    if data_config['validation']:
+        X_validation = np.array(list(vocab_processor.transform(model.validationData[data_config['textCol']].tolist())))
+        Y_validation = pd.get_dummies(model.validationTarget.tolist()).as_matrix()
+
+    vocabulary = vocab_processor.vocabulary_
 
     nrClasses = Y_train.shape[1]
     nn = NeuralNet(X_train.shape[1], nrClasses)
@@ -174,34 +181,22 @@ def cnnClassification():
 
         model.testData['predictedLabel'] = predLabels
 
-    #model.testTarget = model.testTarget.tolist()
-    model.evaluate()
-    model.evaluation.confusionMatrix()
-    model.classifierType = classifierType
 
-    viewer = Viewer(config_name, 'testset')
+        ## Test Data
+        #model.testTarget = model.testTarget.tolist()
+        model.evaluate()
+        model.evaluation.confusionMatrix()
+        model.classifierType = classifierType
 
-    viewer.printDocuments(model.testData, data_config['features'])
-    viewer.classificationResults(model, normalized=False)
+        viewer = Viewer(config_name, model.classifierType + '_test')
 
+        viewer.printDocuments(model.testData, data_config['features'])
+        viewer.classificationResults(model, normalized=False)
 
-    # Prediction Phase
-    graph = tf.Graph()
-    with graph.as_default():
-        session_config = tf.ConfigProto(allow_soft_placement=True, log_device_placement=False)
-        sess = tf.Session(config=session_config)
-        with sess.as_default():
-
-            nn2 = NeuralNet(X_train.shape[1], nrClasses)
-            nn2.loadCheckpoint(graph, sess, checkpoint_dir)
-
-            pdb.set_trace()
-
-            validationData = {nn2.X: X_validation, nn2.Y_: Y_validation, nn2.learning_rate: 0, nn2.pkeep:1.0}
-            predLabels = sess.run(nn2.Y, feed_dict=validationData)
-
-            #pdb.set_trace()
-            predLabels = np.argmax(predLabels, 1)
+        ## Validation Data
+        if data_config['validation']:
+            validationData = {nn.X: X_validation, nn.Y_: Y_validation, nn.learning_rate: 0, nn.pkeep:1.0, nn.step:1}
+            predLabels = sess.run(nn.Y, feed_dict=validationData)
 
             model.validationData['predictedLabel'] = predLabels
             #model.validationTarget = model.validationTarget.tolist()
@@ -211,13 +206,80 @@ def cnnClassification():
             model.classifierType = classifierType
 
 
-    viewer = Viewer(config_name, model.classifierType)
+            viewer = Viewer(config_name, model.classifierType + '_validation')
 
-    viewer.printDocuments(model.validationData, data_config['features'])
-    viewer.classificationResults(model, subset='validation', normalized=False)
+            viewer.printDocuments(model.validationData, data_config['features'])
+            viewer.classificationResults(model, subset='validation', normalized=False)
 
 
-    pdb.set_trace()
+        pdb.set_trace()
+
+
+        ### Prediction of Sentences from Documents:
+        sentences_filename = '../data/ICAAD/' + data_config['ID'] + '_sentencesValidationData.csv'
+
+        if splitValidationDataInSentences:
+            from createSentenceDB import filterSentenceLength, setSentenceLength
+
+            data = pd.read_pickle('../data/ICAAD/ICAAD.pkl')
+            validationIndices = model.validationData.docID.unique()
+            data = data[data.id.isin(validationIndices)]
+
+            def splitInSentences(row):
+                sentences = sent_tokenize(row.text)
+                return [(row.id, row[data_config['label']], sentence) for sentence in sentences]
+
+            sentenceDB = data.apply(splitInSentences, axis=1)
+            sentenceDB = sum(sentenceDB.tolist(), [])
+            sentenceDB = pd.DataFrame(sentenceDB, columns=['docId', data_config['label'], 'text'])
+
+            sentenceDB['sentenceLength'] = sentenceDB.text.map(setSentenceLength)
+            sentenceDB = sentenceDB[sentenceDB.sentenceLength.map(filterSentenceLength)]
+
+            sentenceDB['text'] = sentenceDB['text'].str.lower()
+            sentenceDB.to_csv(sentences_filename)
+
+        else:
+
+            sentenceDB = pd.read_csv(sentences_filename)
+
+        #sentenceDB = sentenceDB[:1000]
+
+        Y_val = pd.get_dummies(sentenceDB[data_config['label']].tolist()).as_matrix()
+        X_val = np.array(list(vocab_processor.transform(sentenceDB[data_config['textCol']].tolist())))
+
+        batches = data_helpers.batch_iter(list(zip(X_val, Y_val)), 5000, 1, shuffle=False)
+
+        predictions = []
+        activations = []
+
+        c = 0
+
+        for batch in batches:
+            print 'New batch: ' + str(c)
+
+            x_batch, y_batch = zip(*batch)
+
+            validationData = {nn.X: x_batch, nn.learning_rate: 0, nn.pkeep:1.0, nn.step:1}
+            #predLabels = sess.run(nn.predictions, feed_dict=validationData)
+            predLabels, activation = sess.run([nn.Y, nn.Ylogits], feed_dict=validationData)
+            predictions.append(predLabels.tolist())
+            activations.append(activation.tolist())
+
+            c = c + 1
+
+        pdb.set_trace()
+
+        predictions = sum(predictions, [])
+        activations = sum(activations, [])
+        sentenceDB['predictedLabel'] = predictions
+        sentenceDB['activation'] = activations
+
+        sentenceDB.to_csv(sentences_filename, index=False)
+
+
+        pdb.set_trace()
+
 
 
 
