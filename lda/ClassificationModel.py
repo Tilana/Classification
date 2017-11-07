@@ -205,11 +205,21 @@ class ClassificationModel:
     def evaluate(self, subset='test', avgType='macro'):
         self.setEvaluationAverage(avgType)
         if subset=='test':
-            self.evaluation = Evaluation(self.testTarget, self.testData.predictedLabel.tolist(),self.evaluationAverage)
+            data = self.testData
+            target = self.testTarget
+            indices = self.testIndices
         elif subset=='validation':
-            self.evaluation = Evaluation(self.validationTarget, self.validationData.predictedLabel.tolist(),self.evaluationAverage)
+            data = self.validationData
+            target = self.validationTarget
+            indices = self.validationIndices
+
+        self.evaluation = Evaluation(target, data.predictedLabel.tolist(), self.evaluationAverage)
         self.evaluation.setAllTags()
-        self.tagTestData()
+        data = self.tagData(data, indices)
+        if subset == 'test':
+            self.testData = data
+        elif subset == 'validation':
+            self.validationData = data
 
         self.evaluation.accuracy()
         self.evaluation.recall()
@@ -257,17 +267,19 @@ class ClassificationModel:
         self.data = pd.merge(self.data, dataset2, on=['id'])
 
 
-    def addTag(self, tag):
+    def addTag(self, tag, data, dataIndices):
         indices = getattr(self.evaluation, tag)
-        tagIndices = [self.testIndices[position] for position in indices]
-        self.testData.loc[tagIndices,'tag'] = tag
+        tagIndices = [dataIndices[position] for position in indices]
+        data.loc[tagIndices,'tag'] = tag
+        return data
 
-    def tagTestData(self):
+    def tagData(self, data, indices):
         tags = ['T','F']
         if self.classificationType=='binary':
             tags = ['TP', 'FP', 'TN', 'FN']
         for tag in tags:
-            self.addTag(tag)
+            self.addTag(tag, data, indices)
+        return data
 
     def oneHotEncoding(self, data):
         return pd.get_dummies(data)
