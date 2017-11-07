@@ -11,7 +11,7 @@ class NeuralNet:
         self.X = tf.placeholder(tf.int32, [None, self.input_size], name='X')
         self.output_size = output_size
         print 'Output size: ' +  str(output_size)
-        self.Y_ = tf.placeholder(tf.int64, [None, self.output_size], name='Y')
+        self.Y_ = tf.placeholder(tf.int64, [None, self.output_size], name='Y_')
         self.learning_rate = tf.placeholder(tf.float32, shape=())
         self.pkeep = tf.placeholder(tf.float32, shape=(), name='pkeep')
         self.step = tf.placeholder(tf.float32, shape=())
@@ -39,7 +39,6 @@ class NeuralNet:
 
     def setSaver(self):
         self.saver = tf.train.Saver(tf.global_variables())
-
 
     def setSummaryWriter(self, path, graph):
         states = ['train', 'test']
@@ -113,7 +112,7 @@ class NeuralNet:
         self.l2_loss += tf.nn.l2_loss(self.W)
         self.l2_loss += tf.nn.l2_loss(self.b)
         self.Ylogits = tf.nn.xw_plus_b(self.h_drop, W, self.b, name="scores")
-        self.Y = tf.argmax(self.Ylogits, 1)
+        self.Y = tf.argmax(self.Ylogits, 1, name='Y')
         self.predictions = tf.argmax(self.Ylogits, 1, name='predictions')
 
 
@@ -185,7 +184,11 @@ class NeuralNet:
         self.saver = tf.train.import_meta_graph('{}.meta'.format(checkpoint_file))
         self.saver.restore(session, checkpoint_file)
 
+        #import pdb
+        #pdb.set_trace()
+
         self.X = graph.get_operation_by_name("X").outputs[0]
+        self.Y_ = graph.get_operation_by_name("Y_").outputs[0]
         self.Y = graph.get_operation_by_name("Y").outputs[0]
         self.pkeep = graph.get_operation_by_name("pkeep").outputs[0]
 
