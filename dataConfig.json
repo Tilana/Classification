@@ -7,7 +7,10 @@
         "categoryOfInterest":"Evidence.of.DV",
         "negCategory":"Evidence.no.SADV", 
         "textCol":"text",
-        "features":["category", "docID", "label", "sentenceLength", "predictedLabel", "tag"]
+        "features":["category", "docID", "label", "sentenceLength", "predictedLabel", "tag"],
+        "label":"Domestic.Violence.Manual", 
+        "validation":1, 
+        "balanceData":1
     },
     
     "ICAAD_SA_sentences":{
@@ -18,9 +21,38 @@
         "categoryOfInterest":"Evidence.of.SA",
         "negCategory":"Evidence.no.SADV", 
         "textCol":"text",
-        "features":["category", "docID", "label", "sentenceLength", "predictedLabel", "tag"]
+        "features":["category", "docID", "label", "sentenceLength", "predictedLabel", "tag"],
+        "label":"Sexual.Assault.Manual", 
+        "validation":1,
+        "balanceDate":1
     },
-    
+
+    "ICAAD_DV_summaries":{
+        "DATASET":"ICAAD",
+        "ID":"DV",
+        "data_path":"../data/ICAAD/DV_summariesValidationData.csv", 
+        "TARGET":"Domestic.Violence.Manual", 
+        "categoryOfInterest":1,
+        "negCategory":0, 
+        "textCol":"text",
+        "features":["Domestic.Violence.Manual", "docID", "nrSentences", "predictedLabel", "tag"],
+        "validation":0,
+        "balanceData":0
+    },
+
+    "ICAAD_SA_summaries":{
+        "DATASET":"ICAAD",
+        "ID":"SA",
+        "data_path":"../data/ICAAD/SA_summariesValidationData.csv", 
+        "TARGET":"Sexual.Assault.Manual", 
+        "categoryOfInterest":1,
+        "negCategory":0, 
+        "textCol":"text",
+        "features":["Sexual.Assault.Manual", "docID", "nrSentences", "predictedLabel", "tag"],
+        "validation":0,
+        "balanceData":0
+    },
+
     "Manifesto_Minorities":{
         "DATASET":"Manifesto",
         "ID":"Minorities",
@@ -29,7 +61,9 @@
         "categoryOfInterest":411,
         "negCategory":506, 
         "textCol":"text",
-        "features":["cmp_code", "eu_code", "id", "textLength", "predictedLabel", "tag"]
+        "features":["cmp_code", "eu_code", "id", "textLength", "predictedLabel", "tag"], 
+        "validation":1,
+        "balanceData":1
     }
 }
 
