@@ -46,17 +46,14 @@ class Viewer:
         self.listToHtmlTable(f, title + '- %d' % len(l), l)
         f.write('</div>')
 
-    def printLinkedDocuments(self, f, title, data, folder='Documents'):
-        #path = self.path + '/' + folder + '/Documents'
-        path = self.path + '/' + folder
-        #path = self.path
+    def printLinkedDocuments(self, f, title, data, folder='Documents', docPath=None):
         f.write('<div>')
         f.write('<h4>%s</h4><table>' % title.encode('utf8'))
         for ind, doc in data.iterrows():
             if hasattr(doc, 'title'):
-                f.write("<tr><td><a href='../../../%s/doc%02d.html'> %s </a></td></tr>" % (path, doc['id'], doc.title.encode('utf8')))
+                f.write("<tr><td><a href='%s/doc%02d.html'> %s </a></td></tr>" % (docPath, doc['id'], doc.title.encode('utf8')))
             else:
-                f.write("<tr><td><a href='../../../%s/doc%02d.html'> Document %02d </a></td></tr>" % (path, doc['id'], doc['id']))
+                f.write("<tr><td><a href='%s/doc%02d.html'> Document %02d </a></td></tr>" % (docPath, doc['id'], doc['id']))
 
 
         f.write('</table>')
@@ -215,17 +212,16 @@ class Viewer:
         f.close()
         webbrowser.open_new_tab(filename)
 
-    def printDocuments(self, data, features, folder=None, openHtml=False):
-        data.apply(lambda row: self.printDocument(row, features, folder, openHtml), axis=1)
-
-    def printDocument(self, doc, features, folder, openHtml):
-        #pdb.set_trace()
-        docID = int(doc.id)
-        path = self.path + '/Documents'
+    def printDocuments(self, data, features, folder=None, openHtml=False, docPath=''):
+        path = self.path
         if folder:
-            #path = self.path + '/' + folder + '/Documents'
             path = self.path + '/' + folder
         self.createFolder(path)
+        data.apply(lambda row: self.printDocument(path, row, features, folder, openHtml, docPath), axis=1)
+
+
+    def printDocument(self, path, doc, features, folder, openHtml, docPath):
+        docID = int(doc.id)
         pagename = path + '/doc%02d.html' % docID
         f = open(pagename, 'w')
         f.write('<html>')
@@ -242,6 +238,9 @@ class Viewer:
                         self.printTupleList(f, elem, doc[elem], 'float')
                     else:
                         self.listToHtmlTable(f, elem, doc[elem])
+                elif elem == 'docID':
+                    docPath = docPath + '/doc%02d.html' % doc[elem]
+                    f.write('%s: <a href=%s > Document %d </a><br><br>' % (elem, docPath, doc[elem]))
                 elif type(doc[elem]) == unicode:
                     f.write('{:25}: {:>40}<br><br>'.format(elem, doc[elem].encode('utf8')))
                 elif elem.find('Topic') != -1:
@@ -304,7 +303,7 @@ class Viewer:
         f.write('</table>')
         f.write('</div>')
 
-    def classificationResults(self, model, subset='test', normalized = False):
+    def classificationResults(self, model, subset='test', normalized=False, docPath=None):
         #targetFolder = self.path + '/' + model.targetFeature
         #self.createFolder(targetFolder)
         #pagename = targetFolder + '/' + model.classifierType + '.html'
@@ -351,12 +350,12 @@ class Viewer:
             for tag in ['TP','FP','FN','TN']:
                 docs = data[data.tag == tag]
                 #self.printLinkedDocuments(f, tag, docs, model.targetFeature)
-                self.printLinkedDocuments(f, tag, docs)
+                self.printLinkedDocuments(f, tag, docs, docPath=docPath)
         else:
             for tag in ['T', 'F']:
                 docs = data[data.tag == tag]
                 #self.printLinkedDocuments(f, tag, docs, model.targetFeature)
-                self.printLinkedDocuments(f, tag, docs)
+                self.printLinkedDocuments(f, tag, docs, docPath=docPath)
 
         f.write('</body></html>')
         f.close()
