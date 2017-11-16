@@ -18,19 +18,19 @@ def evidenceSentencesToSummary():
     file_path = '../data/ICAAD/DV_summariesValidationData.csv'
     label = 'Domestic.Violence.Manual'
 
-    data_path = '../data/ICAAD/SA_sentencesValidationData.csv'
-    file_path = '../data/ICAAD/SA_summariesValidationData.csv'
-    label = 'Sexual.Assault.Manual'
+    #data_path = '../data/ICAAD/SA_sentencesValidationData.csv'
+    #file_path = '../data/ICAAD/SA_summariesValidationData.csv'
+    #label = 'Sexual.Assault.Manual'
 
     data = pd.read_csv(data_path)
 
     posData = data[data.predictedLabel==1]
-    posDocs = posData.groupby('docId')
+    posDocs = posData.groupby('docID')
 
     numberEvidences = posDocs.apply(numberOfEvidenceSentences)
     summaries = posDocs.apply(combineSentencesToSummary)
 
-    docIDs = posDocs.docId.unique()
+    docIDs = posDocs.docID.unique()
     docIDs = docIDs.apply(getFirstElement)
 
     labels = posDocs[label].unique()
@@ -43,7 +43,7 @@ def evidenceSentencesToSummary():
     #summaryData.to_csv(file_path)
 
     trueDocs = data[data[label]==1]
-    trueDocIDs = trueDocs.docId.unique().tolist()
+    trueDocIDs = trueDocs.docID.unique().tolist()
 
     falseNegatives = [elem for elem in trueDocIDs if elem not in docIDs]
     print 'Number of False Negatives: ' + str(len(falseNegatives))
