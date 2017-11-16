@@ -6,11 +6,13 @@
         "TARGET":"category", 
         "categoryOfInterest":"Evidence.of.DV",
         "negCategory":"Evidence.no.SADV", 
-        "textCol":"text",
         "features":["category", "docID", "label", "sentenceLength", "predictedLabel", "tag"],
         "label":"Domestic.Violence.Manual", 
         "validation":1, 
-        "balanceData":1
+        "balanceData":1,
+        "preprocessing":1,
+        "docPath":"../../ICAAD/Sentences"
+
     },
     
     "ICAAD_SA_sentences":{
@@ -20,11 +22,11 @@
         "TARGET":"category", 
         "categoryOfInterest":"Evidence.of.SA",
         "negCategory":"Evidence.no.SADV", 
-        "textCol":"text",
-        "features":["category", "docID", "label", "sentenceLength", "predictedLabel", "tag"],
         "label":"Sexual.Assault.Manual", 
         "validation":1,
-        "balanceDate":1
+        "balanceData":1,
+        "preprocessing":1,
+        "docPath":"../../ICAAD/Sentences"
     },
 
     "ICAAD_DV_summaries":{
@@ -34,10 +36,10 @@
         "TARGET":"Domestic.Violence.Manual", 
         "categoryOfInterest":1,
         "negCategory":0, 
-        "textCol":"text",
-        "features":["Domestic.Violence.Manual", "docID", "nrSentences", "predictedLabel", "tag"],
         "validation":0,
-        "balanceData":0
+        "balanceData":0,
+        "preprocessing":1,
+        "docPath":"../../ICAAD/DV_summaries"
     },
 
     "ICAAD_SA_summaries":{
@@ -47,10 +49,10 @@
         "TARGET":"Sexual.Assault.Manual", 
         "categoryOfInterest":1,
         "negCategory":0, 
-        "textCol":"text",
-        "features":["Sexual.Assault.Manual", "docID", "nrSentences", "predictedLabel", "tag"],
         "validation":0,
-        "balanceData":0
+        "balanceData":0,
+        "preprocessing":1,
+        "docPath":"../../ICAAD/SA_summaries"
     },
 
     "Manifesto_Minorities":{
@@ -60,10 +62,9 @@
         "TARGET":"cmp_code", 
         "categoryOfInterest":411,
         "negCategory":506, 
-        "textCol":"text",
-        "features":["cmp_code", "eu_code", "id", "textLength", "predictedLabel", "tag"], 
         "validation":1,
-        "balanceData":1
+        "balanceData":1,
+        "preprocessing":1
     }
 }
 
