@@ -35,13 +35,14 @@ out_folder = '_'.join([data_config['DATASET'], data_config['ID'], classifierType
 output_dir = os.path.join(os.path.curdir, 'runs', out_folder)
 checkpoint_dir = os.path.join(output_dir, 'checkpoints')
 checkpoint_prefix = os.path.join(checkpoint_dir, 'model')
+processor_dir = os.path.join(output_dir, 'preprocessor')
 
 if not os.path.exists(checkpoint_dir):
     os.makedirs(checkpoint_dir)
 
 
 BATCH_SIZE = 100
-ITERATIONS = 50
+ITERATIONS = 10
 cnnType = 'cnn'
 
 
@@ -109,6 +110,8 @@ def cnnClassification():
 
     X_train = np.array(list(vocab_processor.fit_transform(model.trainData.text.tolist())))
     X_test = np.array(list(vocab_processor.transform(model.testData.text.tolist())))
+
+    vocab_processor.save(processor_dir)
 
     Y_train = pd.get_dummies(model.trainTarget.tolist()).as_matrix()
     Y_test = pd.get_dummies(model.testTarget.tolist()).as_matrix()
@@ -186,6 +189,8 @@ def cnnClassification():
         print('{}: step {}, entropy {:}, acc {:g}, precision {:g}, recall {:g}'.format(datetime.now().isoformat(), c, entropy, accuracy, evaluation.precision, evaluation.recall))
 
         model.testData['predictedLabel'] = predLabels
+
+        pdb.set_trace()
 
 
         ## Test Data

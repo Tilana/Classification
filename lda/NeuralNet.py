@@ -12,9 +12,9 @@ class NeuralNet:
         self.output_size = output_size
         print 'Output size: ' +  str(output_size)
         self.Y_ = tf.placeholder(tf.int64, [None, self.output_size], name='Y_')
-        self.learning_rate = tf.placeholder(tf.float32, shape=())
+        self.learning_rate = tf.placeholder(tf.float32, shape=(), name='learning_rate')
         self.pkeep = tf.placeholder(tf.float32, shape=(), name='pkeep')
-        self.step = tf.placeholder(tf.float32, shape=())
+        self.step = tf.placeholder(tf.float32, shape=(), name='step')
 
 
     def buildNeuralNet(self, nnType='multi', vocab_size=None, hidden_layer_size=100, optimizerType='GD', sequence_length=None):
@@ -39,6 +39,7 @@ class NeuralNet:
 
     def setSaver(self):
         self.saver = tf.train.Saver(tf.global_variables())
+        #self.saver = tf.train.Saver()
 
     def setSummaryWriter(self, path, graph):
         states = ['train', 'test']
@@ -184,13 +185,12 @@ class NeuralNet:
         self.saver = tf.train.import_meta_graph('{}.meta'.format(checkpoint_file))
         self.saver.restore(session, checkpoint_file)
 
-        #import pdb
-        #pdb.set_trace()
-
         self.X = graph.get_operation_by_name("X").outputs[0]
         self.Y_ = graph.get_operation_by_name("Y_").outputs[0]
         self.Y = graph.get_operation_by_name("Y").outputs[0]
         self.pkeep = graph.get_operation_by_name("pkeep").outputs[0]
+        self.learning_rate = graph.get_operation_by_name("learning_rate").outputs[0]
+        self.step = graph.get_operation_by_name("step").outputs[0]
 
         self.predictions = graph.get_operation_by_name("predictions").outputs[0]
         self.scores = graph.get_operation_by_name("scores").outputs[0]
