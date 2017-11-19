@@ -1,18 +1,14 @@
 {
     "ICAAD_DV_sentences":{
+        "name": "ICAAD_DV_sentences",
         "DATASET":"ICAAD",
         "ID":"DV",
         "data_path":"../data/ICAAD/sentences_ICAAD.csv", 
         "TARGET":"category", 
         "categoryOfInterest":"Evidence.of.DV",
         "negCategory":"Evidence.no.SADV", 
-        "features":["category", "docID", "label", "sentenceLength", "predictedLabel", "tag"],
         "label":"Domestic.Violence.Manual", 
-        "validation":1, 
-        "balanceData":1,
-        "preprocessing":1,
-        "docPath":"../../ICAAD/Sentences"
-
+        "doc_path":"../../ICAAD/Sentences"
     },
     
     "ICAAD_SA_sentences":{
@@ -23,23 +19,18 @@
         "categoryOfInterest":"Evidence.of.SA",
         "negCategory":"Evidence.no.SADV", 
         "label":"Sexual.Assault.Manual", 
-        "validation":1,
-        "balanceData":1,
-        "preprocessing":1,
-        "docPath":"../../ICAAD/Sentences"
+        "doc_path":"../../ICAAD/Sentences"
     },
 
     "ICAAD_DV_summaries":{
+        "name":"ICAAD_DV_summaries",
         "DATASET":"ICAAD",
         "ID":"DV",
         "data_path":"../data/ICAAD/DV_summariesValidationData.csv", 
         "TARGET":"Domestic.Violence.Manual", 
         "categoryOfInterest":1,
         "negCategory":0, 
-        "validation":0,
-        "balanceData":0,
-        "preprocessing":1,
-        "docPath":"../../ICAAD/DV_summaries"
+        "doc_path":"../../ICAAD/DV_summaries"
     },
 
     "ICAAD_SA_summaries":{
@@ -49,10 +40,7 @@
         "TARGET":"Sexual.Assault.Manual", 
         "categoryOfInterest":1,
         "negCategory":0, 
-        "validation":0,
-        "balanceData":0,
-        "preprocessing":1,
-        "docPath":"../../ICAAD/SA_summaries"
+        "doc_path":"../../ICAAD/SA_summaries"
     },
 
     "Manifesto_Minorities":{
@@ -61,10 +49,7 @@
         "data_path":"../data/Manifesto/manifesto_United Kingdom.csv", 
         "TARGET":"cmp_code", 
         "categoryOfInterest":411,
-        "negCategory":506, 
-        "validation":1,
-        "balanceData":1,
-        "preprocessing":1
+        "negCategory":506
     }
 }
 
