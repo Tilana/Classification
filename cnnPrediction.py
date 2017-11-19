@@ -1,44 +1,22 @@
 #! /usr/bin/env python
-import json
 import tensorflow as tf
 from lda import NeuralNet
 import numpy as np
 import os
 import data_helpers
-from tensorflow.contrib import learn
 import pandas as pd
-import pdb
 
 
-def cnnPrediction():
+def cnnPrediction(data, label, output_dir):
 
 
-    configFile = 'dataConfig.json'
-    config_name = 'ICAAD_DV_sentences'
-
-
-    with open(configFile) as data_file:
-        data_config = json.load(data_file)[config_name]
-
-    classifierType = 'CNN'
-
-
-    out_folder = '_'.join([data_config['DATASET'], data_config['ID'], classifierType]) + '/'
-    output_dir = os.path.join(os.path.curdir, 'runs', out_folder)
     checkpoint_dir = os.path.join(output_dir, 'checkpoints')
-    checkpoint_prefix = os.path.join(checkpoint_dir, 'model')
     processor_dir = os.path.join(output_dir, 'preprocessor')
 
-    sentences_filename = '../data/ICAAD/' + data_config['ID'] + '_sentencesValidationData.csv'
-    sentenceDB = pd.read_csv(sentences_filename)
-    sentenceDB = sentenceDB[:1000]
+    vocab_processor = tf.contrib.learn.preprocessing.VocabularyProcessor.restore(processor_dir)
 
-    max_document_length = 1683
-    vocab_processor = learn.preprocessing.VocabularyProcessor.restore(processor_dir)
-
-
-    Y_val = pd.get_dummies(sentenceDB[data_config['label']].tolist()).as_matrix()
-    X_val = np.array(list(vocab_processor.transform(sentenceDB.text.tolist())))
+    Y_val = pd.get_dummies(data[label].tolist()).as_matrix()
+    X_val = np.array(list(vocab_processor.transform(data.text.tolist())))
 
     batches = data_helpers.batch_iter(list(zip(X_val, Y_val)), 50, 1, shuffle=False)
 
@@ -64,11 +42,12 @@ def cnnPrediction():
                 predictions.append(predLabels.tolist())
 
 
-            pdb.set_trace()
-
             predictions =sum(predictions, [])
-            sentenceDB['predictedLabel'] = predictions
-            #sentenceDB.to_csv(sentences_filename, index=False)
+            data['predictedLabel'] = predictions
+
+            sess.close()
+
+    return data
 
 
 if __name__=='__main__':
