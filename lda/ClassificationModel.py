@@ -5,10 +5,12 @@ import random
 import cPickle as pickle
 import os
 from listUtils import sortTupleList
+from osHelper import createFolderIfNotExistent
 import dataframeUtils as df
 from Evaluation import Evaluation
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
 from sklearn import svm, neighbors, linear_model
 from sklearn.naive_bayes import MultinomialNB, BernoulliNB, GaussianNB
 from sklearn.metrics import fbeta_score, make_scorer
@@ -36,11 +38,12 @@ class ClassificationModel:
         self.targetFeature = target
 
 
-    def splitDataset(self, num, random=True):
-        self._generateHalfSplitIndices(num)
-        if random:
-            self._generateRandomIndices(num)
+    def splitDataset(self, test_size=0.60, random_state=None):
+        self.trainIndices, self.testIndices = train_test_split(self.data.index, test_size=test_size, random_state=random_state)
+        if self.validation:
+            self.testIndices, self.validationIndices = train_test_split(self.testIndices, test_size=0.7, random_state=random_state)
         self.split()
+
 
 
     def split(self):
@@ -48,30 +51,9 @@ class ClassificationModel:
         self.trainTarget = self.target.loc[self.trainIndices]
         self.testData = self.data.loc[self.testIndices]
         self.testTarget = self.target.loc[self.testIndices]
-
-
-    def validationSet(self):
-        n = len(self.testData)/2
-        self.holdout = self.testData[:n]
-        self.holdoutTarget = self.testTarget[:n]
-        self.testData = self.testData[n:]
-        self.testIndices = self.testIndices[n:]
-        self.testTarget = self.testTarget[n:]
-
-
-    def _generateRandomIndices(self, num):
-        split = StratifiedKFold(n_splits=2) #, train_size=num)
-        X = self.data
-        y = self.target
-        split.get_n_splits(X,y)
-        for trainIndex, testIndex in split.split(X,y):
-            self.trainIndices = trainIndex
-            self.testIndices = testIndex
-
-
-    def _generateHalfSplitIndices(self, num):
-        self.trainIndices = self.data.index[:num]
-        self.testIndices = self.data.index[num:]
+        if self.validation:
+            self.validationData = self.data.loc[self.validationIndices]
+            self.validationTarget = self.target.loc[self.validationIndices]
 
 
     def balanceDataset(self, factor=1):
@@ -113,6 +95,15 @@ class ClassificationModel:
         self.classificationType = 'binary'
         if len(self.targetLabels) > 2:
             self.classificationType = 'multi'
+
+    def setOutputFolderName(self, config):
+        return 'runs/' +  config['name'] + '/'
+
+    def setDataConfig(self, config):
+        self.name = config['name']
+        self.output_dir = self.setOutputFolderName(config)
+        createFolderIfNotExistent(self.output_dir)
+        self.doc_path = config['doc_path']
 
     def setTargetLabels(self, target):
         self.targetLabels = list(self.data[target].unique())
@@ -179,7 +170,7 @@ class ClassificationModel:
 
     def validate(self, features):
         features = self.getFeatureList(self.holdout, features)
-        self.holdout['predictedLabel'] = self.classifier.predict(features)
+        self.validationData['predictedLabel'] = self.classifier.predict(features)
         self.validation = Evaluation(self.holdoutTarget, self.holdout.predictedLabel.tolist())
         self.validation.accuracy()
         self.validation.recall()
@@ -318,9 +309,6 @@ class ClassificationModel:
     def preprocessTestData(self, preprocessor, vecType='tfIdf'):
         testDocs = self.testData.text.tolist()
         self.testData[vecType] = preprocessor.vectorizeDocs(testDocs)
-
-    def createResultFolder(self, dataset, id_name, classifierType):
-        pass
 
 
 
