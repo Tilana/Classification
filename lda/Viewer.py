@@ -303,7 +303,7 @@ class Viewer:
         f.write('</table>')
         f.write('</div>')
 
-    def classificationResults(self, model, subset='test', normalized=False, docPath=None):
+    def classificationResults(self, model, name=None, subset='test', normalized=False, docPath=None):
         #targetFolder = self.path + '/' + model.targetFeature
         #self.createFolder(targetFolder)
         #pagename = targetFolder + '/' + model.classifierType + '.html'
@@ -312,7 +312,10 @@ class Viewer:
         elif subset == 'validation':
             data = model.validationData
 
-        pagename = self.path + '/' + model.classifierType + '.html'
+        if name:
+            pagename = self.path + '/' + model.classifierType + '_' + name + '.html'
+        else:
+            pagename = self.path + '/' + model.classifierType + '.html'
         f = open(pagename, 'w')
         title = '%s Classification - %s' % (model.classifierType, model.targetFeature)
         f.write('<html>')
