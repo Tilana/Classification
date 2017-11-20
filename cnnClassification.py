@@ -96,8 +96,8 @@ def cnnClassification(model, cnnType='cnn', BATCH_SIZE=64, ITERATIONS=100):
         model.evaluation.confusionMatrix()
         model.classifierType = 'CNN'
 
-        viewer = Viewer(model.name, model.classifierType + '_test')
-        viewer.classificationResults(model, normalized=False, docPath=model.doc_path)
+        viewer = Viewer(model.name)
+        viewer.classificationResults(model, name='test', normalized=False, docPath=model.doc_path)
 
         ## Validation Data
         if model.validation:
@@ -110,8 +110,8 @@ def cnnClassification(model, cnnType='cnn', BATCH_SIZE=64, ITERATIONS=100):
             model.evaluation.confusionMatrix()
 
 
-            viewer = Viewer(model.name, model.classifierType + '_validation')
-            viewer.classificationResults(model, subset='validation', normalized=False, docPath=model.doc_path)
+            viewer = Viewer(model.name)
+            viewer.classificationResults(model, name='validation', subset='validation', normalized=False, docPath=model.doc_path)
 
         sess.close()
         tf.reset_default_graph()
