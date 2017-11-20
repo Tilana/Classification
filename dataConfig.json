@@ -8,10 +8,12 @@
         "categoryOfInterest":"Evidence.of.DV",
         "negCategory":"Evidence.no.SADV", 
         "label":"Domestic.Violence.Manual", 
-        "doc_path":"../../ICAAD/Sentences"
+        "doc_path":"../ICAAD/Sentences",
+        "full_doc_path":"../data/ICAAD/ICAAD.pkl"
     },
     
     "ICAAD_SA_sentences":{
+        "name": "ICAAD_SA_sentences",
         "DATASET":"ICAAD",
         "ID":"SA",
         "data_path":"../data/ICAAD/sentences_ICAAD.csv", 
@@ -19,7 +21,8 @@
         "categoryOfInterest":"Evidence.of.SA",
         "negCategory":"Evidence.no.SADV", 
         "label":"Sexual.Assault.Manual", 
-        "doc_path":"../../ICAAD/Sentences"
+        "doc_path":"../ICAAD/Sentences",
+        "full_doc_path":"../data/ICAAD/ICAAD.pkl"
     },
 
     "ICAAD_DV_summaries":{
@@ -30,17 +33,18 @@
         "TARGET":"Domestic.Violence.Manual", 
         "categoryOfInterest":1,
         "negCategory":0, 
-        "doc_path":"../../ICAAD/DV_summaries"
+        "doc_path":"../ICAAD/DV_summaries"
     },
 
     "ICAAD_SA_summaries":{
+        "name":"ICAAD_SA_summaries",
         "DATASET":"ICAAD",
         "ID":"SA",
         "data_path":"../data/ICAAD/SA_summariesValidationData.csv", 
         "TARGET":"Sexual.Assault.Manual", 
         "categoryOfInterest":1,
         "negCategory":0, 
-        "doc_path":"../../ICAAD/SA_summaries"
+        "doc_path":"../ICAAD/SA_summaries"
     },
 
     "Manifesto_Minorities":{
