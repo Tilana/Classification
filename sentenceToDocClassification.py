@@ -6,7 +6,7 @@ from cnnPrediction import cnnPrediction
 from evidenceSentencesToSummary import evidenceSentencesToSummary
 from createSentenceDB import filterSentenceLength, setSentenceLength
 from nltk.tokenize import sent_tokenize
-from lda import ClassificationModel, Preprocessor
+from lda import ClassificationModel, Preprocessor, Viewer
 
 
 
@@ -19,13 +19,17 @@ def sentenceToDocClassification():
     splitValidationDataInSentences = 0
 
     configFile = 'dataConfig.json'
-    config_name = 'ICAAD_DV_sentences'
+    sentences_config_name = 'ICAAD_DV_sentences'
+    summary_config_name = 'ICAAD_DV_summaries'
+
+    sentences_config_name = 'ICAAD_SA_sentences'
+    summary_config_name = 'ICAAD_SA_summaries'
     #config_name = 'ICAAD_SA_sentences'
     #config_name = 'Manifesto_Minorities'
 
 
     with open(configFile) as data_file:
-        sentences_config = json.load(data_file)[config_name]
+        sentences_config = json.load(data_file)[sentences_config_name]
 
     sentences = pd.read_csv(sentences_config['data_path'], encoding ='utf8')
 
@@ -68,44 +72,40 @@ def sentenceToDocClassification():
 
     cnnClassification(sentenceClassifier, ITERATIONS=30, BATCH_SIZE=64)
 
-    sentences_filename = '../data/' + sentences_config['DATASET'] + '/' + sentences_config['ID'] + '_sentencesValidationData.csv'
+
+    print 'Split Validation Data In Setences'
+    data = pd.read_pickle(sentences_config['full_doc_path'])
+    validationIndices = sentenceClassifier.validationData.docID.unique()
+    data = data[data.id.isin(validationIndices)]
+
+    def splitInSentences(row):
+        sentences = sent_tokenize(row.text)
+        return [(row.id, row[sentences_config['label']], sentence) for sentence in sentences]
+
+    sentenceDB = data.apply(splitInSentences, axis=1)
+    sentenceDB = sum(sentenceDB.tolist(), [])
+    sentenceDB = pd.DataFrame(sentenceDB, columns=['docID', sentences_config['label'], 'text'])
+
+    sentenceDB['sentenceLength'] = sentenceDB.text.map(setSentenceLength)
+    sentenceDB = sentenceDB[sentenceDB.sentenceLength.map(filterSentenceLength)]
+
+    sentenceDB['text'] = sentenceDB['text'].str.lower()
 
 
-    if splitValidationDataInSentences:
-
-        print 'Split Validation Data In Setences'
-        data = pd.read_pickle('../data/ICAAD/ICAAD.pkl')
-        validationIndices = sentenceClassifier.validationData.docID.unique()
-        data = data[data.id.isin(validationIndices)]
-
-        def splitInSentences(row):
-            sentences = sent_tokenize(row.text)
-            return [(row.id, row[data_config['label']], sentence) for sentence in sentences]
-
-        sentenceDB = data.apply(splitInSentences, axis=1)
-        sentenceDB = sum(sentenceDB.tolist(), [])
-        sentenceDB = pd.DataFrame(sentenceDB, columns=['docID', data_config['label'], 'text'])
-
-        sentenceDB['sentenceLength'] = sentenceDB.text.map(setSentenceLength)
-        sentenceDB = sentenceDB[sentenceDB.sentenceLength.map(filterSentenceLength)]
-
-        sentenceDB['text'] = sentenceDB['text'].str.lower()
-        sentenceDB.to_csv(sentences_filename)
-
-    else:
-
-        sentenceDB = pd.read_csv(sentences_filename)
-
-
+    print 'Predict labels of sentences in validation data'
     predictedData = cnnPrediction(sentenceDB, sentences_config['label'], sentenceClassifier.output_dir)
 
     summaries = evidenceSentencesToSummary(predictedData, sentences_config['label'])
 
 
-    summary_config_name = 'ICAAD_DV_summaries'
     with open(configFile) as data_file:
         summary_config = json.load(data_file)[summary_config_name]
 
+    features = summaries.columns.tolist()
+    features.remove('text')
+
+    viewer = Viewer(summary_config['DATASET'])
+    viewer.printDocuments(summaries, features, folder= summary_config['ID'] + '_summaries', docPath='../../' + summary_config['DATASET'] + '/Documents')
 
     if preprocessing:
         preprocessor = Preprocessor()
