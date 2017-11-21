@@ -17,7 +17,12 @@ def loadData(path):
     fileEnding = path.split('.')[-1]
     loadFunction = fileFunctionMatch[fileEnding]
     return loadFunction(path)
-    
+
+
+def loadConfigFile(configFile, configName):
+    with open(configFile) as dataFile:
+        return json.load(dataFile)[configName]
+
 
 def loadCouchDB(path):
     dat = json.load(urllib.urlopen(path))
