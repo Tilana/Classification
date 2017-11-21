@@ -1,13 +1,12 @@
 import pandas as pd
 import pdb
-import json
+from lda.docLoader import loadConfigFile
 from cnnClassification import cnnClassification
 from cnnPrediction import cnnPrediction
 from evidenceSentencesToSummary import evidenceSentencesToSummary
 from createSentenceDB import filterSentenceLength, setSentenceLength
 from nltk.tokenize import sent_tokenize
 from lda import ClassificationModel, Preprocessor, Viewer
-
 
 
 def sentenceToDocClassification():
@@ -17,20 +16,19 @@ def sentenceToDocClassification():
     balanceData = 1
     validation = 1
     splitValidationDataInSentences = 0
+    test_size = 0.9
 
     configFile = 'dataConfig.json'
     sentences_config_name = 'ICAAD_DV_sentences'
     summary_config_name = 'ICAAD_DV_summaries'
 
-    sentences_config_name = 'ICAAD_SA_sentences'
-    summary_config_name = 'ICAAD_SA_summaries'
+    #sentences_config_name = 'ICAAD_SA_sentences'
+    #summary_config_name = 'ICAAD_SA_summaries'
     #config_name = 'ICAAD_SA_sentences'
     #config_name = 'Manifesto_Minorities'
 
 
-    with open(configFile) as data_file:
-        sentences_config = json.load(data_file)[sentences_config_name]
-
+    sentences_config = loadConfigFile(configFile, sentences_config_name)
     sentences = pd.read_csv(sentences_config['data_path'], encoding ='utf8')
 
 
@@ -49,9 +47,9 @@ def sentenceToDocClassification():
     sentenceClassifier.createTarget()
 
     sentenceClassifier.setDataConfig(sentences_config)
-    sentenceClassifier.validation = 1
+    sentenceClassifier.validation = validation
 
-    sentenceClassifier.splitDataset(random_state=10)
+    sentenceClassifier.splitDataset(test_size=test_size)
 
 
     if analyze:
@@ -63,7 +61,7 @@ def sentenceToDocClassification():
         bins = range(1,100)
         plotter.plotHistogram(document_lengths, log=False, title= sentences_config['ID'] + ' frequency of evidence sentences length', xlabel='sentence length', ylabel='frequency', bins=bins, path=None)
         print 'max: ' + str(max(document_lengths))
-        print 'min: ' + str(min(document_lengths))
+        print 'min 0.5: ' + str(min(document_lengths))
         print 'median: ' + str(np.median(document_lengths))
 
     sentenceClassifier.max_document_length = max([len(x.split(" ")) for x in sentenceClassifier.trainData.text])
@@ -98,8 +96,8 @@ def sentenceToDocClassification():
     summaries = evidenceSentencesToSummary(predictedData, sentences_config['label'])
 
 
-    with open(configFile) as data_file:
-        summary_config = json.load(data_file)[summary_config_name]
+    summary_config = loadConfigFile(configFile, summary_config_name)
+
 
     features = summaries.columns.tolist()
     features.remove('text')
