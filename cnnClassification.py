@@ -23,6 +23,8 @@ def cnnClassification(model, cnnType='cnn', BATCH_SIZE=64, ITERATIONS=100):
         X_validation = np.array(list(vocab_processor.transform(model.validationData.text.tolist())))
         Y_validation = pd.get_dummies(model.validationTarget.tolist()).as_matrix()
 
+    nrTrainData = str(len(X_train))
+
 
     vocabulary = vocab_processor.vocabulary_
 
@@ -97,7 +99,7 @@ def cnnClassification(model, cnnType='cnn', BATCH_SIZE=64, ITERATIONS=100):
         model.classifierType = 'CNN'
 
         viewer = Viewer(model.name)
-        viewer.classificationResults(model, name='test', normalized=False, docPath=model.doc_path)
+        viewer.classificationResults(model, name= nrTrainData + '_test', normalized=False, docPath=model.doc_path)
 
         ## Validation Data
         if model.validation:
@@ -111,7 +113,7 @@ def cnnClassification(model, cnnType='cnn', BATCH_SIZE=64, ITERATIONS=100):
 
 
             viewer = Viewer(model.name)
-            viewer.classificationResults(model, name='validation', subset='validation', normalized=False, docPath=model.doc_path)
+            viewer.classificationResults(model, name= nrTrainData + '_validation', subset='validation', normalized=False, docPath=model.doc_path)
 
         sess.close()
         tf.reset_default_graph()
