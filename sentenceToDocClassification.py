@@ -16,7 +16,8 @@ def sentenceToDocClassification():
     balanceData = 1
     validation = 1
     splitValidationDataInSentences = 0
-    test_size = 0.9
+    sentences_train_size = 100
+    doc_train_size = 100
 
     configFile = 'dataConfig.json'
     sentences_config_name = 'ICAAD_DV_sentences'
@@ -49,7 +50,7 @@ def sentenceToDocClassification():
     sentenceClassifier.setDataConfig(sentences_config)
     sentenceClassifier.validation = validation
 
-    sentenceClassifier.splitDataset(test_size=test_size)
+    sentenceClassifier.splitDataset(train_size=sentences_train_size, random_state=20)
 
 
     if analyze:
@@ -68,7 +69,7 @@ def sentenceToDocClassification():
     print 'Maximal sentence length ' + str(sentenceClassifier.max_document_length)
 
 
-    cnnClassification(sentenceClassifier, ITERATIONS=30, BATCH_SIZE=64)
+    cnnClassification(sentenceClassifier, ITERATIONS=60, BATCH_SIZE=64, filter_sizes=[2,3,4,5])
 
 
     print 'Split Validation Data In Setences'
@@ -115,14 +116,14 @@ def sentenceToDocClassification():
     docClassifier.createTarget()
 
     docClassifier.setDataConfig(summary_config)
-    docClassifier.splitDataset(random_state=10)
+    docClassifier.splitDataset(train_size=doc_train_size, random_state=20)
 
 
     docClassifier.max_document_length = max([len(x.split(" ")) for x in docClassifier.trainData.text])
     print 'Maximal sentence length ' + str(sentenceClassifier.max_document_length)
 
 
-    cnnClassification(docClassifier, BATCH_SIZE=32, ITERATIONS=30)
+    cnnClassification(docClassifier, BATCH_SIZE=32, ITERATIONS=30, filter_sizes=[3,4,5])
 
     pdb.set_trace()
 

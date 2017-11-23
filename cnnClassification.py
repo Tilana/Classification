@@ -7,7 +7,7 @@ import data_helpers
 from lda import Viewer, NeuralNet, Evaluation
 
 
-def cnnClassification(model, cnnType='cnn', BATCH_SIZE=64, ITERATIONS=100):
+def cnnClassification(model, cnnType='cnn', BATCH_SIZE=64, ITERATIONS=100, filter_sizes=[3,4,5]):
 
     vocab_processor = tf.contrib.learn.preprocessing.VocabularyProcessor(model.max_document_length)
 
@@ -37,7 +37,7 @@ def cnnClassification(model, cnnType='cnn', BATCH_SIZE=64, ITERATIONS=100):
     with sess.as_default():
 
         nn.setSummaryWriter(model.output_dir, tf.get_default_graph())
-        nn.buildNeuralNet(cnnType, sequence_length=model.max_document_length, vocab_size=len(vocabulary), optimizerType='Adam')
+        nn.buildNeuralNet(cnnType, sequence_length=model.max_document_length, vocab_size=len(vocabulary), optimizerType='Adam', filter_sizes=filter_sizes)
 
         sess.run(tf.global_variables_initializer())
         sess.run(tf.local_variables_initializer())

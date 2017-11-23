@@ -17,14 +17,14 @@ class NeuralNet:
         self.step = tf.placeholder(tf.float32, shape=(), name='step')
 
 
-    def buildNeuralNet(self, nnType='multi', vocab_size=None, hidden_layer_size=100, optimizerType='GD', sequence_length=None):
+    def buildNeuralNet(self, nnType='multi', vocab_size=None, hidden_layer_size=100, optimizerType='GD', sequence_length=None, filter_sizes=[3,4,5]):
         self.nnType = nnType
         self.vocab_size = vocab_size
         self.sequence_length = sequence_length
         if nnType=='multi':
             self.multiLayerNN(hidden_layer_size)
         elif nnType =='cnn':
-            self.cnn()
+            self.cnn(filter_sizes=filter_sizes)
         else:
             self.oneLayerNN()
         self.crossEntropy()
@@ -81,7 +81,7 @@ class NeuralNet:
         self.Ylogits = tf.matmul(self.Y1d, self.W2) + self.b2
         self.Y = tf.nn.softmax(self.Ylogits)
 
-    def cnn(self, embedding_size=128, filter_sizes=[3,4,5], num_filters=128):
+    def cnn(self, embedding_size=128, filter_sizes=[4,5,6,7], num_filters=128):
         self.l2_loss = tf.constant(0.0)
 
         # Embedding Layer
