@@ -4,7 +4,6 @@ from FeatureAnalyser import FeatureAnalyser
 from Evaluation import Evaluation
 from Dictionary import Dictionary
 from Entities import Entities
-from Collection import Collection
 from Topic import Topic
 from Cluster import Cluster
 from Model import Model
