@@ -1,21 +1,15 @@
 ## Classification
 
-This module provides a framework to analyse collections of documents.
+This module provides a framework to process, analyse, and categorize collections of documents.
 
-The *classificationScript.py* shows a sample pipeline that includes:
- * *preprocessing.py* - normalizes text documents and computes the term relevancy (tf-idf) 
- * *FeatureExtraction.py* - extracts text properties based on named-entity recognition, regular expressions and wordlists  
- * *FeatureAnalysis.py* - analyzes which features are could indicators regarding a supervised classification task
- * *modelSelection.py* - determines best classifier and parameters for supervised classification
- * *validateModel.py* - re-trains and tests the best classifier anddisplays the accuracy measures as well as correctly and incorrectly identified documents with their extracted properties
+In *dataConfig.json* the for different dataset specific parameters, like the variable to classify, the path to the document, etc. are stored. With *classificationScript.py* a sample pipeline for classification based on standard algorithms like *Logistic Regression* or *Naive Bayes* is provided.
+Similar in *cnnClassification.py* the pipeline for document classification based on a Convolutional Neural Network is demonstrated.
 
-Unsupervised classification with K-Means clustering is implemented in *clustering_ICAAD.py*. The number of clusters is variable. 
- 
+
 ## Scripts
-Use the following command to run the scripts:
+Use the following command to run the *sentenceToDocClassification.py* script which combines a sentence classifier to identify relevant word sequences with a document classifier:
 ```
-python classificationScript.py
-python clustering_ICAAD.py
+python sentenceToDocClassification.py
 ```
 
 
@@ -41,15 +35,24 @@ pip install --user -r requirements.txt
 ```
 
 ### Installing NLTK data
-In python type:
+Install *nltk* and to download the required modules, open python and type the following commands:
 ```
 import nltk
-nltk.download()
+nltk.download('punkt')
+nltk.download('wordnet')
+nltk.download('averaged_perceptron_tagger')
+
 ```
-Select **wordnet** under *Corpora* and **punkt** under *Models*.
 
 
 ## Detailed list of dependencies
+* [Tensorflow - An Open-Source Software Library for Machine Intelligence](https://www.tensorflow.org/install/) <br />
+TensorFlow is an open-source software library for dataflow programming across a range of tasks. It is a symbolic math library, and also used for machine learning applications such as neural networks.
+```
+pip install tensorflow      # Python 2.7; CPU support
+pip install tensorflow-gpu  # Python 2.7; GPU support
+```
+
 * [gensim - Topic Modeling for Humans](https://radimrehurek.com/gensim/install.html) <br />
 Gensim is a free Python library designed to automatically extract semantic topics from documents by implementing Latent Semantic Analysis, Latent Dirichlet Allocation and Term-Frequency Inverse-Document Frequency models.
 ```
