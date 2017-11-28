@@ -212,11 +212,14 @@ class Viewer:
         f.close()
         webbrowser.open_new_tab(filename)
 
-    def printDocuments(self, data, features, folder=None, openHtml=False, docPath=''):
+    def printDocuments(self, data, features=None, folder=None, openHtml=False, docPath=''):
         path = self.path
         if folder:
             path = self.path + '/' + folder
         self.createFolder(path)
+        if not features:
+            features = data.columns.tolist()
+            features.remove('text')
         data.apply(lambda row: self.printDocument(path, row, features, folder, openHtml, docPath), axis=1)
 
 
