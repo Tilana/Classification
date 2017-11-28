@@ -8,7 +8,7 @@ def validateModel(model, features):
     #pdb.set_trace()
 
     nrDocs = len(model.data)
-    model.splitDataset(2*nrDocs/3, random=True)
+    model.splitDataset(train_size=1*nrDocs/3)
     #model.validationSet()
 
     print 'Train Classifier'
