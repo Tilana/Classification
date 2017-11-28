@@ -8,3 +8,4 @@ nose
 scikit_learn
 Pattern
 seaborn
+tensorflow
