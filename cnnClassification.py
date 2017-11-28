@@ -44,7 +44,7 @@ def cnnClassification(model, cnnType='cnn', BATCH_SIZE=64, ITERATIONS=100, filte
 
         nn.setSaver()
 
-        batches = data_helpers.batch_iter(list(zip(X_train, Y_train)), BATCH_SIZE, ITERATIONS)
+        batches = data_helpers.batch_iter(list(zip(X_train, Y_train)), BATCH_SIZE, ITERATIONS, shuffle=False)
 
         c=0
         dropout = 0.5
