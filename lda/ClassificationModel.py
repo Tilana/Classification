@@ -38,10 +38,10 @@ class ClassificationModel:
         self.targetFeature = target
 
 
-    def splitDataset(self, test_size=0.60, random_state=None):
-        self.trainIndices, self.testIndices = train_test_split(self.data.index, test_size=test_size, random_state=random_state)
+    def splitDataset(self, train_size=0.30, random_state=None):
+        self.trainIndices, self.testIndices = train_test_split(self.data.index, train_size=train_size, random_state=random_state)
         if self.validation:
-            self.testIndices, self.validationIndices = train_test_split(self.testIndices, test_size=0.7, random_state=random_state)
+            self.testIndices, self.validationIndices = train_test_split(self.testIndices, train_size=0.5, random_state=random_state)
         self.split()
 
 
