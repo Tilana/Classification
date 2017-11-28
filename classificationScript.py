@@ -1,6 +1,4 @@
-from modelSelection import modelSelection
-from validateModel import validateModel
-from lda import Collection, FeatureAnalyser, Viewer
+from lda import Viewer
 from lda.docLoader import loadTargets, loadConfigFile
 from lda import Preprocessor, ClassificationModel
 import pandas as pd
@@ -11,6 +9,7 @@ def classificationScript():
 
     configFile = 'dataConfig.json'
     data_config_name = 'ICAAD_DV_sentences'
+    data_config_name = 'ICAAD_SA_sentences'
 
     data_config = loadConfigFile(configFile, data_config_name)
     data = pd.read_csv(data_config['data_path'], encoding ='utf8')
