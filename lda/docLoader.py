@@ -3,8 +3,6 @@ import urllib
 import pickle
 import os
 import pandas as pd
-import MySQLdb
-import sqlite3
 
 def loadTargets(path, field):
     projects = pd.read_csv(path)
@@ -61,23 +59,16 @@ def loadCategories(path):
 
 
 def loadSQL(path):
-    #db = MySQLdb.connect('localhost', 'test', 'test123', 'Documents/right_docs_hrc_data.sql') #, 'natalie', 'test123', 'TESTDB')
-    #connection = sqlite3.connect('database.db')
-    #cursor = connection.cursor()
-    #cursor.execute
     fd = open('right_docs_hrc_data.sql', 'r')
     sqlFile = fd.read()
     fd.close()
 
     sqlCommands = sqlFile.split(';')
-
     for command in sqlCommands:
         try:
             c.execute(command)
         except OperationalError, msg:
             print 'Command skipped: ', msg
-
-
 
 
 def removeSpecialChars(text, verbosity=0):
