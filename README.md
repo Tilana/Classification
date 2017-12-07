@@ -19,6 +19,7 @@ python clustering_ICAAD.py
 ```
 
 
+
 ## Testing
 The folder *Unittests* contains the tests corresponding to each module. [*nose*](http://nose.readthedocs.org/) provides an easy way to run all tests together. <br  />
 
@@ -47,6 +48,11 @@ import nltk
 nltk.download()
 ```
 Select **wordnet** under *Corpora* and **punkt** under *Models*.
+
+### Download pre-trained Word2Vec model
+We are using a pre-trained vector model trained on part of Google News dataset (about 100 billion words). The model contains 300-dimensional vectors for 3 million words and phrases.
+The archive with the 1.5 GB model is [here](https://drive.google.com/file/d/0B7XkCwpI5KDYNlNUTTlSS21pQmM/edit) available.
+Download the file and unpack it in the **Word2Vec** folder.
 
 
 ## Detailed list of dependencies
