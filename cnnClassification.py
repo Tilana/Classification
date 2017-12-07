@@ -5,16 +5,20 @@ import numpy as np
 from datetime import datetime
 import data_helpers
 from lda import Viewer, NeuralNet, Evaluation
+import pdb
+import gensim.models.keyedvectors as w2v_model
 
 
-def cnnClassification(model, cnnType='cnn', BATCH_SIZE=64, ITERATIONS=100, filter_sizes=[3,4,5]):
+def cnnClassification(model, cnnType='cnn', BATCH_SIZE=64, ITERATIONS=100, filter_sizes=[3,4,5], pretrainedWordEmbeddings=True):
 
     vocab_processor = tf.contrib.learn.preprocessing.VocabularyProcessor(model.max_document_length)
+    pretrain = vocab_processor.fit(model.data.text.tolist())
 
-    X_train = np.array(list(vocab_processor.fit_transform(model.trainData.text.tolist())))
+
+    word2vec = w2v_model.KeyedVectors.load_word2vec_format('Word2Vec/GoogleNews-vectors-negative300.bin', binary=True)
+
+    X_train = np.array(list(vocab_processor.transform(model.trainData.text.tolist())))
     X_test = np.array(list(vocab_processor.transform(model.testData.text.tolist())))
-
-    vocab_processor.save(model.output_dir + 'preprocessor')
 
     Y_train = pd.get_dummies(model.trainTarget.tolist()).as_matrix()
     Y_test = pd.get_dummies(model.testTarget.tolist()).as_matrix()
@@ -23,10 +27,12 @@ def cnnClassification(model, cnnType='cnn', BATCH_SIZE=64, ITERATIONS=100, filte
         X_validation = np.array(list(vocab_processor.transform(model.validationData.text.tolist())))
         Y_validation = pd.get_dummies(model.validationTarget.tolist()).as_matrix()
 
-    nrTrainData = str(len(X_train))
-
-
     vocabulary = vocab_processor.vocabulary_
+    vocab_processor.save(model.output_dir + 'preprocessor')
+
+    print 'Vocabulary Size: ' + str(len(vocabulary))
+
+    nrTrainData = str(len(X_train))
 
     nrClasses = Y_train.shape[1]
     nn = NeuralNet(X_train.shape[1], nrClasses)
@@ -42,6 +48,14 @@ def cnnClassification(model, cnnType='cnn', BATCH_SIZE=64, ITERATIONS=100, filte
         sess.run(tf.global_variables_initializer())
         sess.run(tf.local_variables_initializer())
 
+        if pretrainedWordEmbeddings:
+            vocabIntersection = set(vocabulary._mapping.keys()).intersection(word2vec.vocab.keys())
+            initW = np.random.uniform(-0.25, 0.25, (len(vocabulary), 300))
+            for word in vocabIntersection:
+                idx = vocabulary.get(word)
+                initW[idx] = word2vec.word_vec(word)
+            sess.run(nn.W.assign(initW))
+
         nn.setSaver()
 
         batches = data_helpers.batch_iter(list(zip(X_train, Y_train)), BATCH_SIZE, ITERATIONS, shuffle=False)
@@ -55,6 +69,8 @@ def cnnClassification(model, cnnType='cnn', BATCH_SIZE=64, ITERATIONS=100, filte
 
             #learning_rate = nn.learningRate(c)
             learning_rate =1e-3
+
+            #pdb.set_trace()
 
             train_data = {nn.X: x_batch, nn.Y_: y_batch, nn.step:c, nn.learning_rate: learning_rate, nn.pkeep:dropout}
 
