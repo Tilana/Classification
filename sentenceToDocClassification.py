@@ -14,10 +14,12 @@ def sentenceToDocClassification():
     analyze = 0
     preprocessing = 1
     balanceData = 1
-    validation = 1
+    validation = 0
     splitValidationDataInSentences = 0
-    sentences_train_size = 100
+    sentences_train_size = 20
     doc_train_size = 100
+    useWord2Vec = True
+    random_state = 20
 
     configFile = 'dataConfig.json'
     sentences_config_name = 'ICAAD_DV_sentences'
@@ -35,7 +37,7 @@ def sentenceToDocClassification():
 
     if balanceData:
         posSample = sentences[sentences[sentences_config['TARGET']]==sentences_config['categoryOfInterest']]
-        negSample = sentences[sentences[sentences_config['TARGET']] == sentences_config['negCategory']].sample(len(posSample))
+        negSample = sentences[sentences[sentences_config['TARGET']] == sentences_config['negCategory']].sample(len(posSample), random_state=random_state)
         sentences = pd.concat([posSample, negSample])
 
     if preprocessing:
@@ -51,6 +53,8 @@ def sentenceToDocClassification():
     sentenceClassifier.validation = validation
 
     sentenceClassifier.splitDataset(train_size=sentences_train_size, random_state=20)
+
+    #pdb.set_trace()
 
 
     if analyze:
@@ -68,9 +72,11 @@ def sentenceToDocClassification():
     sentenceClassifier.max_document_length = max([len(x.split(" ")) for x in sentenceClassifier.trainData.text])
     print 'Maximal sentence length ' + str(sentenceClassifier.max_document_length)
 
+    print sentenceClassifier.trainData.index
 
-    cnnClassification(sentenceClassifier, ITERATIONS=60, BATCH_SIZE=64, filter_sizes=[2,3,4,5])
+    cnnClassification(sentenceClassifier, ITERATIONS=600, BATCH_SIZE=64, filter_sizes=[2,3,4,5], pretrainedWordEmbeddings=useWord2Vec)
 
+    pdb.set_trace()
 
     print 'Split Validation Data In Setences'
     data = pd.read_pickle(sentences_config['full_doc_path'])
