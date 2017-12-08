@@ -20,12 +20,14 @@ def classificationScript():
     preprocessing = 1
     train_size = 60
 
+    random_state = 20
+
 
     features = ['tfidf']
 
     if balanceData:
         posSample = data[data[data_config['TARGET']]==data_config['categoryOfInterest']]
-        negSample = data[data[data_config['TARGET']] == data_config['negCategory']].sample(len(posSample))
+        negSample = data[data[data_config['TARGET']] == data_config['negCategory']].sample(len(posSample), random_state=random_state)
         data = pd.concat([posSample, negSample])
 
     if preprocessing:
@@ -42,7 +44,7 @@ def classificationScript():
     model.setDataConfig(data_config)
     model.validation = validation
 
-    model.splitDataset(train_size=train_size, random_state=20)
+    model.splitDataset(train_size=train_size, random_state=random_state)
 
     nrTrainData = str(len(model.trainData))
 
@@ -52,11 +54,13 @@ def classificationScript():
         collection.correlation =  analyser.correlateVariables(collection)
 
 
-    model.buildClassifier('LogisticRegression')
+    model.buildClassifier('LogisticRegression', params={'random_state':random_state})
     model.whitelist = None
 
-    (score, params) = model.gridSearch(features) #, scoring=weightedFscore, scaling=False, pca=pca, components=pcaComponents)
-    print('Best score: %0.3f' % score)
+    model.trainClassifier(features)
+
+    #(score, params) = model.gridSearch(features) #, scoring=weightedFscore, scaling=False, pca=pca, components=pcaComponents)
+    #print('Best score: %0.3f' % score)
     model.predict(features)
     model.evaluate()
 
