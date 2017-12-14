@@ -3,17 +3,19 @@ import tensorflow as tf
 from lda import NeuralNet
 import numpy as np
 import os
-import data_helpers
 import pandas as pd
 from nltk.tokenize import sent_tokenize
 from createSentenceDB import filterSentenceLength, setSentenceLength
-import pdb
 
+def generateModelDirectory(category):
+    return os.path.join('runs', category)
 
-def predictDoc(doc, output_dir, splitInSentences=True):
+def predictDoc(doc, category):
 
-    checkpoint_dir = os.path.join(output_dir, 'checkpoints')
-    processor_dir = os.path.join(output_dir, 'preprocessor')
+    model_path = generateModelDirectory(category)
+
+    checkpoint_dir = os.path.join(model_path, 'checkpoints')
+    processor_dir = os.path.join(model_path, 'preprocessor')
 
     vocab_processor = tf.contrib.learn.preprocessing.VocabularyProcessor.restore(processor_dir)
 
@@ -36,14 +38,13 @@ def predictDoc(doc, output_dir, splitInSentences=True):
             validationData = {nn.X: np.asarray(X_val), nn.pkeep:1.0}
             predictions = sess.run(nn.Y, feed_dict=validationData)
 
-            pdb.set_trace()
-
             sentenceDB['predictedLabel'] = predictions
 
             sess.close()
 
     evidenceSentences = sentenceDB[sentenceDB['predictedLabel']==1]
     return evidenceSentences
+
 
 
 if __name__=='__main__':
