@@ -7,8 +7,9 @@ def deleteFolderContent(path):
     for f in files:
         os.remove(f)
 
-
 def createFolderIfNotExistent(path):
     if not os.path.exists(path):
         os.makedirs(path)
 
+def generateModelDirectory(category):
+    return os.path.join('runs', category)

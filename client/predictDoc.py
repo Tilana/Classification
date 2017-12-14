@@ -6,9 +6,9 @@ import os
 import pandas as pd
 from nltk.tokenize import sent_tokenize
 from createSentenceDB import filterSentenceLength, setSentenceLength
+from lda.osHelper import generateModelDirectory
+import pdb
 
-def generateModelDirectory(category):
-    return os.path.join('runs', category)
 
 def predictDoc(doc, category):
 
@@ -29,9 +29,11 @@ def predictDoc(doc, category):
     X_val = np.array(list(vocab_processor.transform(sentenceDB.text.tolist())))
 
     nn = NeuralNet()
+    tf.reset_default_graph()
     graph = tf.Graph()
     with graph.as_default():
         with tf.Session() as sess:
+
             nn.loadCheckpoint(graph, sess, checkpoint_dir)
             predictions = []
 
