@@ -17,7 +17,7 @@ class NeuralNet:
         self.step = tf.placeholder(tf.float32, shape=(), name='step')
 
 
-    def buildNeuralNet(self, nnType='multi', vocab_size=None, hidden_layer_size=100, optimizerType='GD', sequence_length=None, filter_sizes=[3,4,5]):
+    def buildNeuralNet(self, nnType='cnn', vocab_size=None, hidden_layer_size=100, optimizerType='GD', sequence_length=None, filter_sizes=[3,4,5]):
         self.nnType = nnType
         self.vocab_size = vocab_size
         self.sequence_length = sequence_length
@@ -140,7 +140,7 @@ class NeuralNet:
         self.grads_and_vars = self.optimizer.compute_gradients(self.cross_entropy)
 
     def trainStep(self, summary=1):
-        self.train_step = self.optimizer.minimize(self.cross_entropy)
+        self.train_step = self.optimizer.minimize(self.cross_entropy) #, name="train_step")
 
     def getAccuracy(self):
         if self.nnType=='cnn':
@@ -193,4 +193,12 @@ class NeuralNet:
         self.step = graph.get_operation_by_name("step").outputs[0]
 
         self.predictions = graph.get_operation_by_name("predictions").outputs[0]
-        self.scores = graph.get_operation_by_name("scores").outputs[0]
+        self.Ylogits = graph.get_operation_by_name("scores").outputs[0]
+
+        self.nnType = 'cnn'
+
+        self.crossEntropy()
+        self.optimizer(optimizerType='GD')
+        #self.getAccuracy()
+        #self.getConfusionMatrix()
+        self.trainStep()
