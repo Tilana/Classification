@@ -26,7 +26,7 @@ def train(sentence, category, valid):
         X = np.array(list(vocab_processor.transform([sentence])))
 
         Y = np.zeros(2).reshape(1,2)
-        Y[valid] = 1
+        Y[0, int(valid)] = 1
 
         nn = NeuralNet()
         tf.reset_default_graph()
@@ -41,14 +41,10 @@ def train(sentence, category, valid):
                 _ = sess.run(nn.train_step, feed_dict=trainData)
 
 
+                nn.saveCheckpoint(sess, checkpoint_dir + '/model', STEP)
+
+
                 sess.close()
-
-    #else:
-    #    create new Model
-
-    #Train Model
-
-    #Save Model
 
     return True
 
