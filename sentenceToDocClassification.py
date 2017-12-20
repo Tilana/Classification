@@ -3,7 +3,6 @@ import pdb
 from lda.docLoader import loadConfigFile
 from cnnClassification import cnnClassification
 from cnnPrediction import cnnPrediction
-from predictDoc import predictDoc
 from evidenceSentencesToSummary import evidenceSentencesToSummary
 from createSentenceDB import filterSentenceLength, setSentenceLength
 from nltk.tokenize import sent_tokenize
@@ -36,7 +35,7 @@ def sentenceToDocClassification():
 
     if balanceData:
         posSample = sentences[sentences[sentences_config['TARGET']]==sentences_config['categoryOfInterest']]
-        negSample = sentences[sentences[sentences_config['TARGET']] == sentences_config['negCategory']].sample(len(posSample), random_state=42)
+        negSample = sentences[sentences[sentences_config['TARGET']] == sentences_config['negCategory']].sample(len(posSample))
         sentences = pd.concat([posSample, negSample])
 
 
@@ -83,34 +82,25 @@ def sentenceToDocClassification():
     validationIndices = sentenceClassifier.validationData.docID.unique()
     data = data[data.id.isin(validationIndices)]
 
-    #pdb.set_trace()
-
-    doc = data.sample(1, random_state=42).iloc[0]
-    labeledDoc = predictDoc(doc, sentenceClassifier.output_dir)
 
 
-    pdb.set_trace()
-    #sentences = sent_tokenize(doc.text)
 
-    #pdb.set_trace()
+    def splitInSentences(row):
+        sentences = sent_tokenize(row.text)
+        return [(row.id, row[sentences_config['label']], sentence) for sentence in sentences]
 
+    sentenceDB = data.apply(splitInSentences, axis=1)
+    sentenceDB = sum(sentenceDB.tolist(), [])
+    sentenceDB = pd.DataFrame(sentenceDB, columns=['docID', sentences_config['label'], 'text'])
 
-    #def splitInSentences(row):
-    #    sentences = sent_tokenize(row.text)
-    #    return [(row.id, row[sentences_config['label']], sentence) for sentence in sentences]
+    sentenceDB['sentenceLength'] = sentenceDB.text.map(setSentenceLength)
+    sentenceDB = sentenceDB[sentenceDB.sentenceLength.map(filterSentenceLength)]
 
-    #sentenceDB = data.apply(splitInSentences, axis=1)
-    #sentenceDB = sum(sentenceDB.tolist(), [])
-    #sentenceDB = pd.DataFrame(sentenceDB, columns=['docID', sentences_config['label'], 'text'])
-
-    #sentenceDB['sentenceLength'] = sentenceDB.text.map(setSentenceLength)
-    #sentenceDB = sentenceDB[sentenceDB.sentenceLength.map(filterSentenceLength)]
-
-    #sentenceDB['text'] = sentenceDB['text'].str.lower()
+    sentenceDB['text'] = sentenceDB['text'].str.lower()
 
 
-    #print 'Predict labels of sentences in validation data'
-    #predictedData = cnnPrediction(sentenceDB, sentences_config['label'], sentenceClassifier.output_dir)
+    print 'Predict labels of sentences in validation data'
+    predictedData = cnnPrediction(sentenceDB, sentences_config['label'], sentenceClassifier.output_dir)
 
     summaries = evidenceSentencesToSummary(predictedData, sentences_config['label'])
 

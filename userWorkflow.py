@@ -1,5 +1,6 @@
 import pandas as pd
 import pdb
+import lda
 from lda.docLoader import loadConfigFile
 from cnnClassification import cnnClassification
 from cnnPrediction import cnnPrediction
@@ -60,11 +61,8 @@ def userWorkflow():
     for numberSample in xrange(5):
         sample = data.sample(1, random_state=42).iloc[0]
         evidenceSentences = predictDoc(sample[['text', 'title']], categoryID)
-        print evidenceSentences
 
     pdb.set_trace()
-
-
 
 
 if __name__=='__main__':
