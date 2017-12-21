@@ -11,6 +11,7 @@ processedData/
 stopwords/
 Plots/
 venv/
+Word2Vec/
 modelSelection/
 runs/**/*
 
