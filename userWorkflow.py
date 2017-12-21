@@ -17,15 +17,15 @@ def userWorkflow():
     categoryID = 'ICAAD_DV_sentences'
     summary_config_name = 'ICAAD_DV_summaries'
 
+    # Get Sentence dataset
+    sentences_config = loadConfigFile(configFile, sentences_config_name)
+    sentences = pd.read_csv(sentences_config['data_path'], encoding ='utf8')
+
     # Get Full text documents
     data = pd.read_pickle(sentences_config['full_doc_path'])
 
     # Set Machine learning model up
-    setUp(data, categoryID)
-
-    # Get Sentence dataset
-    sentences_config = loadConfigFile(configFile, sentences_config_name)
-    sentences = pd.read_csv(sentences_config['data_path'], encoding ='utf8')
+    setUp(data[:10], categoryID)
 
     #if BALANCE_DATA:
     #    posSample = sentences[sentences[sentences_config['TARGET']]==sentences_config['categoryOfInterest']]
@@ -36,7 +36,6 @@ def userWorkflow():
     for numberSample in xrange(10):
         sentence,category,value = getSentenceSample(sentences, categoryID, sentences_config)
         train(sentence, category, value)
-
 
     # Predict label of sentences in documents
     for numberSample in xrange(5):
