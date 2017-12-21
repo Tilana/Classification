@@ -8,8 +8,6 @@ def getSentenceSample(sentences, categoryID, sentences_config):
     isValid = sentence[sentences_config['TARGET']]==sentences_config['categoryOfInterest']
     return (sentence.text, categoryID, isValid)
 
-BALANCE_DATA = 1
-
 def userWorkflow():
 
     configFile = 'dataConfig.json'
@@ -26,11 +24,6 @@ def userWorkflow():
 
     # Set Machine learning model up
     setUp(data[:10], categoryID)
-
-    #if BALANCE_DATA:
-    #    posSample = sentences[sentences[sentences_config['TARGET']]==sentences_config['categoryOfInterest']]
-    #    negSample = sentences[sentences[sentences_config['TARGET']] == sentences_config['negCategory']].sample(len(posSample), random_state=42)
-    #    sentences = pd.concat([posSample, negSample])
 
     # Train Classifier
     for numberSample in xrange(10):
