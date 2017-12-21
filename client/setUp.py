@@ -1,8 +1,10 @@
 from lda.osHelper import generateModelDirectory, createFolderIfNotExistent
 import tensorflow as tf
+from nltk.tokenize import sent_tokenize
+import os
 import pdb
 
-MIN_NUMBER_DOCS = 30
+MIN_NUMBER_DOCS = 5
 
 def setUp(data, categoryID):
 
@@ -10,17 +12,23 @@ def setUp(data, categoryID):
     checkpoint_dir = os.path.join(model_path, 'checkpoints')
     processor_dir = os.path.join(model_path, 'preprocessor')
 
-    if len(data)>=MIN_NUMBER_DOCS:
-        vocab_processor = tf.contrib.learn.preprocessing.VocabularyProcessor
+    sentences = [sent_tokenize(doc) for doc in data.text]
 
-        pdb.set_trace()
+    if len(data)>=MIN_NUMBER_DOCS:
+        vocab_processor = tf.contrib.learn.preprocessing.VocabularyProcessor()
+        #pdb.set_trace()
+
+    else:
+        # TODO: use default vocabulary
+        pass
+
+    return True
 
 
 
     # If enough documents available:
     #   create vocabulary
     # else:
-    #   use default vocabulary
 
     # determine MAX_SENTENCE_LENGTH
     # determine VOCAB_SIZE
