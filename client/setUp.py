@@ -1,16 +1,20 @@
 from lda.osHelper import generateModelDirectory, createFolderIfNotExistent
 import tensorflow as tf
 from nltk.tokenize import sent_tokenize
+import json
 import os
+import pandas as pd
 
 MIN_NUMBER_DOCS = 5
 
 def setUp(data, categoryID):
 
-    model_path = generateModelDirectory(categoryID)
-    processor_dir = os.path.join(model_path, 'preprocessor')
+    modelPath = generateModelDirectory(categoryID)
+    processorDir = os.path.join(modelPath, 'preprocessor')
+    infoFile = os.path.join(modelPath, 'info.json')
+    batchFile = os.path.join(modelPath, 'batch.csv')
 
-    createFolderIfNotExistent(model_path)
+    createFolderIfNotExistent(modelPath)
 
     sentences = [sent_tokenize(doc) for doc in data.text]
     sentences = sum(sentences, [])
@@ -22,11 +26,17 @@ def setUp(data, categoryID):
         vocabProcessor.fit(data.text.str.lower())
         vocabulary = vocabProcessor.vocabulary_._mapping
 
-        vocabProcessor.save(processor_dir)
+        vocabProcessor.save(processorDir)
 
     else:
         # TODO: use default vocabulary
         pass
+
+    info = {'NR_DOCS_VOCABULARY': len(data), 'TOTAL_NR_TRAIN_SENTENCES':0,}
+    json.dump(info, open(infoFile, 'wb'))
+
+    batch = pd.DataFrame(columns=['sentence', 'label'])
+    batch.to_csv(batchFile, index=False)
 
     return True
 
