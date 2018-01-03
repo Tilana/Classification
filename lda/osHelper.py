@@ -7,6 +7,14 @@ def deleteFolderContent(path):
     for f in files:
         os.remove(f)
 
+def deleteFolderWithContent(path):
+    try:
+        deleteFolderContent(path)
+        os.rmdir(path)
+    except:
+        pass
+
+
 def createFolderIfNotExistent(path):
     if not os.path.exists(path):
         os.makedirs(path)
