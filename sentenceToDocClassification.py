@@ -1,12 +1,12 @@
 import pandas as pd
 import pdb
+import sys
+import os
+from lda import ClassificationModel, Preprocessor, Viewer
 from lda.docLoader import loadConfigFile
-from cnnClassification import cnnClassification
-from cnnPrediction import cnnPrediction
-from evidenceSentencesToSummary import evidenceSentencesToSummary
+from scripts import cnnClassification, cnnPrediction, evidenceSentencesToSummary
 from createSentenceDB import filterSentenceLength, setSentenceLength
 from nltk.tokenize import sent_tokenize
-from lda import ClassificationModel, Preprocessor, Viewer
 
 
 def sentenceToDocClassification():
@@ -17,7 +17,7 @@ def sentenceToDocClassification():
     validation = 1
     splitValidationDataInSentences = 0
     sentences_train_size = 100
-    doc_train_size = 100
+    doc_train_size = 10
 
     configFile = 'dataConfig.json'
     sentences_config_name = 'ICAAD_DV_sentences'
@@ -30,6 +30,7 @@ def sentenceToDocClassification():
 
 
     sentences_config = loadConfigFile(configFile, sentences_config_name)
+    dataPath = sentences_config['data_path']
     sentences = pd.read_csv(sentences_config['data_path'], encoding ='utf8')
 
 

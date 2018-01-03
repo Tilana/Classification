@@ -1,7 +1,9 @@
 import pandas as pd
 import pdb
 from lda.docLoader import loadConfigFile
-from client import predictDoc, train, setUp
+from predictDoc import predictDoc
+from train import train
+from setUp import setUp
 
 def getSentenceSample(sentences, categoryID, sentences_config):
     sentence = sentences.sample(1).iloc[0]

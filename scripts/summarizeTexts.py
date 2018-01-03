@@ -1,7 +1,6 @@
 import textrank
 import pandas as pd
 from nltk import sent_tokenize
-import pdb
 
 def printSummaries(collection):
     for ind, text in enumerate(collection):
@@ -30,8 +29,9 @@ def getSampleTexts(data, nrSamples=500):
 
 def summarizeTexts():
 
-    path = '../data/ICAAD.pkl'
-    data = pd.read_pickle(path)
+    path = '../../data/ICAAD/'
+    dataPath = path + 'ICAAD.pkl'
+    data = pd.read_pickle(dataPath)
 
 
     print 'No SA/DV Documents'
@@ -42,7 +42,7 @@ def summarizeTexts():
     noSADV_sentences = splitInSentences(summaries)
 
     noSADV_data = pd.DataFrame(noSADV_sentences, columns=['id', 'sentence'])
-    noSADV_data.to_csv('../data/noSADV_summaries.csv')
+    noSADV_data.to_csv(dataPath + 'noSADV_summaries.csv')
 
 
     print 'SA Documents'
@@ -51,7 +51,7 @@ def summarizeTexts():
     SA_sentences = splitInSentences(SA_summaries)
 
     SA_data = pd.DataFrame(SA_sentences, columns=['id', 'sentence'])
-    SA_data.to_csv('../data/SA_summaries.csv')
+    SA_data.to_csv(dataPath + 'SA_summaries.csv')
 
 
     print 'DV Documents'
@@ -60,8 +60,7 @@ def summarizeTexts():
     DV_sentences = splitInSentences(DV_summaries)
 
     DV_data = pd.DataFrame(DV_sentences, columns=['id', 'sentence'])
-    DV_data.to_csv('../data/DV_summaries.csv')
-
+    DV_data.to_csv(dataPath + 'DV_summaries.csv')
 
 
 if __name__=='__main__':

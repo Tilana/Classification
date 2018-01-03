@@ -5,7 +5,7 @@ import numpy as np
 import os
 import pandas as pd
 from nltk.tokenize import sent_tokenize
-from createSentenceDB import filterSentenceLength, setSentenceLength
+from scripts.createSentenceDB import filterSentenceLength, setSentenceLength
 from lda.osHelper import generateModelDirectory
 import pdb
 
@@ -38,9 +38,10 @@ def predictDoc(doc, category):
             predictions = []
 
             validationData = {nn.X: np.asarray(X_val), nn.pkeep:1.0}
-            predictions = sess.run(nn.Y, feed_dict=validationData)
+            predictions, probability = sess.run([nn.Y, nn.probability], feed_dict=validationData)
 
             sentenceDB['predictedLabel'] = predictions
+            sentenceDB['probability'] = probability
 
             sess.close()
 

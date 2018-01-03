@@ -8,7 +8,7 @@ def getLabel(labelList):
             return label
 
 filename = 'UPR_DATABASE.csv'
-path = '../data/UPR/'
+path = '../../data/UPR/'
 
 LABELS = ['Enforced disappearances', 'Disabilities', 'Freedom of opinion and expression', 'Human rights violations by state agents', 'International humanitarian law', 'Migrants', 'Minorities', 'Poverty', 'Trafficking']
 
@@ -18,4 +18,3 @@ data = pd.read_csv(path + filename)
 data['label'] = data.Issue.apply(getLabel)
 
 data.to_csv(path+filename)
-

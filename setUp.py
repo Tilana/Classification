@@ -1,4 +1,4 @@
-from lda.osHelper import generateModelDirectory, createFolderIfNotExistent
+from lda.osHelper import generateModelDirectory, createFolderIfNotExistent, deleteFolderWithContent
 import tensorflow as tf
 from nltk.tokenize import sent_tokenize
 import json
@@ -11,10 +11,12 @@ def setUp(data, categoryID):
 
     modelPath = generateModelDirectory(categoryID)
     processorDir = os.path.join(modelPath, 'preprocessor')
+    checkpointDir = os.path.join(modelPath, 'checkpoints')
     infoFile = os.path.join(modelPath, 'info.json')
     batchFile = os.path.join(modelPath, 'batch.csv')
 
     createFolderIfNotExistent(modelPath)
+    deleteFolderWithContent(checkpointDir)
 
     sentences = [sent_tokenize(doc) for doc in data.text]
     sentences = sum(sentences, [])

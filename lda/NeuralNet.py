@@ -7,10 +7,8 @@ class NeuralNet:
 
     def __init__(self, input_size=None, output_size=None):
         self.input_size = input_size
-        print 'Input size: ' +  str(input_size)
         self.X = tf.placeholder(tf.int32, [None, self.input_size], name='X')
         self.output_size = output_size
-        print 'Output size: ' +  str(output_size)
         self.Y_ = tf.placeholder(tf.int64, [None, self.output_size], name='Y_')
         self.learning_rate = tf.placeholder(tf.float32, shape=(), name='learning_rate')
         self.pkeep = tf.placeholder(tf.float32, shape=(), name='pkeep')
@@ -115,6 +113,7 @@ class NeuralNet:
         self.Ylogits = tf.nn.xw_plus_b(self.h_drop, W, self.b, name="scores")
         self.Y = tf.argmax(self.Ylogits, 1, name='Y')
         self.predictions = tf.argmax(self.Ylogits, 1, name='predictions')
+        self.probability = tf.reduce_max(tf.nn.softmax(self.Ylogits), 1, name='probability')
 
 
     def crossEntropy(self):
@@ -194,6 +193,7 @@ class NeuralNet:
 
         self.predictions = graph.get_operation_by_name("predictions").outputs[0]
         self.Ylogits = graph.get_operation_by_name("scores").outputs[0]
+        self.probability = graph.get_operation_by_name("probability").outputs[0]
 
         self.nnType = 'cnn'
 

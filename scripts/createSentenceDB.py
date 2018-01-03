@@ -1,7 +1,7 @@
 import pandas as pd
 from ast import literal_eval
 from nltk.tokenize import sent_tokenize, word_tokenize
-from lda import Viewer
+#from lda import Viewer
 import pdb
 
 EvidenceSA = 'Evidence.of.SA'
@@ -47,7 +47,7 @@ def toDataFrame(data, labels=None):
 
 def createSentenceDB():
 
-    path = '../data/ICAAD/'
+    path = '../../data/ICAAD/'
     data = pd.read_pickle(path + 'ICAAD.pkl')
 
     evidence = []
@@ -66,10 +66,10 @@ def createSentenceDB():
         ## Check labels
         FPs = subData[subData[target]==0]
         TPs = subData[subData[target]==1]
-        viewer = Viewer(foldername)
-        features = ['id', target, category]
-        viewer.printDocuments(FPs, features, folder='FalsePositives')
-        viewer.printDocuments(TPs, features, folder='TruePositives')
+        #viewer = Viewer(foldername)
+        #features = ['id', target, category]
+        #viewer.printDocuments(FPs, features, folder='FalsePositives')
+        #viewer.printDocuments(TPs, features, folder='TruePositives')
 
 
         subData[category] = subData[category].str.lower()
@@ -107,7 +107,9 @@ def createSentenceDB():
     # Create final database with all categories
     sentenceDB= pd.concat(evidence)
     sentenceDB['sentence'] = sentenceDB.sentence.str.strip()
-    sentenceDB.to_csv(path + 'sentences_ICAAD.csv', index=False)
+    import pdb
+    pdb.set_trace()
+    #sentenceDB.to_csv(path + 'sentences_ICAAD.csv', index=False)
 
 
 if __name__=='__main__':

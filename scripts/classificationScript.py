@@ -1,18 +1,20 @@
+import sys
+import os
+sys.path.append(os.path.abspath('../'))
 from lda import Viewer
 from lda.docLoader import loadTargets, loadConfigFile
 from lda import Preprocessor, ClassificationModel
 import pandas as pd
-import pdb
 
 
 def classificationScript():
 
-    configFile = 'dataConfig.json'
+    configFile = '../dataConfig.json'
     data_config_name = 'ICAAD_DV_sentences'
     data_config_name = 'ICAAD_SA_sentences'
 
     data_config = loadConfigFile(configFile, data_config_name)
-    data = pd.read_csv(data_config['data_path'], encoding ='utf8')
+    data = pd.read_csv('../' + data_config['data_path'], encoding ='utf8')
 
     analyze = False
     balanceData = 1
@@ -69,8 +71,6 @@ def classificationScript():
 
     viewer = Viewer(model.name)
     viewer.classificationResults(model, name=nrTrainData, normalized=False, docPath=model.doc_path)
-
-    pdb.set_trace()
 
 
 

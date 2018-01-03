@@ -3,8 +3,7 @@ import pandas as pd
 import tensorflow as tf
 import numpy as np
 from datetime import datetime
-import data_helpers
-from lda import Viewer, NeuralNet, Evaluation
+from lda import Viewer, NeuralNet, Evaluation, data_helpers
 
 
 def cnnClassification(model, cnnType='cnn', BATCH_SIZE=64, ITERATIONS=100, filter_sizes=[3,4,5]):
