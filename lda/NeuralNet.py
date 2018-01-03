@@ -113,6 +113,7 @@ class NeuralNet:
         self.Ylogits = tf.nn.xw_plus_b(self.h_drop, W, self.b, name="scores")
         self.Y = tf.argmax(self.Ylogits, 1, name='Y')
         self.predictions = tf.argmax(self.Ylogits, 1, name='predictions')
+        self.probability = tf.reduce_max(tf.nn.softmax(self.Ylogits), 1, name='probability')
 
 
     def crossEntropy(self):
@@ -192,6 +193,7 @@ class NeuralNet:
 
         self.predictions = graph.get_operation_by_name("predictions").outputs[0]
         self.Ylogits = graph.get_operation_by_name("scores").outputs[0]
+        self.probability = graph.get_operation_by_name("probability").outputs[0]
 
         self.nnType = 'cnn'
 
