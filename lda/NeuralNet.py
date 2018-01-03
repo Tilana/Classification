@@ -7,10 +7,8 @@ class NeuralNet:
 
     def __init__(self, input_size=None, output_size=None):
         self.input_size = input_size
-        print 'Input size: ' +  str(input_size)
         self.X = tf.placeholder(tf.int32, [None, self.input_size], name='X')
         self.output_size = output_size
-        print 'Output size: ' +  str(output_size)
         self.Y_ = tf.placeholder(tf.int64, [None, self.output_size], name='Y_')
         self.learning_rate = tf.placeholder(tf.float32, shape=(), name='learning_rate')
         self.pkeep = tf.placeholder(tf.float32, shape=(), name='pkeep')
