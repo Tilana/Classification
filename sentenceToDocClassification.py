@@ -5,7 +5,7 @@ import os
 from lda import ClassificationModel, Preprocessor, Viewer
 from lda.docLoader import loadConfigFile
 from scripts import cnnClassification, cnnPrediction, evidenceSentencesToSummary
-from createSentenceDB import filterSentenceLength, setSentenceLength
+from scripts.createSentenceDB import filterSentenceLength, setSentenceLength
 from nltk.tokenize import sent_tokenize
 
 
