@@ -132,7 +132,7 @@ def docStandardClassification():
     model.evaluation.confusionMatrix()
     model.classifierType = 'CNN Docs'
 
-    viewer = Viewer('DocsCNN', 'test')
+    viewer = Viewer('DocsCNN', folder='test', prefix='..')
 
     displayFeatures = ['Court', 'Year', 'Sexual.Assault.Manual', 'Domestic.Violence.Manual', 'predictedLabel', 'tag', 'Family.Member.Victim', 'probability', 'Age', 'evidence']
     viewer.printDocuments(model.testData, displayFeatures, TARGET)

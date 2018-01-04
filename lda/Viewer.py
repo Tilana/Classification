@@ -5,12 +5,15 @@ import pdb
 
 class Viewer:
 
-    def __init__(self, name, folder=None):
-        self.path = 'results/' + name
+    def __init__(self, name, folder=None, prefix=None):
+        DIR = 'results/'
+        if prefix:
+            DIR = os.path.join(prefix, DIR)
+        self.path = os.path.join(DIR, name)
         self.createFolder(self.path)
         if folder:
-            self.createFolder(self.path + '/' + folder)
-            self.path = self.path + '/' + folder
+            self.path = os.path.join(self.path, folder)
+            self.createFolder(self.path)
 
     def createFolder(self, path):
         try:

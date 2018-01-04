@@ -97,7 +97,7 @@ def cnnClassification(model, cnnType='cnn', BATCH_SIZE=64, ITERATIONS=100, filte
         model.evaluation.confusionMatrix()
         model.classifierType = 'CNN'
 
-        viewer = Viewer(model.name)
+        viewer = Viewer(model.name, prefix='..')
         viewer.classificationResults(model, name= nrTrainData + '_test', normalized=False, docPath=model.doc_path)
 
         ## Validation Data
@@ -111,7 +111,7 @@ def cnnClassification(model, cnnType='cnn', BATCH_SIZE=64, ITERATIONS=100, filte
             model.evaluation.confusionMatrix()
 
 
-            viewer = Viewer(model.name)
+            viewer = Viewer(model.name, prefix='..')
             viewer.classificationResults(model, name= nrTrainData + '_validation', subset='validation', normalized=False, docPath=model.doc_path)
 
         sess.close()

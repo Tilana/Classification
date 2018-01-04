@@ -96,12 +96,15 @@ class ClassificationModel:
         if len(self.targetLabels) > 2:
             self.classificationType = 'multi'
 
-    def setOutputFolderName(self, config):
-        return 'runs/' +  config['name'] + '/'
+    def setOutputFolderName(self, config, prefix):
+        folder = 'runs'
+        if prefix:
+            folder = os.path.join(prefix, 'runs')
+        return os.path.join(folder, config['name'])
 
-    def setDataConfig(self, config):
+    def setDataConfig(self, config, prefix=None):
         self.name = config['name']
-        self.output_dir = self.setOutputFolderName(config)
+        self.output_dir = self.setOutputFolderName(config, prefix)
         createFolderIfNotExistent(self.output_dir)
         self.doc_path = config['doc_path']
 

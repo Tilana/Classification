@@ -1,9 +1,8 @@
 import sys
 import os
 sys.path.append(os.path.abspath('../'))
-from lda import Viewer
 from lda.docLoader import loadTargets, loadConfigFile
-from lda import Preprocessor, ClassificationModel
+from lda import Preprocessor, ClassificationModel, Viewer
 import pandas as pd
 
 
@@ -69,7 +68,7 @@ def classificationScript():
     except:
         pass
 
-    viewer = Viewer(model.name)
+    viewer = Viewer(model.name, prefix='../')
     viewer.classificationResults(model, name=nrTrainData, normalized=False, docPath=model.doc_path)
 
 
