@@ -11,9 +11,10 @@ import gensim.models.keyedvectors as w2v_model
 
 def cnnClassification(model, cnnType='cnn', BATCH_SIZE=64, ITERATIONS=100, filter_sizes=[3,4,5], pretrainedWordEmbeddings=True):
 
+    np.random.seed(42)
+
     vocab_processor = tf.contrib.learn.preprocessing.VocabularyProcessor(model.max_document_length)
     pretrain = vocab_processor.fit(model.data.text.tolist())
-
 
     word2vec = w2v_model.KeyedVectors.load_word2vec_format('Word2Vec/GoogleNews-vectors-negative300.bin', binary=True)
 
@@ -29,6 +30,8 @@ def cnnClassification(model, cnnType='cnn', BATCH_SIZE=64, ITERATIONS=100, filte
 
     vocabulary = vocab_processor.vocabulary_
     vocab_processor.save(model.output_dir + 'preprocessor')
+
+    #pdb.set_trace()
 
     print 'Vocabulary Size: ' + str(len(vocabulary))
 
@@ -51,6 +54,7 @@ def cnnClassification(model, cnnType='cnn', BATCH_SIZE=64, ITERATIONS=100, filte
         if pretrainedWordEmbeddings:
             vocabIntersection = set(vocabulary._mapping.keys()).intersection(word2vec.vocab.keys())
             initW = np.random.uniform(-0.25, 0.25, (len(vocabulary), 300))
+            #initW = tf.Variable(tf.constant(0.0, shape=[len(vocabulary), 300]), trainable=False, name='W')
             for word in vocabIntersection:
                 idx = vocabulary.get(word)
                 initW[idx] = word2vec.word_vec(word)

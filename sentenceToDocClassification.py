@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import pdb
 from lda.docLoader import loadConfigFile
 from cnnClassification import cnnClassification
@@ -6,12 +7,12 @@ from cnnPrediction import cnnPrediction
 from evidenceSentencesToSummary import evidenceSentencesToSummary
 from createSentenceDB import filterSentenceLength, setSentenceLength
 from nltk.tokenize import sent_tokenize
-from lda import ClassificationModel, Preprocessor, Viewer
+from lda import ClassificationModel, Preprocessor, Viewer, ImagePlotter
 
 
 def sentenceToDocClassification():
 
-    analyze = 0
+    analyze = 1
     preprocessing = 1
     balanceData = 1
     validation = 0
@@ -54,27 +55,33 @@ def sentenceToDocClassification():
 
     sentenceClassifier.splitDataset(train_size=sentences_train_size, random_state=20)
 
-    #pdb.set_trace()
-
-
     if analyze:
-        coi = sentenceClassifier.sentences[sentenceClassifier.sentences[sentences_config['TARGET']]==sentences_config['categoryOfInterest']]
-        document_lengths = [len(word_tokenize(sentence)) for sentence in coi.text]
+        document_lengths = [len(sentence.split(" ")) for sentence in sentences.text]
         plotter = ImagePlotter(True)
-        #figure_path = path=os.path.join(PATH, sentences_config['DATASET'], 'figures', data_config['ID'] + '_evidenceSentences' + '.png')
-
         bins = range(1,100)
         plotter.plotHistogram(document_lengths, log=False, title= sentences_config['ID'] + ' frequency of evidence sentences length', xlabel='sentence length', ylabel='frequency', bins=bins, path=None)
         print 'max: ' + str(max(document_lengths))
         print 'min 0.5: ' + str(min(document_lengths))
         print 'median: ' + str(np.median(document_lengths))
+        print 'average: ' + str(np.mean(document_lengths))
+
 
     sentenceClassifier.max_document_length = max([len(x.split(" ")) for x in sentenceClassifier.trainData.text])
     print 'Maximal sentence length ' + str(sentenceClassifier.max_document_length)
 
-    print sentenceClassifier.trainData.index
 
-    cnnClassification(sentenceClassifier, ITERATIONS=600, BATCH_SIZE=64, filter_sizes=[2,3,4,5], pretrainedWordEmbeddings=useWord2Vec)
+    cnnClassification(sentenceClassifier, ITERATIONS=200, BATCH_SIZE=50, filter_sizes=[2], pretrainedWordEmbeddings=useWord2Vec)
+    #cnnClassification(sentenceClassifier, ITERATIONS=200, BATCH_SIZE=50, filter_sizes=[2,2,2], pretrainedWordEmbeddings=useWord2Vec)
+    #cnnClassification(sentenceClassifier, ITERATIONS=200, BATCH_SIZE=50, filter_sizes=[1,2,3], pretrainedWordEmbeddings=useWord2Vec)
+    #cnnClassification(sentenceClassifier, ITERATIONS=200, BATCH_SIZE=50, filter_sizes=[2,2,3], pretrainedWordEmbeddings=useWord2Vec)
+    #cnnClassification(sentenceClassifier, ITERATIONS=200, BATCH_SIZE=50, filter_sizes=[2,3,4], pretrainedWordEmbeddings=useWord2Vec)
+
+
+    #cnnClassification(sentenceClassifier, ITERATIONS=200, BATCH_SIZE=50, filter_sizes=[3,4,5], pretrainedWordEmbeddings=useWord2Vec)
+    #cnnClassification(sentenceClassifier, ITERATIONS=200, BATCH_SIZE=50, filter_sizes=[4,5,6], pretrainedWordEmbeddings=useWord2Vec)
+    #cnnClassification(sentenceClassifier, ITERATIONS=200, BATCH_SIZE=50, filter_sizes=[5,6,7], pretrainedWordEmbeddings=useWord2Vec)
+    #cnnClassification(sentenceClassifier, ITERATIONS=200, BATCH_SIZE=50, filter_sizes=[6,7,8], pretrainedWordEmbeddings=useWord2Vec)
+    #cnnClassification(sentenceClassifier, ITERATIONS=200, BATCH_SIZE=50, filter_sizes=[7,8,9], pretrainedWordEmbeddings=useWord2Vec)
 
     pdb.set_trace()
 
