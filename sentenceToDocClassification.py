@@ -1,11 +1,11 @@
 import pandas as pd
 import numpy as np
 import pdb
+import sys
+import os
 from lda.docLoader import loadConfigFile
-from cnnClassification import cnnClassification
-from cnnPrediction import cnnPrediction
-from evidenceSentencesToSummary import evidenceSentencesToSummary
-from createSentenceDB import filterSentenceLength, setSentenceLength
+from scripts import cnnClassification, cnnPrediction, evidenceSentencesToSummary
+from scripts.createSentenceDB import filterSentenceLength, setSentenceLength
 from nltk.tokenize import sent_tokenize
 from lda import ClassificationModel, Preprocessor, Viewer, ImagePlotter
 
@@ -33,6 +33,7 @@ def sentenceToDocClassification():
 
 
     sentences_config = loadConfigFile(configFile, sentences_config_name)
+    dataPath = sentences_config['data_path']
     sentences = pd.read_csv(sentences_config['data_path'], encoding ='utf8')
 
 

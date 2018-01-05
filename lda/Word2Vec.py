@@ -1,4 +1,5 @@
-from gensim.models import word2vec 
+#from gensim.models import word2vec
+import gensim.models.keyedvectors as word2vec
 import os
 import listUtils as utils
 
@@ -7,7 +8,7 @@ class Word2Vec:
     def __init__(self):
         if os.path.exists('Word2Vec/text8Net.bin'):
             print 'Load trained Word2Vec net'
-            self.net = word2vec.Word2Vec.load_word2vec_format('Word2Vec/text8Net.bin', binary = True)
+            self.net = word2vec.KeyedVectors.load_word2vec_format('Word2Vec/text8Net.bin', binary = True)
         else:
             print 'Train Word2Vec model with text8 corpus'
             sentences = word2vec.Text8Corpus('Word2Vec/text8')

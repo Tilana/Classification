@@ -1,4 +1,4 @@
-from lda import Viewer, ClassificationModel, FeatureExtractor
+from lda import ClassificationModel
 from lda.dataframeUtils import toCSV
 import pandas as pd
 import pdb

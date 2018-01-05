@@ -3,10 +3,9 @@ import pandas as pd
 import tensorflow as tf
 import numpy as np
 from datetime import datetime
-import data_helpers
-from lda import Viewer, NeuralNet, Evaluation
 import pdb
 import gensim.models.keyedvectors as w2v_model
+from lda import Viewer, NeuralNet, Evaluation, data_helpers
 
 
 def cnnClassification(model, cnnType='cnn', BATCH_SIZE=64, ITERATIONS=100, filter_sizes=[3,4,5], pretrainedWordEmbeddings=True):
@@ -74,7 +73,6 @@ def cnnClassification(model, cnnType='cnn', BATCH_SIZE=64, ITERATIONS=100, filte
             #learning_rate = nn.learningRate(c)
             learning_rate =1e-3
 
-            #pdb.set_trace()
 
             train_data = {nn.X: x_batch, nn.Y_: y_batch, nn.step:c, nn.learning_rate: learning_rate, nn.pkeep:dropout}
 
@@ -118,7 +116,7 @@ def cnnClassification(model, cnnType='cnn', BATCH_SIZE=64, ITERATIONS=100, filte
         model.evaluation.confusionMatrix()
         model.classifierType = 'CNN'
 
-        viewer = Viewer(model.name)
+        viewer = Viewer(model.name, prefix='..')
         viewer.classificationResults(model, name= nrTrainData + '_test', normalized=False, docPath=model.doc_path)
 
         ## Validation Data
@@ -132,7 +130,7 @@ def cnnClassification(model, cnnType='cnn', BATCH_SIZE=64, ITERATIONS=100, filte
             model.evaluation.confusionMatrix()
 
 
-            viewer = Viewer(model.name)
+            viewer = Viewer(model.name, prefix='..')
             viewer.classificationResults(model, name= nrTrainData + '_validation', subset='validation', normalized=False, docPath=model.doc_path)
 
         sess.close()

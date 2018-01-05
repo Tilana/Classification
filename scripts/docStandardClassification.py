@@ -1,45 +1,15 @@
 #! /usr/bin/env python
 import pandas as pd
-import tensorflow as tf
 import numpy as np
 import os
-import data_helpers
-import time
-import datetime
-import data_helpers
-from text_cnn import TextCNN
-from tensorflow.contrib import learn
-from lda import ClassificationModel, Viewer, NeuralNet, Collection
-from data_helpers import splitInSentences
-import pdb
-from tensorflow.python import debug as tf_debug
-from modelSelection import modelSelection
-from validateModel import validateModel
-
-
-def textToSentenceData(data):
-    sentences = splitInSentences(data, TARGET)
-    return pd.DataFrame(sentences, columns=['id', TARGET, 'sentences'])
-
-def sentenceLength(sentence):
-    return len(sentence.split())
-
-def loadProcessor(directory):
-    vocab_path = os.path.join(directory, "vocab")
-    return learn.preprocessing.VocabularyProcessor.restore(vocab_path)
+import sys
+sys.path.append(os.path.abspath('../'))
+from lda import ClassificationModel, Viewer, Collection, data_helpers
 
 def padDocuments(doc, nrSentences, cols=['0','1','2','3']):
-    #pdb.set_trace()
     pads = np.zeros((nrSentences, len(cols)))
     activation = doc[cols].as_matrix()
     pads[:len(activation)] = activation[:nrSentences]
-    return pads
-
-def highestActivation(data, col=0, thresh=100):
-    pads = np.zeros((thresh, 1))
-    sortedData = data.sort_values(col, ascending=False)
-    data = sortedData[[0]].as_matrix()
-    pads[:len(sortedData)] = data[:thresh]
     return pads
 
 def getTargetValue(data, target):
@@ -47,13 +17,13 @@ def getTargetValue(data, target):
 
 
 
-PATH = '../data/'
+PATH = '../../data/'
 DATASET = 'ICAAD'
 ID = 'SA'
 ID = 'DV'
 TARGET = 'Sexual.Assault.Manual'
 TARGET = 'Domestic.Violence.Manual'
-MODEL_PATH = './runs/' + DATASET + '_' + ID + '/'
+MODEL_PATH = '../runs/' + DATASET + '_' + ID + '/'
 BATCH_SIZE = 50
 ITERATIONS = 900
 multilayer = 1
@@ -70,6 +40,7 @@ def docStandardClassification():
     model.targetFeature = TARGET
     model.target = data[TARGET]
     model.classificationType = 'binary'
+    model.validation = False
 
     indices = pd.read_csv(MODEL_PATH + 'trainTest_split.csv', index_col=0)
 
@@ -96,8 +67,6 @@ def docStandardClassification():
 
     train_docs = trainSentences.groupby('id')
     test_docs = testSentences.groupby('id')
-
-    #pdb.set_trace()
 
     # combine evidence sentences
     if storeEvidenceText:
@@ -139,11 +108,6 @@ def docStandardClassification():
 
     model.testTarget = test_docs.apply(getTargetValue, TARGET).tolist()
 
-    #nn = NeuralNet(maxNumberEvidenceSentences*nrFeature, nrClasses)
-
-
-    #pdb.set_trace()
-
     model.buildClassifier('LogisticRegression')
     #model.buildClassifier('SVM')
     #model.buildClassifier('DecisionTree')
@@ -158,31 +122,21 @@ def docStandardClassification():
     (score, params)  = model.gridSearch(model.features, scaling=False)
     model.predict(model.features)
 
-
-
     #predictedLabels = sess.run(nn.Y, feed_dict=testData)
     #model.testData['predictedLabel'] = np.argmax(predictedLabels, 1)
     #model.testData['probability'] = np.max(predictedLabels, 1)
     #test_accuracy = sess.run(nn.accuracy, feed_dict=testData)
     #print 'Test Accuracy: ' + str(test_accuracy)
 
-    #pdb.set_trace()
-
-
     model.evaluate()
     model.evaluation.confusionMatrix()
     model.classifierType = 'CNN Docs'
 
-    viewer = Viewer('DocsCNN', 'test')
+    viewer = Viewer('DocsCNN', folder='test', prefix='..')
 
     displayFeatures = ['Court', 'Year', 'Sexual.Assault.Manual', 'Domestic.Violence.Manual', 'predictedLabel', 'tag', 'Family.Member.Victim', 'probability', 'Age', 'evidence']
     viewer.printDocuments(model.testData, displayFeatures, TARGET)
     viewer.classificationResults(model, normalized=False)
-
-
-    pdb.set_trace()
-
-
 
 if __name__=='__main__':
     docStandardClassification()

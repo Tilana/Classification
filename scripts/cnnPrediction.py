@@ -1,9 +1,8 @@
 #! /usr/bin/env python
 import tensorflow as tf
-from lda import NeuralNet
+from lda import NeuralNet, data_helpers
 import numpy as np
 import os
-import data_helpers
 import pandas as pd
 
 
