@@ -41,6 +41,10 @@ def sentenceToDocClassification():
         negSample = sentences[sentences[sentences_config['TARGET']] == sentences_config['negCategory']].sample(len(posSample), random_state=random_state)
         sentences = pd.concat([posSample, negSample])
 
+
+    viewer = Viewer(sentences_config['DATASET'])
+    viewer.printDocuments(sentences, folder='Sentences', docPath='../../' + sentences_config['DATASET'] + '/Documents')
+
     if preprocessing:
         preprocessor = Preprocessor()
         sentences.text = sentences.text.apply(preprocessor.cleanText)
@@ -76,7 +80,6 @@ def sentenceToDocClassification():
     #cnnClassification(sentenceClassifier, ITERATIONS=200, BATCH_SIZE=50, filter_sizes=[2,2,3], pretrainedWordEmbeddings=useWord2Vec)
     #cnnClassification(sentenceClassifier, ITERATIONS=200, BATCH_SIZE=50, filter_sizes=[2,3,4], pretrainedWordEmbeddings=useWord2Vec)
 
-
     #cnnClassification(sentenceClassifier, ITERATIONS=200, BATCH_SIZE=50, filter_sizes=[3,4,5], pretrainedWordEmbeddings=useWord2Vec)
     #cnnClassification(sentenceClassifier, ITERATIONS=200, BATCH_SIZE=50, filter_sizes=[4,5,6], pretrainedWordEmbeddings=useWord2Vec)
     #cnnClassification(sentenceClassifier, ITERATIONS=200, BATCH_SIZE=50, filter_sizes=[5,6,7], pretrainedWordEmbeddings=useWord2Vec)
@@ -87,8 +90,11 @@ def sentenceToDocClassification():
 
     print 'Split Validation Data In Setences'
     data = pd.read_pickle(sentences_config['full_doc_path'])
+    viewer.printDocuments(data, folder='Documents')
+
     validationIndices = sentenceClassifier.validationData.docID.unique()
     data = data[data.id.isin(validationIndices)]
+
 
     def splitInSentences(row):
         sentences = sent_tokenize(row.text)
@@ -112,12 +118,7 @@ def sentenceToDocClassification():
 
     summary_config = loadConfigFile(configFile, summary_config_name)
 
-
-    features = summaries.columns.tolist()
-    features.remove('text')
-
-    viewer = Viewer(summary_config['DATASET'])
-    viewer.printDocuments(summaries, features, folder= summary_config['ID'] + '_summaries', docPath='../../' + summary_config['DATASET'] + '/Documents')
+    viewer.printDocuments(summaries, folder= summary_config['ID'] + '_summaries', docPath='../../' + summary_config['DATASET'] + '/Documents')
 
     if preprocessing:
         preprocessor = Preprocessor()
@@ -136,7 +137,7 @@ def sentenceToDocClassification():
     print 'Maximal sentence length ' + str(sentenceClassifier.max_document_length)
 
 
-    cnnClassification(docClassifier, BATCH_SIZE=32, ITERATIONS=30, filter_sizes=[3,4,5])
+    cnnClassification(docClassifier, BATCH_SIZE=32, ITERATIONS=3, filter_sizes=[3,4,5])
 
     pdb.set_trace()
 
