@@ -27,7 +27,7 @@ classifierParams = {'DecisionTree': {'min_samples_leaf': [2,5], 'max_depth':[3,5
 
 class ClassificationModel:
 
-    def __init__(self, path=None, target=None, data=None, labelOfInterest=None):
+    def __init__(self, path=None, target=None, data=None, labelOfInterest=None, validation=0):
         self.data = []
         if path:
             self.data = pd.read_pickle(path)
@@ -36,6 +36,7 @@ class ClassificationModel:
         if labelOfInterest is not None:
             self.labelOfInterest = labelOfInterest
         self.targetFeature = target
+        self.validation = validation
 
 
     def splitDataset(self, train_size=0.30, random_state=None):
