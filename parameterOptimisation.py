@@ -7,12 +7,16 @@ import pandas as pd
 import pdb
 
 
-TRAINSIZES = [20, 50, 100]
-FILTERSIZES = [2,3,5,10,12]
-RUNS = 10
+TRAINSIZES = [50]
+FILTERSIZES = [[2], [2,2,2]]
+USE2NDLAYER = [False, True]
+
+RUNS = 3
 
 configFile = 'dataConfig.json'
 configName = 'ICAAD_DV_sentences'
+#configName = 'ICAAD_SA_sentences'
+configName = 'Manifesto_Minorities'
 
 config = loadConfigFile(configFile, configName)
 data = pd.read_csv(config['data_path'], encoding='utf8')
@@ -41,12 +45,14 @@ for trainSize in TRAINSIZES:
         info['_'.join([str(idx), str(trainSize)])] = classifier.max_document_length
 
         for filterSize in FILTERSIZES:
-            model = cnnClassification(classifier, ITERATIONS=200, BATCH_SIZE=50, filter_sizes=[filterSize], pretrainedWordEmbeddings=True, storeModel=0)
-            modelName = '_'.join([config['DATASET'], config['ID'], str(trainSize), str(filterSize)])
 
-            results.loc[str(idx)+'_acc', modelName] = model.evaluation.accuracy
-            results.loc[str(idx)+'_prec', modelName] = model.evaluation.precision
-            results.loc[str(idx)+'_rec', modelName] = model.evaluation.recall
+            for secondLayer in USE2NDLAYER:
+                model = cnnClassification(classifier, ITERATIONS=200, BATCH_SIZE=50, filter_sizes=filterSize, pretrainedWordEmbeddings=True, storeModel=0, secondLayer=secondLayer)
+                modelName = '_'.join([config['DATASET'], config['ID'], str(trainSize), str(filterSize), str(secondLayer)])
+
+                results.loc[str(idx)+'_acc', modelName] = model.evaluation.accuracy
+                results.loc[str(idx)+'_prec', modelName] = model.evaluation.precision
+                results.loc[str(idx)+'_rec', modelName] = model.evaluation.recall
 
 results.to_csv('results/' + configName + '_gridSearch.csv')
 infoFile = open('results/' + configName + '_sentenceLength.json', 'w')
