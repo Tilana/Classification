@@ -3,17 +3,14 @@
 This module provides a framework to process, analyse, and categorize collections of documents.
 
 
-
-In *dataConfig.json* the for different dataset specific parameters, like the variable to classify, the path to the document, etc. are stored. With *classificationScript.py* a sample pipeline for classification based on standard algorithms like *Logistic Regression* or *Naive Bayes* is provided.
-Similar in *cnnClassification.py* the pipeline for document classification based on a Convolutional Neural Network is demonstrated.
-
-
 ## Scripts
-Use the following command to run the *sentenceToDocClassification.py* script which combines a sentence classifier to identify relevant word sequences with a document classifier:
+In *dataConfig.json* the for different dataset specific parameters, like the variable to classify, the path to the document, etc. are stored.
+The *scripts* folder contains different methods to analyze and classify documents. For example, with the *classificationScript.py* a sample pipeline for classification based on standard algorithms like *Logistic Regression* or *Naive Bayes* is provided. Similar in *cnnClassification.py* the pipeline for document classification based on a Convolutional Neural Network is demonstrated.
+
+Use the following command to run *sentenceToDocClassification.py* script which combines a sentence classifier to identify relevant word sequences with a document classifier:
 ```
 python sentenceToDocClassification.py
 ```
-
 
 
 ## Testing
