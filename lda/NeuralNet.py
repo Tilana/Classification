@@ -15,7 +15,7 @@ class NeuralNet:
         self.step = tf.placeholder(tf.float32, shape=(), name='step')
 
 
-    def buildNeuralNet(self, nnType='cnn', vocab_size=None, hidden_layer_size=100, optimizerType='GD', sequence_length=None, filter_sizes=[3,4,5]):
+    def buildNeuralNet(self, nnType='cnn', vocab_size=None, hidden_layer_size=100, optimizerType='GD', sequence_length=None, filter_sizes=[3,4,5], secondLayer=False):
         self.nnType = nnType
         self.vocab_size = vocab_size
         self.sequence_length = sequence_length
@@ -79,7 +79,7 @@ class NeuralNet:
         self.Ylogits = tf.matmul(self.Y1d, self.W2) + self.b2
         self.Y = tf.nn.softmax(self.Ylogits)
 
-    def cnn(self, embedding_size=300, filter_sizes=[4,5,6,7], num_filters=128):
+    def cnn(self, embedding_size=300, filter_sizes=[4,5,6,7], num_filters=128, secondLayer=False):
         self.l2_loss = tf.constant(0.0)
 
         # Embedding Layer
@@ -99,9 +99,17 @@ class NeuralNet:
             pooled = tf.nn.max_pool(h, ksize=[1, self.sequence_length - filter_size + 1, 1, 1], strides=[1, 1, 1, 1], padding='VALID', name="pool")
             pooled_outputs.append(pooled)
 
+
         num_filters_total = num_filters * len(filter_sizes)
         self.h_pool = tf.concat(pooled_outputs, 3)
-        self.h_pool_flat = tf.reshape(self.h_pool, [-1, num_filters_total])
+
+
+        conv2 = tf.layers.conv2d(inputs=self.h_pool, filters=num_filters, kernel_size=[2,2], padding="same", activation=tf.nn.relu)
+
+        if secondLayer:
+            self.h_pool_flat = tf.reshape(conv2, [-1, num_filters_total])
+        else:
+            self.h_pool_flat = tf.reshape(self.h_pool, [-1, num_filters_total])
 
         self.h_drop = tf.nn.dropout(self.h_pool_flat, self.pkeep)
 
