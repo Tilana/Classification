@@ -2,6 +2,8 @@
 
 This module provides a framework to process, analyse, and categorize collections of documents.
 
+
+
 In *dataConfig.json* the for different dataset specific parameters, like the variable to classify, the path to the document, etc. are stored. With *classificationScript.py* a sample pipeline for classification based on standard algorithms like *Logistic Regression* or *Naive Bayes* is provided.
 Similar in *cnnClassification.py* the pipeline for document classification based on a Convolutional Neural Network is demonstrated.
 
@@ -46,9 +48,9 @@ nltk.download('averaged_perceptron_tagger')
 ```
 
 ### Download pre-trained Word2Vec model
-We are using a pre-trained vector model trained on part of Google News dataset (about 100 billion words). The model contains 300-dimensional vectors for 3 million words and phrases.
-The archive with the 1.5 GB model is [here](https://drive.google.com/file/d/0B7XkCwpI5KDYNlNUTTlSS21pQmM/edit) available.
-Download the file and unpack it in the **Word2Vec** folder.
+The word embeddings used for sentence classification with a convolutional neural network can either be trained on the specific collection or implemented by using a pre-trained model.
+Google provides such pre-trained word embeddings which are trained on parts of the Google News dataset (about 100 billion words). The model contains 300-dimensional vectors for 3 million words and phrases. The archive (1.5 GB) is [here](https://drive.google.com/file/d/0B7XkCwpI5KDYNlNUTTlSS21pQmM/edit) available.
+To make use of it, just download the file and unpack it in the **Word2Vec** folder in the main directory.
 
 
 ## Detailed list of dependencies
