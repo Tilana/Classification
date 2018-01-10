@@ -8,7 +8,7 @@ import gensim.models.keyedvectors as w2v_model
 from lda import Viewer, NeuralNet, Evaluation, data_helpers
 
 
-def cnnClassification(model, cnnType='cnn', BATCH_SIZE=64, ITERATIONS=100, filter_sizes=[3,4,5], pretrainedWordEmbeddings=True, storeModel=1):
+def cnnClassification(model, cnnType='cnn', BATCH_SIZE=64, ITERATIONS=100, filter_sizes=[3,4,5], pretrainedWordEmbeddings=True, storeModel=1, secondLayer=False):
 
     np.random.seed(42)
 
@@ -46,7 +46,7 @@ def cnnClassification(model, cnnType='cnn', BATCH_SIZE=64, ITERATIONS=100, filte
     with sess.as_default():
         if storeModel:
             nn.setSummaryWriter(model.output_dir, tf.get_default_graph())
-        nn.buildNeuralNet(cnnType, sequence_length=model.max_document_length, vocab_size=len(vocabulary), optimizerType='Adam', filter_sizes=filter_sizes)
+        nn.buildNeuralNet(cnnType, sequence_length=model.max_document_length, vocab_size=len(vocabulary), optimizerType='Adam', filter_sizes=filter_sizes, secondLayer=secondLayer)
 
         sess.run(tf.global_variables_initializer())
         sess.run(tf.local_variables_initializer())
