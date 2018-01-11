@@ -1,4 +1,6 @@
-from lda.osHelper import generateModelDirectory, createFolderIfNotExistent
+import lda.osHelper as osHelper
+import gensim.models.keyedvectors as w2v_model
+from scripts import setUp
 import tensorflow as tf
 from lda import Preprocessor, NeuralNet
 import numpy as np
@@ -14,11 +16,14 @@ BATCH_SIZE = 3
 
 def train(sentence, category, valid):
 
-    model_path = generateModelDirectory(category)
+    model_path = osHelper.generateModelDirectory(category)
     checkpoint_dir = os.path.join(model_path, 'checkpoints')
     processor_dir = os.path.join(model_path, 'preprocessor')
     infoFile = os.path.join(model_path, 'info.json')
     batchFile = os.path.join(model_path, 'batch.csv')
+
+    if not os.path.exists(processor_dir):
+        setUp(category)
 
     preprocessor = Preprocessor()
     cleanSentence = preprocessor.cleanText(sentence)
@@ -37,6 +42,7 @@ def train(sentence, category, valid):
         graph = tf.Graph()
         with graph.as_default():
             with tf.Session() as sess:
+
                 vocabProcessor = tf.contrib.learn.preprocessing.VocabularyProcessor.restore(processor_dir)
                 vocabSize = len(vocabProcessor.vocabulary_)
                 maxSentenceLength = vocabProcessor.max_document_length
@@ -46,6 +52,7 @@ def train(sentence, category, valid):
                 else:
                     nn = NeuralNet(maxSentenceLength, 2)
                     nn.buildNeuralNet('cnn', sequence_length=maxSentenceLength, vocab_size=vocabSize, optimizerType='Adam', filter_sizes=FILTER_SIZES)
+                    #nn.buildNeuralNet('cnn', sequence_length=maxSentenceLength, vocab_size=vocabSize, optimizerType='Adam', filter_sizes=FILTER_SIZES, pretrainedWordEmbeddings=False)
                     sess.run(tf.global_variables_initializer())
                     sess.run(tf.local_variables_initializer())
                     nn.setSaver()

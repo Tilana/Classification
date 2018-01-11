@@ -1,3 +1,4 @@
 from cnnClassification import cnnClassification
 from cnnPrediction import cnnPrediction
 from evidenceSentencesToSummary import evidenceSentencesToSummary
+from setUp import setUp
