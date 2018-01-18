@@ -4,18 +4,16 @@ import tensorflow as tf
 import numpy as np
 from datetime import datetime
 import pdb
-import gensim.models.keyedvectors as w2v_model
 from lda import Viewer, NeuralNet, Evaluation, data_helpers
+from getPretrainedEmbedding import getPretrainedEmbedding
 
 
-def cnnClassification(model, cnnType='cnn', BATCH_SIZE=64, ITERATIONS=100, filter_sizes=[3,4,5], pretrainedWordEmbeddings=True, storeModel=1, secondLayer=False):
+def cnnClassification(model, cnnType='cnn', BATCH_SIZE=64, ITERATIONS=100, filter_sizes=[3,4,5], storeModel=1, secondLayer=False, pretrainedWordEmbeddings=True):
 
     np.random.seed(42)
 
     vocab_processor = tf.contrib.learn.preprocessing.VocabularyProcessor(model.max_document_length)
-    pretrain = vocab_processor.fit(model.data.text.tolist())
-
-    word2vec = w2v_model.KeyedVectors.load_word2vec_format('Word2Vec/GoogleNews-vectors-negative300.bin', binary=True)
+    vocab_processor.fit(model.data.text.tolist())
 
     X_train = np.array(list(vocab_processor.transform(model.trainData.text.tolist())))
     X_test = np.array(list(vocab_processor.transform(model.testData.text.tolist())))
@@ -27,13 +25,11 @@ def cnnClassification(model, cnnType='cnn', BATCH_SIZE=64, ITERATIONS=100, filte
         X_validation = np.array(list(vocab_processor.transform(model.validationData.text.tolist())))
         Y_validation = pd.get_dummies(model.validationTarget.tolist()).as_matrix()
 
-    vocabulary = vocab_processor.vocabulary_
+    vocab = vocab_processor.vocabulary_._mapping
     if storeModel:
         vocab_processor.save(model.output_dir + 'preprocessor')
 
-    #pdb.set_trace()
-
-    print 'Vocabulary Size: ' + str(len(vocabulary))
+    print 'Vocabulary Size: ' + str(len(vocab))
 
     nrTrainData = str(len(X_train))
 
@@ -46,19 +42,14 @@ def cnnClassification(model, cnnType='cnn', BATCH_SIZE=64, ITERATIONS=100, filte
     with sess.as_default():
         if storeModel:
             nn.setSummaryWriter(model.output_dir, tf.get_default_graph())
-        nn.buildNeuralNet(cnnType, sequence_length=model.max_document_length, vocab_size=len(vocabulary), optimizerType='Adam', filter_sizes=filter_sizes, secondLayer=secondLayer)
+        nn.buildNeuralNet(cnnType, sequence_length=model.max_document_length, vocab_size=len(vocab), optimizerType='Adam', filter_sizes=filter_sizes, secondLayer=secondLayer)
 
         sess.run(tf.global_variables_initializer())
         sess.run(tf.local_variables_initializer())
 
         if pretrainedWordEmbeddings:
-            vocabIntersection = set(vocabulary._mapping.keys()).intersection(word2vec.vocab.keys())
-            initW = np.random.uniform(-0.25, 0.25, (len(vocabulary), 300))
-            #initW = tf.Variable(tf.constant(0.0, shape=[len(vocabulary), 300]), trainable=False, name='W')
-            for word in vocabIntersection:
-                idx = vocabulary.get(word)
-                initW[idx] = word2vec.word_vec(word)
-            sess.run(nn.W.assign(initW))
+            embedding = getPretrainedEmbedding(vocab)
+            sess.run(nn.W.assign(embedding))
 
         if storeModel:
             nn.setSaver()
@@ -72,12 +63,9 @@ def cnnClassification(model, cnnType='cnn', BATCH_SIZE=64, ITERATIONS=100, filte
 
             x_batch, y_batch = zip(*batch)
 
-            #learning_rate = nn.learningRate(c)
             learning_rate =1e-3
 
-
             train_data = {nn.X: x_batch, nn.Y_: y_batch, nn.step:c, nn.learning_rate: learning_rate, nn.pkeep:dropout}
-
             _, train_summary, grad_summary, entropy, acc, predLabels = sess.run([nn.train_step, nn.summary, nn.grad_summaries, nn.cross_entropy, nn.accuracy, nn.Y], feed_dict=train_data)
 
             evaluation = Evaluation(np.argmax(y_batch,1), predLabels)

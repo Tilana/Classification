@@ -7,16 +7,16 @@ import pandas as pd
 import pdb
 
 
-TRAINSIZES = [50]
+TRAINSIZES = [25]
 FILTERSIZES = [[2], [2,2,2]]
-USE2NDLAYER = [False, True]
+WORD2VEC = [False, True]
 
 RUNS = 3
 
 configFile = 'dataConfig.json'
 configName = 'ICAAD_DV_sentences'
 #configName = 'ICAAD_SA_sentences'
-configName = 'Manifesto_Minorities'
+#configName = 'Manifesto_Minorities'
 
 config = loadConfigFile(configFile, configName)
 data = pd.read_csv(config['data_path'], encoding='utf8')
@@ -46,9 +46,9 @@ for trainSize in TRAINSIZES:
 
         for filterSize in FILTERSIZES:
 
-            for secondLayer in USE2NDLAYER:
-                model = cnnClassification(classifier, ITERATIONS=200, BATCH_SIZE=50, filter_sizes=filterSize, pretrainedWordEmbeddings=True, storeModel=0, secondLayer=secondLayer)
-                modelName = '_'.join([config['DATASET'], config['ID'], str(trainSize), str(filterSize), str(secondLayer)])
+            for useWord2Vec in WORD2VEC:
+                model = cnnClassification(classifier, ITERATIONS=200, BATCH_SIZE=50, filter_sizes=filterSize, pretrainedWordEmbeddings=useWord2Vec, storeModel=0, secondLayer=False)
+                modelName = '_'.join([config['DATASET'], config['ID'], str(trainSize), str(filterSize), str(useWord2Vec)])
 
                 results.loc[str(idx)+'_acc', modelName] = model.evaluation.accuracy
                 results.loc[str(idx)+'_prec', modelName] = model.evaluation.precision

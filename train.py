@@ -1,6 +1,6 @@
 import lda.osHelper as osHelper
-import gensim.models.keyedvectors as w2v_model
 from scripts import setUp
+from scripts.getPretrainedEmbedding import getPretrainedEmbedding
 import tensorflow as tf
 from lda import Preprocessor, NeuralNet
 import numpy as np
@@ -13,6 +13,7 @@ LEARNING_RATE = 1e-3
 STEP=20
 FILTER_SIZES = [2,3,4]
 BATCH_SIZE = 3
+PRETRAINED_WORDEMBEDDINGS = True
 
 def train(sentence, category, valid):
 
@@ -44,17 +45,21 @@ def train(sentence, category, valid):
             with tf.Session() as sess:
 
                 vocabProcessor = tf.contrib.learn.preprocessing.VocabularyProcessor.restore(processor_dir)
-                vocabSize = len(vocabProcessor.vocabulary_)
+                vocabulary = vocabProcessor.vocabulary_._mapping
                 maxSentenceLength = vocabProcessor.max_document_length
 
                 if os.path.exists(checkpoint_dir):
                     nn.loadCheckpoint(graph, sess, checkpoint_dir)
                 else:
                     nn = NeuralNet(maxSentenceLength, 2)
-                    nn.buildNeuralNet('cnn', sequence_length=maxSentenceLength, vocab_size=vocabSize, optimizerType='Adam', filter_sizes=FILTER_SIZES)
-                    #nn.buildNeuralNet('cnn', sequence_length=maxSentenceLength, vocab_size=vocabSize, optimizerType='Adam', filter_sizes=FILTER_SIZES, pretrainedWordEmbeddings=False)
+                    nn.buildNeuralNet('cnn', sequence_length=maxSentenceLength, vocab_size=len(vocabulary), optimizerType='Adam', filter_sizes=FILTER_SIZES)
                     sess.run(tf.global_variables_initializer())
                     sess.run(tf.local_variables_initializer())
+
+                    if PRETRAINED_WORDEMBEDDINGS:
+                        embedding = getPretrainedEmbedding(vocabulary)
+                        sess.run(nn.W.assign(embedding))
+
                     nn.setSaver()
 
                 X = np.array(list(vocabProcessor.transform(batch.sentence.tolist())))

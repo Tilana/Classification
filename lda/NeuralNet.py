@@ -5,6 +5,7 @@ from sklearn.metrics import precision_score, recall_score
 
 class NeuralNet:
 
+
     def __init__(self, input_size=None, output_size=None):
         self.input_size = input_size
         self.X = tf.placeholder(tf.int32, [None, self.input_size], name='X')
@@ -22,7 +23,7 @@ class NeuralNet:
         if nnType=='multi':
             self.multiLayerNN(hidden_layer_size)
         elif nnType =='cnn':
-            self.cnn(filter_sizes=filter_sizes)
+            self.cnn(filter_sizes=filter_sizes, secondLayer=secondLayer)
         else:
             self.oneLayerNN()
         self.crossEntropy()
@@ -37,7 +38,6 @@ class NeuralNet:
 
     def setSaver(self):
         self.saver = tf.train.Saver(tf.global_variables())
-        #self.saver = tf.train.Saver()
 
     def setSummaryWriter(self, path, graph):
         states = ['train', 'test']
@@ -80,15 +80,13 @@ class NeuralNet:
         self.Y = tf.nn.softmax(self.Ylogits)
 
     def cnn(self, embedding_size=300, filter_sizes=[4,5,6,7], num_filters=128, secondLayer=False):
-        self.l2_loss = tf.constant(0.0)
+        self.l2_loss=tf.constant(0.0)
 
-        # Embedding Layer
         with tf.device('/cpu:0'), tf.name_scope("embedding"):
             self.W = tf.Variable(tf.random_uniform([self.vocab_size, embedding_size], -1.0, 1.0, seed=42), name='W')
             self.embedded_chars = tf.nn.embedding_lookup(self.W, self.X)
             self.embedded_chars_expanded = tf.expand_dims(self.embedded_chars, -1)
 
-        # Convolution + Maxpool layer
         pooled_outputs = []
         for i, filter_size in enumerate(filter_sizes):
             filter_shape = [filter_size, embedding_size, 1, num_filters]
@@ -99,14 +97,11 @@ class NeuralNet:
             pooled = tf.nn.max_pool(h, ksize=[1, self.sequence_length - filter_size + 1, 1, 1], strides=[1, 1, 1, 1], padding='VALID', name="pool")
             pooled_outputs.append(pooled)
 
-
         num_filters_total = num_filters * len(filter_sizes)
         self.h_pool = tf.concat(pooled_outputs, 3)
 
-
-        conv2 = tf.layers.conv2d(inputs=self.h_pool, filters=num_filters, kernel_size=[2,2], padding="same", activation=tf.nn.relu)
-
         if secondLayer:
+            conv2 = tf.layers.conv2d(inputs=self.h_pool, filters=num_filters, kernel_size=[2,2], padding="same", activation=tf.nn.relu)
             self.h_pool_flat = tf.reshape(conv2, [-1, num_filters_total])
         else:
             self.h_pool_flat = tf.reshape(self.h_pool, [-1, num_filters_total])
@@ -116,7 +111,7 @@ class NeuralNet:
         W = tf.get_variable("W", shape=[num_filters_total, self.output_size], initializer=tf.contrib.layers.xavier_initializer())
 
         self.b = tf.Variable(tf.constant(0.1, shape=[self.output_size]), name="b")
-        self.l2_loss += tf.nn.l2_loss(self.W)
+        self.l2_loss += tf.nn.l2_loss(W)
         self.l2_loss += tf.nn.l2_loss(self.b)
         self.Ylogits = tf.nn.xw_plus_b(self.h_drop, W, self.b, name="scores")
         self.Y = tf.argmax(self.Ylogits, 1, name='Y')
@@ -128,7 +123,6 @@ class NeuralNet:
         cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=self.Ylogits, labels=self.Y_)
         if self.nnType=='cnn':
             l2_reg_lambda = 0.0
-            #self.cross_entropy = tf.reduce_mean(cross_entropy) + l2_reg_lambda * self.l2_loss
             self.cross_entropy = tf.reduce_mean(cross_entropy) #+ l2_reg_lambda * self.l2_loss
         else:
             self.cross_entropy = tf.reduce_mean(cross_entropy)*100
