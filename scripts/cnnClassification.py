@@ -7,13 +7,15 @@ import pdb
 from lda import Viewer, NeuralNet, Evaluation, data_helpers
 from getPretrainedEmbedding import getPretrainedEmbedding
 
+VOCABULARY_PATH = 'vocabulary.txt'
 
 def cnnClassification(model, cnnType='cnn', BATCH_SIZE=64, ITERATIONS=100, filter_sizes=[3,4,5], storeModel=1, secondLayer=False, pretrainedWordEmbeddings=True):
 
     np.random.seed(42)
 
     vocab_processor = tf.contrib.learn.preprocessing.VocabularyProcessor(model.max_document_length)
-    vocab_processor.fit(model.data.text.tolist())
+    vocabulary = pd.read_pickle(VOCABULARY_PATH)
+    vocab_processor.fit(vocabulary)
 
     X_train = np.array(list(vocab_processor.transform(model.trainData.text.tolist())))
     X_test = np.array(list(vocab_processor.transform(model.testData.text.tolist())))

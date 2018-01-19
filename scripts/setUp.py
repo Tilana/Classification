@@ -1,6 +1,5 @@
 import lda.osHelper as osHelper
 import tensorflow as tf
-import gensim.models.keyedvectors as w2v_model
 import json
 import os
 import pandas as pd
@@ -19,8 +18,8 @@ def setUp(categoryID):
     osHelper.createFolderIfNotExistent(modelPath)
     osHelper.deleteFolderWithContent(checkpointDir)
 
-    word2vec = w2v_model.KeyedVectors.load_word2vec_format('Word2Vec/GoogleNews-vectors-negative300.bin', binary=True)
-    vocabulary = {key:value.index for key, value in word2vec.vocab.iteritems() if key.islower() and '_' not in key}
+    vocabPath = 'vocabulary.txt'
+    vocabulary = pd.read_pickle(vocabPath)
 
     vocabProcessor = tf.contrib.learn.preprocessing.VocabularyProcessor(MAX_SENTENCE_LENGTH)
     vocabProcessor.fit(vocabulary)
