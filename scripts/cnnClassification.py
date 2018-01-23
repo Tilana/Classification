@@ -9,9 +9,7 @@ from getPretrainedEmbedding import getPretrainedEmbedding
 
 VOCABULARY_PATH = 'vocabulary.txt'
 
-def cnnClassification(model, cnnType='cnn', BATCH_SIZE=64, ITERATIONS=100, filter_sizes=[3,4,5], storeModel=1, secondLayer=False, pretrainedWordEmbeddings=True):
-
-    np.random.seed(42)
+def cnnClassification(model, cnnType='cnn', BATCH_SIZE=64, ITERATIONS=100, filter_sizes=[3,4,5], storeModel=1, secondLayer=False, pretrainedWordEmbeddings=True, ):
 
     vocab_processor = tf.contrib.learn.preprocessing.VocabularyProcessor(model.max_document_length)
     vocabulary = pd.read_pickle(VOCABULARY_PATH)
