@@ -39,7 +39,7 @@ class ImagePlotter:
 
     def boxplot(self, data):
         self.createFigure()
-        plt.boxplot(data)
+        plt.boxplot(data, showmeans=1, meanline=1)
         self.showFigure()
         self.closeFigure()
 
