@@ -6,9 +6,13 @@ import json
 import pandas as pd
 import pdb
 
-TRAINSIZES = [20]
+TRAINSIZES = [20, 50, 100]
 FILTERSIZES = [[2], [2,2,2]]
 SEQUENCE_LENGTHS = [25,50,90,120]
+
+BASELINE_MODEL = 'LogisticRegression'
+
+VOCABULARY_PATH = 'vocabulary.txt'
 
 RUNS = 10
 
@@ -20,6 +24,8 @@ configName = 'ICAAD_DV_sentences'
 config = loadConfigFile(configFile, configName)
 data = pd.read_csv(config['data_path'], encoding='utf8')
 
+vocabulary = pd.read_pickle(VOCABULARY_PATH)
+
 results = pd.DataFrame()
 
 for trainSize in TRAINSIZES:
@@ -30,8 +36,9 @@ for trainSize in TRAINSIZES:
         negSample = data[data[config['TARGET']] == config['negCategory']].sample(len(posSample))
         sentences = pd.concat([posSample, negSample])
 
-        preprocessor = Preprocessor()
+        preprocessor = Preprocessor(vocabulary=vocabulary)
         sentences.text = sentences.text.apply(preprocessor.cleanText)
+        sentences['tfidf'] = preprocessor.trainVectorizer(sentences.text.tolist())
 
         classifier = ClassificationModel(target=config['TARGET'], labelOfInterest=config['categoryOfInterest'])
         classifier.data = sentences
@@ -54,12 +61,23 @@ for trainSize in TRAINSIZES:
                 results.loc[str(idx)+'_prec', modelName] = model.evaluation.precision
                 results.loc[str(idx)+'_rec', modelName] = model.evaluation.recall
 
-        for measure in ['acc', 'prec', 'rec']:
-            rows = [name for name in results.index if name.find(measure)!=-1]
-            res = results.loc[rows]
-            results.loc['mean_' + measure] = res.mean(axis=0)
-
         classifier.trainData.to_csv('results/' + configName + '_trainData' + str(trainSize) + '_RUN_' + str(idx) + '.csv')
+
+        classifier.buildClassifier(BASELINE_MODEL)
+        classifier.whitelist = None
+        classifier.trainClassifier(['tfidf'])
+        classifier.predict(['tfidf'])
+        classifier.evaluate()
+
+        results.loc[str(idx)+'_acc', BASELINE_MODEL + '_' + str(trainSize)] = classifier.evaluation.accuracy
+        results.loc[str(idx)+'_prec', BASELINE_MODEL + '_' + str(trainSize)] = classifier.evaluation.precision
+        results.loc[str(idx)+'_rec', BASELINE_MODEL + '_' + str(trainSize)] = classifier.evaluation.recall
+
+
+for measure in ['acc', 'prec', 'rec']:
+    rows = [name for name in results.index if name.find(measure)!=-1]
+    res = results.loc[rows]
+    results.loc['mean_' + measure] = res.mean(axis=0)
 
 results.to_csv('results/' + configName + '_gridSearch.csv')
 
