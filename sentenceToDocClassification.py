@@ -12,14 +12,14 @@ from lda import ClassificationModel, Preprocessor, Viewer, ImagePlotter
 
 def sentenceToDocClassification():
 
-    analyze = 1
+    analyze = 0
     preprocessing = 1
     balanceData = 1
     validation = 0
     splitValidationDataInSentences = 0
-    sentences_train_size = 20
+    sentences_train_size = 50
     doc_train_size = 100
-    useWord2Vec = True
+    #useWord2Vec = True
     random_state = 20
 
     configFile = 'dataConfig.json'
@@ -75,17 +75,8 @@ def sentenceToDocClassification():
     print 'Maximal sentence length ' + str(sentenceClassifier.max_document_length)
 
 
-    cnnClassification(sentenceClassifier, ITERATIONS=200, BATCH_SIZE=50, filter_sizes=[2], pretrainedWordEmbeddings=useWord2Vec)
-    #cnnClassification(sentenceClassifier, ITERATIONS=200, BATCH_SIZE=50, filter_sizes=[2,2,2], pretrainedWordEmbeddings=useWord2Vec)
-    #cnnClassification(sentenceClassifier, ITERATIONS=200, BATCH_SIZE=50, filter_sizes=[1,2,3], pretrainedWordEmbeddings=useWord2Vec)
-    #cnnClassification(sentenceClassifier, ITERATIONS=200, BATCH_SIZE=50, filter_sizes=[2,2,3], pretrainedWordEmbeddings=useWord2Vec)
-    #cnnClassification(sentenceClassifier, ITERATIONS=200, BATCH_SIZE=50, filter_sizes=[2,3,4], pretrainedWordEmbeddings=useWord2Vec)
+    cnnClassification(sentenceClassifier, ITERATIONS=200, BATCH_SIZE=50, filter_sizes=[2])
 
-    #cnnClassification(sentenceClassifier, ITERATIONS=200, BATCH_SIZE=50, filter_sizes=[3,4,5], pretrainedWordEmbeddings=useWord2Vec)
-    #cnnClassification(sentenceClassifier, ITERATIONS=200, BATCH_SIZE=50, filter_sizes=[4,5,6], pretrainedWordEmbeddings=useWord2Vec)
-    #cnnClassification(sentenceClassifier, ITERATIONS=200, BATCH_SIZE=50, filter_sizes=[5,6,7], pretrainedWordEmbeddings=useWord2Vec)
-    #cnnClassification(sentenceClassifier, ITERATIONS=200, BATCH_SIZE=50, filter_sizes=[6,7,8], pretrainedWordEmbeddings=useWord2Vec)
-    #cnnClassification(sentenceClassifier, ITERATIONS=200, BATCH_SIZE=50, filter_sizes=[7,8,9], pretrainedWordEmbeddings=useWord2Vec)
 
     pdb.set_trace()
 
@@ -111,6 +102,7 @@ def sentenceToDocClassification():
     sentenceDB['text'] = sentenceDB['text'].str.lower()
 
 
+
     print 'Predict labels of sentences in validation data'
     predictedData = cnnPrediction(sentenceDB, sentences_config['label'], sentenceClassifier.output_dir)
 
@@ -124,6 +116,7 @@ def sentenceToDocClassification():
     if preprocessing:
         preprocessor = Preprocessor()
         summaries.text = summaries.text.apply(preprocessor.cleanText)
+
 
     docClassifier = ClassificationModel(target=summary_config['TARGET'], labelOfInterest=summary_config['categoryOfInterest'])
     docClassifier.data = summaries
