@@ -44,6 +44,14 @@ nltk.download('averaged_perceptron_tagger')
 
 ```
 
+### Installing FLASK framework
+Install flask and run the application
+```
+pip install Flask
+FLASK_APP=routes.py flask run --port 4000
+
+```
+
 ### Download pre-trained Word2Vec model
 The word embeddings used for sentence classification with a convolutional neural network can either be trained on the specific collection or implemented by using a pre-trained model.
 Google provides such pre-trained word embeddings which are trained on parts of the Google News dataset (about 100 billion words). The model contains 300-dimensional vectors for 3 million words and phrases. The archive (1.5 GB) is [here](https://drive.google.com/file/d/0B7XkCwpI5KDYNlNUTTlSS21pQmM/edit) available.
