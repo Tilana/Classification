@@ -31,7 +31,7 @@ def predict_route():
             predictions['document'] = evidence['document'];
             predictions['value'] = evidence['value'];
             results.append(predictions);
-        except tensorflowErrors.NotFoundError:
-            print 'error'
+        except:
+            print 'model not trained'
 
     return pd.concat(results).to_json(orient='records')
