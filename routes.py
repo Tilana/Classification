@@ -13,7 +13,7 @@ def train_route():
 
     sentence = data['evidence']['text']
 
-    train(sentence, data['value'], data['isEvidence'])
+    train(sentence, data['value'] + data['property'], data['isEvidence'])
 
     return "{}"
 
@@ -25,7 +25,7 @@ def predict_route():
     results = [];
     for evidence in evidencesData:
         try:
-            predictions = predictDoc(doc, evidence['value']);
+            predictions = predictDoc(doc, evidence['value'] + evidence['property']);
             predictions = predictions.rename(index=str, columns={'text': 'evidence'});
             predictions['property'] = evidence['property'];
             predictions['document'] = evidence['document'];
