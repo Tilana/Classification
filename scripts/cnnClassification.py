@@ -40,6 +40,7 @@ def cnnClassification(model, cnnType='cnn', BATCH_SIZE=64, ITERATIONS=100, filte
     sess = tf.Session(config=session_config)
 
     with sess.as_default():
+
         if storeModel:
             nn.setSummaryWriter(model.output_dir, tf.get_default_graph())
         nn.buildNeuralNet(cnnType, sequence_length=model.max_document_length, vocab_size=len(vocab), optimizerType='Adam', filter_sizes=filter_sizes, secondLayer=secondLayer)
@@ -79,6 +80,7 @@ def cnnClassification(model, cnnType='cnn', BATCH_SIZE=64, ITERATIONS=100, filte
             print('{}: step {}, loss {:g}, acc {:g}, precision {:g}, recall {:g}'.format(datetime.now().isoformat(), c, entropy, acc, evaluation.precision, evaluation.recall))
 
             if c % 100 == 0:
+
                 testData = {nn.X: X_test, nn.Y_: Y_test, nn.learning_rate: 0, nn.pkeep:1.0}
                 predLabels, test_summary = sess.run([nn.Y, nn.summary], feed_dict=testData)
 
@@ -110,7 +112,8 @@ def cnnClassification(model, cnnType='cnn', BATCH_SIZE=64, ITERATIONS=100, filte
         model.classifierType = 'CNN'
 
         if storeModel:
-            viewer = Viewer(model.name, prefix='..')
+            #viewer = Viewer(model.name, prefix='..')
+            viewer = Viewer(model.name)
             viewer.classificationResults(model, name= nrTrainData + '_test', normalized=False, docPath=model.doc_path)
 
         ## Validation Data
@@ -124,7 +127,8 @@ def cnnClassification(model, cnnType='cnn', BATCH_SIZE=64, ITERATIONS=100, filte
             model.evaluation.confusionMatrix()
 
             if storeModel:
-                viewer = Viewer(model.name, prefix='..')
+                #viewer = Viewer(model.name, prefix='..')
+                viewer = Viewer(model.name)
                 viewer.classificationResults(model, name= nrTrainData + '_validation', subset='validation', normalized=False, docPath=model.doc_path)
 
         sess.close()

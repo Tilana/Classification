@@ -11,6 +11,8 @@ class Evaluation:
         self.checkLength()
         self.n = len(self.target)
         self.average = average
+        if average=='binary' and len(set(target))>2:
+            self.average = 'micro'
 
     def computeMeasures(self):
         self.accuracy()

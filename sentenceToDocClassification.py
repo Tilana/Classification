@@ -7,41 +7,41 @@ from lda.docLoader import loadConfigFile
 from scripts import cnnClassification, cnnPrediction, evidenceSentencesToSummary
 from scripts.createSentenceDB import filterSentenceLength, setSentenceLength
 from nltk.tokenize import sent_tokenize
-from lda import ClassificationModel, Preprocessor, Viewer, ImagePlotter
+from lda import ClassificationModel, Preprocessor, Viewer
+
+
+MAX_SEQUENCE_LENGTH = 90
+
+balance = 1
+preprocessing = 1
+validation = 0
+splitValidationDataInSentences = 0
+sentences_train_size = 75
+doc_train_size = 100
+random_state = 42
+classificationType = 'multi'
+
+configFile = 'dataConfig.json'
+
+sentences_config_name = 'ICAAD_DV_sentences'
+#summary_config_name = 'ICAAD_DV_summaries'
+
+#sentences_config_name = 'ICAAD_SA_sentences'
+#summary_config_name = 'ICAAD_SA_summaries'
+
+#sentences_config_name = 'Manifesto_Minorities'
 
 
 def sentenceToDocClassification():
-
-    analyze = 0
-    preprocessing = 1
-    balanceData = 1
-    validation = 0
-    splitValidationDataInSentences = 0
-    sentences_train_size = 50
-    doc_train_size = 100
-    #useWord2Vec = True
-    random_state = 20
-
-    configFile = 'dataConfig.json'
-    sentences_config_name = 'ICAAD_DV_sentences'
-    summary_config_name = 'ICAAD_DV_summaries'
-
-    #sentences_config_name = 'ICAAD_SA_sentences'
-    #summary_config_name = 'ICAAD_SA_summaries'
-    #config_name = 'ICAAD_SA_sentences'
-    #config_name = 'Manifesto_Minorities'
-
 
     sentences_config = loadConfigFile(configFile, sentences_config_name)
     dataPath = sentences_config['data_path']
     sentences = pd.read_csv(sentences_config['data_path'], encoding ='utf8')
 
-
-    if balanceData:
+    if classificationType == 'binary' and balance==1:
         posSample = sentences[sentences[sentences_config['TARGET']]==sentences_config['categoryOfInterest']]
         negSample = sentences[sentences[sentences_config['TARGET']] == sentences_config['negCategory']].sample(len(posSample), random_state=random_state)
-        sentences = pd.concat([posSample, negSample])
-
+        sentences = pd.concat([posSample, negSample], ignore_index=True)
 
     viewer = Viewer(sentences_config['DATASET'])
     viewer.printDocuments(sentences, folder='Sentences', docPath='../../' + sentences_config['DATASET'] + '/Documents')
@@ -50,7 +50,6 @@ def sentenceToDocClassification():
         preprocessor = Preprocessor()
         sentences.text = sentences.text.apply(preprocessor.cleanText)
 
-
     sentenceClassifier = ClassificationModel(target=sentences_config['TARGET'], labelOfInterest=sentences_config['categoryOfInterest'])
     sentenceClassifier.data = sentences
     sentenceClassifier.createTarget()
@@ -58,23 +57,9 @@ def sentenceToDocClassification():
     sentenceClassifier.setDataConfig(sentences_config)
     sentenceClassifier.validation = validation
 
-    sentenceClassifier.splitDataset(train_size=sentences_train_size, random_state=20)
+    sentenceClassifier.splitDataset(train_size=sentences_train_size, stratify=True)
 
-    if analyze:
-        document_lengths = [len(sentence.split(" ")) for sentence in sentences.text]
-        plotter = ImagePlotter(True)
-        bins = range(1,100)
-        plotter.plotHistogram(document_lengths, log=False, title= sentences_config['ID'] + ' frequency of evidence sentences length', xlabel='sentence length', ylabel='frequency', bins=bins, path=None)
-        print 'max: ' + str(max(document_lengths))
-        print 'min 0.5: ' + str(min(document_lengths))
-        print 'median: ' + str(np.median(document_lengths))
-        print 'average: ' + str(np.mean(document_lengths))
-
-
-    sentenceClassifier.max_document_length = max([len(x.split(" ")) for x in sentenceClassifier.trainData.text])
-    print 'Maximal sentence length ' + str(sentenceClassifier.max_document_length)
-
-
+    sentenceClassifier.max_document_length = MAX_SEQUENCE_LENGTH
     cnnClassification(sentenceClassifier, ITERATIONS=200, BATCH_SIZE=50, filter_sizes=[2])
 
 
@@ -100,8 +85,6 @@ def sentenceToDocClassification():
     sentenceDB = sentenceDB[sentenceDB.sentenceLength.map(filterSentenceLength)]
 
     sentenceDB['text'] = sentenceDB['text'].str.lower()
-
-
 
     print 'Predict labels of sentences in validation data'
     predictedData = cnnPrediction(sentenceDB, sentences_config['label'], sentenceClassifier.output_dir)

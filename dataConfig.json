@@ -11,7 +11,7 @@
         "doc_path":"../ICAAD/Sentences",
         "full_doc_path":"../data/ICAAD/ICAAD.pkl"
     },
-    
+
     "ICAAD_SA_sentences":{
         "name": "ICAAD_SA_sentences",
         "DATASET":"ICAAD",
@@ -53,7 +53,8 @@
         "data_path":"../data/Manifesto/manifesto_United Kingdom.csv", 
         "TARGET":"cmp_code", 
         "categoryOfInterest":411,
-        "negCategory":506
+        "negCategory":506,
+        "name": "Manifesto"
     }
 }
 
