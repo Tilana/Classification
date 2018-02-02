@@ -11,7 +11,7 @@ import json
 DROPOUT = 0.5
 LEARNING_RATE = 1e-3
 STEP=20
-FILTER_SIZES = [2,3,4]
+FILTER_SIZES = [2,2,2]
 BATCH_SIZE = 3
 PRETRAINED_WORDEMBEDDINGS = True
 
@@ -62,11 +62,11 @@ def train(sentence, category, valid):
 
                     nn.setSaver()
 
+
                 X = np.array(list(vocabProcessor.transform(batch.sentence.tolist())))
 
-                categories = [0,1]
-                Y = pd.get_dummies(batch.label.tolist(), prefix='', prefix_sep='')
-                Y = Y.T.reindex(categories).T.fillna(0).as_matrix()
+                Ylabels = batch.label.astype('category', categories=[0,1])
+                Y = pd.get_dummies(Ylabels).as_matrix()
 
                 trainData = {nn.X: X, nn.Y_:Y, nn.step:STEP, nn.learning_rate: LEARNING_RATE,  nn.pkeep:DROPOUT}
                 _ = sess.run(nn.train_step, feed_dict=trainData)
