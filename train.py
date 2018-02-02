@@ -61,9 +61,6 @@ def train(sentence, category, valid):
 
                     nn.setSaver()
 
-
-                sentence = batch.sentence.tolist()[2]
-
                 def getOOV(sentence):
                     return [word for word in sentence.split(' ') if word not in vocabulary]
 
