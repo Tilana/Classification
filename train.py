@@ -34,7 +34,6 @@ def train(sentence, category, valid):
 
     info = json.load(open(infoFile))
     info['TOTAL_NR_TRAIN_SENTENCES'] += 1
-    json.dump(info, open(infoFile, 'wb'))
 
 
     if len(batch)==BATCH_SIZE:
@@ -63,6 +62,16 @@ def train(sentence, category, valid):
                     nn.setSaver()
 
 
+                sentence = batch.sentence.tolist()[2]
+
+                def getOOV(sentence):
+                    return [word for word in sentence.split(' ') if word not in vocabulary]
+
+                batch['oov'] = batch.sentence.apply(getOOV)
+                OOV = set(info['OOV'])
+                OOV.update(sum(batch.oov.tolist(), []))
+                info['OOV'] = list(OOV)
+
                 X = np.array(list(vocabProcessor.transform(batch.sentence.tolist())))
 
                 Ylabels = batch.label.astype('category', categories=[0,1])
@@ -77,6 +86,8 @@ def train(sentence, category, valid):
 
         batch = pd.DataFrame(columns=['index', 'sentence', 'label'])
 
+
+    json.dump(info, open(infoFile, 'wb'))
     batch.to_csv(batchFile, index=False)
 
     return True

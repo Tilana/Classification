@@ -25,7 +25,7 @@ def setUp(categoryID):
     vocabProcessor.fit(vocabulary)
     vocabProcessor.save(processorDir)
 
-    info = {'TOTAL_NR_TRAIN_SENTENCES':0}
+    info = {'TOTAL_NR_TRAIN_SENTENCES':0, 'OOV':[]}
     json.dump(info, open(infoFile, 'wb'))
 
     batch = pd.DataFrame(columns=['sentence', 'label'])
