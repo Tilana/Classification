@@ -1,6 +1,5 @@
 import re
 import cPickle as pickle
-from bs4 import BeautifulSoup
 from nltk.stem import WordNetLemmatizer
 from nltk import pos_tag
 from nltk.corpus import wordnet, stopwords
@@ -124,9 +123,9 @@ class Preprocessor:
         return ' '.join(lemmas)
 
 
-    def removeHTMLtags(self, text):
-        html = BeautifulSoup(text, 'lxml')
-        return html.get_text()
+    #def removeHTMLtags(self, text):
+    #    html = BeautifulSoup(text, 'lxml')
+    #    return html.get_text()
 
 
     def removeStopwords(self, text, stopchars=None):
