@@ -6,11 +6,13 @@ import cPickle as pickle
 import os
 from listUtils import sortTupleList
 from osHelper import createFolderIfNotExistent
+from ImagePlotter import ImagePlotter
 import dataframeUtils as df
 from Evaluation import Evaluation
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
+from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn import svm, neighbors, linear_model
 from sklearn.naive_bayes import MultinomialNB, BernoulliNB, GaussianNB
 from sklearn.metrics import fbeta_score, make_scorer
@@ -33,19 +35,21 @@ class ClassificationModel:
             self.data = pd.read_pickle(path)
         if data is not None:
             self.data = data
-        if labelOfInterest is not None:
-            self.labelOfInterest = labelOfInterest
+        self.labelOfInterest = labelOfInterest
         self.targetFeature = target
         self.validation = validation
 
 
-    def splitDataset(self, train_size=0.30, random_state=None):
+    def splitDataset(self, train_size=0.30, random_state=None, stratify=False):
         self.trainIndices, self.testIndices = train_test_split(self.data.index, train_size=train_size, random_state=random_state)
+        if stratify:
+            sss = StratifiedShuffleSplit(n_splits=1, random_state=random_state, train_size=train_size)
+            for trainIndex, testIndex in sss.split(self.data, self.target):
+                self.trainIndices = trainIndex
+                self.testIndices = testIndex
         if self.validation:
             self.testIndices, self.validationIndices = train_test_split(self.testIndices, train_size=0.5, random_state=random_state)
         self.split()
-
-
 
     def split(self):
         self.trainData = self.data.loc[self.trainIndices]
@@ -55,7 +59,6 @@ class ClassificationModel:
         if self.validation:
             self.validationData = self.data.loc[self.validationIndices]
             self.validationTarget = self.target.loc[self.validationIndices]
-
 
     def balanceDataset(self, factor=1):
         trueCases = df.getIndex(df.filterData(self.data, self.targetFeature))
@@ -208,7 +211,7 @@ class ClassificationModel:
             target = self.validationTarget
             indices = self.validationIndices
 
-        self.evaluation = Evaluation(target, data.predictedLabel.tolist(), self.evaluationAverage)
+        self.evaluation = Evaluation(target, data.predictedLabel.tolist(), average=self.evaluationAverage)
         self.evaluation.setAllTags()
         data = self.tagData(data, indices)
         if subset == 'test':
@@ -313,6 +316,18 @@ class ClassificationModel:
     def preprocessTestData(self, preprocessor, vecType='tfIdf'):
         testDocs = self.testData.text.tolist()
         self.testData[vecType] = preprocessor.vectorizeDocs(testDocs)
+
+    def analyzeSentenceLength(self, title):
+        document_lengths = [len(sentence.split(" ")) for sentence in self.data.text]
+        plotter = ImagePlotter(True)
+        bins = range(1,100)
+        plotter.plotHistogram(document_lengths, log=False, title= title + ' frequency of evidence sentences length', xlabel='sentence length', ylabel='frequency', bins=bins, path=None)
+        print 'max: ' + str(max(document_lengths))
+        print 'min 0.5: ' + str(min(document_lengths))
+        print 'median: ' + str(np.median(document_lengths))
+        print 'average: ' + str(np.mean(document_lengths))
+
+
 
 
 
