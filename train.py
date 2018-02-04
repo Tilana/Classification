@@ -1,6 +1,7 @@
 import lda.osHelper as osHelper
 from scripts import setUp
 from scripts.getPretrainedEmbedding import getPretrainedEmbedding
+from collections import Counter
 import tensorflow as tf
 from lda import Preprocessor, NeuralNet
 import numpy as np
@@ -61,13 +62,31 @@ def train(sentence, category, valid):
 
                     nn.setSaver()
 
-                def getOOV(sentence):
-                    return [word for word in sentence.split(' ') if word not in vocabulary]
-
-                batch['oov'] = batch.sentence.apply(getOOV)
+                posWordFrequency = info['posWordFrequency']
+                negWordFrequency = info['negWordFrequency']
                 OOV = set(info['OOV'])
-                OOV.update(sum(batch.oov.tolist(), []))
+
+                def getWordFrequencies(sentence, wordFrequency):
+                    for word in sentence.split(' '):
+                        if word in vocabulary:
+                            if wordFrequency.get(word):
+                                wordFrequency[word] += 1
+                            else:
+                                wordFrequency[word] = 1
+                        else:
+                            OOV.update(word)
+
+
+                for name, group in batch.groupby('label'):
+                    if name==True:
+                        group.sentence.apply(getWordFrequencies, wordFrequency=posWordFrequency)
+                    else:
+                        group.sentence.apply(getWordFrequencies, wordFrequency=negWordFrequency)
+
                 info['OOV'] = list(OOV)
+                info['posWordFrequency'] = posWordFrequency
+                info['negWordFrequency'] = negWordFrequency
+
 
                 X = np.array(list(vocabProcessor.transform(batch.sentence.tolist())))
 
