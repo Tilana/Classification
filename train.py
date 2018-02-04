@@ -3,7 +3,7 @@ from scripts import setUp
 from scripts.getPretrainedEmbedding import getPretrainedEmbedding
 from collections import Counter
 import tensorflow as tf
-from lda import Preprocessor, NeuralNet
+from lda import Preprocessor, NeuralNet, Info
 import numpy as np
 import pandas as pd
 import os
@@ -33,9 +33,8 @@ def train(sentence, category, valid):
     batch = pd.read_csv(batchFile) ##, index_col='index')
     batch = batch.append({'sentence':cleanSentence, 'label':valid}, ignore_index=True)
 
-    info = json.load(open(infoFile))
-    info['TOTAL_NR_TRAIN_SENTENCES'] += 1
-
+    info = Info(infoFile)
+    info.load()
 
     if len(batch)==BATCH_SIZE:
         nn = NeuralNet()
@@ -62,31 +61,8 @@ def train(sentence, category, valid):
 
                     nn.setSaver()
 
-                posWordFrequency = info['posWordFrequency']
-                negWordFrequency = info['negWordFrequency']
-                OOV = set(info['OOV'])
 
-                def getWordFrequencies(sentence, wordFrequency):
-                    for word in sentence.split(' '):
-                        if word in vocabulary:
-                            if wordFrequency.get(word):
-                                wordFrequency[word] += 1
-                            else:
-                                wordFrequency[word] = 1
-                        else:
-                            OOV.update(word)
-
-
-                for name, group in batch.groupby('label'):
-                    if name==True:
-                        group.sentence.apply(getWordFrequencies, wordFrequency=posWordFrequency)
-                    else:
-                        group.sentence.apply(getWordFrequencies, wordFrequency=negWordFrequency)
-
-                info['OOV'] = list(OOV)
-                info['posWordFrequency'] = posWordFrequency
-                info['negWordFrequency'] = negWordFrequency
-
+                info.updateWordFrequencyInDataframe(batch.groupby('label'), vocabulary)
 
                 X = np.array(list(vocabProcessor.transform(batch.sentence.tolist())))
 
@@ -103,7 +79,7 @@ def train(sentence, category, valid):
         batch = pd.DataFrame(columns=['index', 'sentence', 'label'])
 
 
-    json.dump(info, open(infoFile, 'wb'))
+    info.save()
     batch.to_csv(batchFile, index=False)
 
     return True

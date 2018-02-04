@@ -1,4 +1,5 @@
 import lda.osHelper as osHelper
+from lda import Info
 import tensorflow as tf
 import json
 import os
@@ -25,8 +26,8 @@ def setUp(categoryID):
     vocabProcessor.fit(vocabulary)
     vocabProcessor.save(processorDir)
 
-    info = {'TOTAL_NR_TRAIN_SENTENCES':0, 'OOV':[], 'negWordFrequency':{}, 'posWordFrequency':{}}
-    json.dump(info, open(infoFile, 'wb'))
+    info = Info(infoFile)
+    info.setup()
 
     batch = pd.DataFrame(columns=['sentence', 'label'])
     batch.to_csv(batchFile, index=False)
