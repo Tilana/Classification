@@ -1,13 +1,18 @@
 import json
+import os
 
 class Info:
 
     def __init__(self, path):
         self.path = path
+        if os.path.exists(self.path):
+            self.load()
 
 
     def setup(self):
         self.TOTAL_NR_TRAIN_SENTENCES = 0
+        self.NR_TRAIN_SENTENCES_POS = 0
+        self.NR_TRAIN_SENTENCES_NEG = 0
         self.OOV = []
         self.NEG_WORD_FREQUENCY = {}
         self.POS_WORD_FREQUENCY = {}
@@ -23,6 +28,13 @@ class Info:
         attributes = json.load(open(self.path))
         for name, value in attributes.iteritems():
             setattr(self, name, value)
+
+    def updateTrainingCounter(self, valid):
+        if valid:
+            self.NR_TRAIN_SENTENCES_POS += 1
+        else:
+            self.NR_TRAIN_SENTENCES_NEG += 1
+        self.TOTAL_NR_TRAIN_SENTENCES += 1
 
 
     def updateWordFrequencyInSentence(self, sentence, wordFrequency, vocabulary):

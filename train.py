@@ -37,7 +37,7 @@ def train(sentence, category, valid):
     batch = batch.append({'orgSentence':sentence, 'sentence':cleanSentence, 'label':valid}, ignore_index=True)
 
     info = Info(infoFile)
-    info.load()
+    info.updateTrainingCounter(valid)
 
     if len(batch)==BATCH_SIZE:
         nn = NeuralNet()
