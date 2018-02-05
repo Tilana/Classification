@@ -62,7 +62,7 @@ def train(sentence, category, valid):
                     nn.setSaver()
 
 
-                info.updateWordFrequencyInDataframe(batch.groupby('label'), vocabulary)
+                info.updateWordFrequency(batch.groupby('label'), vocabulary)
 
                 X = np.array(list(vocabProcessor.transform(batch.sentence.tolist())))
 
