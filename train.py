@@ -23,6 +23,7 @@ def train(sentence, category, valid):
     processor_dir = os.path.join(model_path, 'preprocessor')
     infoFile = os.path.join(model_path, 'info.json')
     batchFile = os.path.join(model_path, 'batch.csv')
+    memoryFile = os.path.join(model_path, 'memory.csv')
 
     if not os.path.exists(processor_dir):
         setUp(category)
@@ -30,8 +31,10 @@ def train(sentence, category, valid):
     preprocessor = Preprocessor()
     cleanSentence = preprocessor.cleanText(sentence)
 
-    batch = pd.read_csv(batchFile) ##, index_col='index')
-    batch = batch.append({'sentence':cleanSentence, 'label':valid}, ignore_index=True)
+    batch = pd.read_csv(batchFile)
+    memory = pd.read_csv(memoryFile)
+
+    batch = batch.append({'orgSentence':sentence, 'sentence':cleanSentence, 'label':valid}, ignore_index=True)
 
     info = Info(infoFile)
     info.load()
@@ -75,12 +78,13 @@ def train(sentence, category, valid):
 
                 sess.close()
 
-
-        batch = pd.DataFrame(columns=['index', 'sentence', 'label'])
-
+        batch['sentenceNoOOV'] = batch.sentence.apply(preprocessor.removeOOV, vocabulary=vocabulary)
+        memory = memory.append(batch, ignore_index=True)
+        batch = pd.DataFrame(columns=['orgSentence', 'sentence', 'label'])
 
     info.save()
     batch.to_csv(batchFile, index=False)
+    memory.to_csv(memoryFile, index=False)
 
     return True
 

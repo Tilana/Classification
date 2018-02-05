@@ -134,6 +134,11 @@ class Preprocessor:
         return [word for word in text.split() if word not in stopchars]
 
 
+    def removeOOV(self, text, vocabulary):
+        words = [word for word in text.split(' ') if word in vocabulary]
+        return ' '.join(words)
+
+
 
 
 

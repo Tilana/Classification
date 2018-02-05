@@ -15,6 +15,7 @@ def setUp(categoryID):
     checkpointDir = os.path.join(modelPath, 'checkpoints')
     infoFile = os.path.join(modelPath, 'info.json')
     batchFile = os.path.join(modelPath, 'batch.csv')
+    memoryFile = os.path.join(modelPath, 'memory.csv')
 
     osHelper.createFolderIfNotExistent(modelPath)
     osHelper.deleteFolderWithContent(checkpointDir)
@@ -29,8 +30,11 @@ def setUp(categoryID):
     info = Info(infoFile)
     info.setup()
 
-    batch = pd.DataFrame(columns=['sentence', 'label'])
+    batch = pd.DataFrame(columns=['orgSentence', 'sentence', 'label'])
     batch.to_csv(batchFile, index=False)
+
+    memory = pd.DataFrame(columns=['orgSentence', 'sentence', 'sentenceNoOOV', 'label'])
+    memory.to_csv(memoryFile, index=False)
 
     return True
 
