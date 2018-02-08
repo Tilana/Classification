@@ -27,7 +27,7 @@ class NeuralNet:
         else:
             self.oneLayerNN()
         self.crossEntropy()
-        self.optimizer(optimizerType)
+        self.setOptimizer(optimizerType)
         self.getAccuracy()
         self.getConfusionMatrix()
         self.trainStep()
@@ -92,21 +92,21 @@ class NeuralNet:
             filter_shape = [filter_size, embedding_size, 1, num_filters]
             W_filter = tf.Variable(tf.truncated_normal(filter_shape, stddev=0.1), name="W_filter")
             b_filter = tf.Variable(tf.constant(0.1, shape=[num_filters]), name="b_filter")
-            conv = tf.nn.conv2d(self.embedded_chars_expanded, W_filter, strides=[1, 1, 1, 1], padding="VALID", name="conv")
-            h = tf.nn.relu(tf.nn.bias_add(conv, b_filter), name="relu")
+            self.conv = tf.nn.conv2d(self.embedded_chars_expanded, W_filter, strides=[1, 1, 1, 1], padding="VALID", name="conv")
+            h = tf.nn.relu(tf.nn.bias_add(self.conv, b_filter), name="relu")
             pooled = tf.nn.max_pool(h, ksize=[1, self.sequence_length - filter_size + 1, 1, 1], strides=[1, 1, 1, 1], padding='VALID', name="pool")
             pooled_outputs.append(pooled)
 
         num_filters_total = num_filters * len(filter_sizes)
-        self.h_pool = tf.concat(pooled_outputs, 3)
+        self.h_pool = tf.concat(pooled_outputs, 3, name='h_pool')
 
         if secondLayer:
             conv2 = tf.layers.conv2d(inputs=self.h_pool, filters=num_filters, kernel_size=[2,2], padding="same", activation=tf.nn.relu)
             self.h_pool_flat = tf.reshape(conv2, [-1, num_filters_total])
         else:
-            self.h_pool_flat = tf.reshape(self.h_pool, [-1, num_filters_total])
+            self.h_pool_flat = tf.reshape(self.h_pool, [-1, num_filters_total], name='feature')
 
-        self.h_drop = tf.nn.dropout(self.h_pool_flat, self.pkeep)
+        self.h_drop = tf.nn.dropout(self.h_pool_flat, self.pkeep, name='h_drop')
 
         W = tf.get_variable("W", shape=[num_filters_total, self.output_size], initializer=tf.contrib.layers.xavier_initializer())
 
@@ -127,13 +127,13 @@ class NeuralNet:
         else:
             self.cross_entropy = tf.reduce_mean(cross_entropy)*100
 
-    def optimizer(self, optimizerType='GD', learning_rate=1e-3, decay=False):
+    def setOptimizer(self, optimizerType='GD', learning_rate=1e-3, decay=False):
         if decay:
             learning_rate = self.learning_rate
         if optimizerType == 'GD':
-            self.optimizer = tf.train.GradientDescentOptimizer(learning_rate)
+            self.optimizer = tf.train.GradientDescentOptimizer(learning_rate, name='optimizer')
         elif optimizerType == 'Adam':
-            self.optimizer = tf.train.AdamOptimizer(learning_rate)
+            self.optimizer = tf.train.AdamOptimizer(learning_rate, name='optimizer')
         else:
             print 'Warning: unkown Optimizer'
 
@@ -168,6 +168,9 @@ class NeuralNet:
                 grad_summaries.append(sparsity_summary)
         self.grad_summaries = tf.summary.merge(grad_summaries)
 
+    def imageSummary(self, image):
+        tf.summary.image('image', image)
+
 
     def variable_summaries(self, var):
         mean = tf.reduce_mean(var)
@@ -197,10 +200,16 @@ class NeuralNet:
         self.Ylogits = graph.get_operation_by_name("scores").outputs[0]
         self.probability = graph.get_operation_by_name("probability").outputs[0]
 
+        self.h_pool = graph.get_operation_by_name("h_pool").outputs[0]
+        self.h_pool_flat = graph.get_operation_by_name("feature").outputs[0]
+        #self.h_drop = graph.get_operation_by_name("h_drop").outputs[0]
+        self.conv = graph.get_operation_by_name("conv").outputs[0]
+        #self.optimizer = graph.get_operation_by_name("optimizer").outputs[0]
+
         self.nnType = 'cnn'
 
         self.crossEntropy()
-        self.optimizer(optimizerType='GD')
+        self.setOptimizer(optimizerType='GD')
         #self.getAccuracy()
         #self.getConfusionMatrix()
         self.trainStep()
