@@ -19,6 +19,9 @@ def userWorkflow():
     sentences_config = loadConfigFile(configFile, sentences_config_name)
     sentences = pd.read_csv(sentences_config['data_path'], encoding ='utf8')
 
+    noDV = sentences[sentences.category=='Evidence.no.SADV'].sample(655)
+    sentences = sentences[sentences.category=='Evidence.of.DV'].append(noDV)
+
     # Train Classifier
     for numberSample in xrange(10):
         sentence,category,value = getSentenceSample(sentences, categoryID, sentences_config)
@@ -26,10 +29,11 @@ def userWorkflow():
 
     # Get Full text documents
     data = pd.read_pickle(sentences_config['full_doc_path'])
-    # Predict label of sentences in documents
-    for numberSample in xrange(5):
-        sample = data.sample(1, random_state=42).iloc[0]
+    for numberSample in xrange(10):
+        sample = data.sample(1).iloc[0]
         evidenceSentences = predictDoc(sample[['text', 'title']], categoryID)
+
+        print evidenceSentences
 
 
 if __name__=='__main__':
