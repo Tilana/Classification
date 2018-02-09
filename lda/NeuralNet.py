@@ -5,7 +5,6 @@ from sklearn.metrics import precision_score, recall_score
 
 class NeuralNet:
 
-
     def __init__(self, input_size=None, output_size=None):
         self.input_size = input_size
         self.X = tf.placeholder(tf.int32, [None, self.input_size], name='X')
@@ -15,9 +14,10 @@ class NeuralNet:
         self.pkeep = tf.placeholder(tf.float32, shape=(), name='pkeep')
         self.step = tf.placeholder(tf.float32, shape=(), name='step')
 
-
     def buildNeuralNet(self, nnType='cnn', vocab_size=None, hidden_layer_size=100, optimizerType='GD', sequence_length=None, filter_sizes=[3,4,5], secondLayer=False):
-        self.nnType = nnType
+        tf.flags.DEFINE_string("nnType", nnType, "Neural Network Type (CNN, oneLayerNN, multiLayerNN)")
+        self.FLAGS = tf.flags.FLAGS
+        self.FLAGS._parse_flags()
         self.vocab_size = vocab_size
         self.sequence_length = sequence_length
         if nnType=='multi':
@@ -27,14 +27,14 @@ class NeuralNet:
         else:
             self.oneLayerNN()
         self.crossEntropy()
-        self.setOptimizer(optimizerType)
+        optimizer = self.getOptimizer(optimizerType)
+        self.train_step = optimizer.minimize(self.cross_entropy)
+        tf.add_to_collection("train_step", self.train_step)
         self.getAccuracy()
         self.getConfusionMatrix()
-        self.trainStep()
         self.evaluationSummary()
-        self.gradients()
+        self.gradients(optimizer)
         self.gradientSummary()
-
 
     def setSaver(self):
         self.saver = tf.train.Saver(tf.global_variables())
@@ -121,30 +121,28 @@ class NeuralNet:
 
     def crossEntropy(self):
         cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=self.Ylogits, labels=self.Y_)
-        if self.nnType=='cnn':
+        if self.FLAGS.nnType == 'cnn':
             l2_reg_lambda = 0.0
             self.cross_entropy = tf.reduce_mean(cross_entropy) #+ l2_reg_lambda * self.l2_loss
         else:
             self.cross_entropy = tf.reduce_mean(cross_entropy)*100
 
-    def setOptimizer(self, optimizerType='GD', learning_rate=1e-3, decay=False):
-        if decay:
-            learning_rate = self.learning_rate
+    def getOptimizer(self, optimizerType='GD', learning_rate=1e-3, decay=False):
         if optimizerType == 'GD':
-            self.optimizer = tf.train.GradientDescentOptimizer(learning_rate, name='optimizer')
+            optimizer = tf.train.GradientDescentOptimizer(learning_rate, name='optimizer')
         elif optimizerType == 'Adam':
-            self.optimizer = tf.train.AdamOptimizer(learning_rate, name='optimizer')
+            optimizer = tf.train.AdamOptimizer(learning_rate, name='optimizer')
         else:
-            print 'Warning: unkown Optimizer'
+            print 'Warning: unkown Optimizer Type'
+        return optimizer
 
-    def gradients(self):
-        self.grads_and_vars = self.optimizer.compute_gradients(self.cross_entropy)
 
-    def trainStep(self, summary=1):
-        self.train_step = self.optimizer.minimize(self.cross_entropy) #, name="train_step")
+    def gradients(self, optimizer):
+        self.grads_and_vars = optimizer.compute_gradients(self.cross_entropy)
+
 
     def getAccuracy(self):
-        if self.nnType=='cnn':
+        if self.FLAGS.nnType == 'cnn':
             is_correct = tf.equal(self.Y, tf.argmax(self.Y_,1))
         else:
             is_correct = tf.equal(tf.argmax(self.Y, 1), tf.argmax(self.Y_, 1))
@@ -170,7 +168,6 @@ class NeuralNet:
 
     def imageSummary(self, image):
         tf.summary.image('image', image)
-
 
     def variable_summaries(self, var):
         mean = tf.reduce_mean(var)
@@ -202,14 +199,5 @@ class NeuralNet:
 
         self.h_pool = graph.get_operation_by_name("h_pool").outputs[0]
         self.h_pool_flat = graph.get_operation_by_name("feature").outputs[0]
-        #self.h_drop = graph.get_operation_by_name("h_drop").outputs[0]
-        self.conv = graph.get_operation_by_name("conv").outputs[0]
-        #self.optimizer = graph.get_operation_by_name("optimizer").outputs[0]
+        self.train_step = tf.get_collection("train_step")[0]
 
-        self.nnType = 'cnn'
-
-        self.crossEntropy()
-        self.setOptimizer(optimizerType='GD')
-        #self.getAccuracy()
-        #self.getConfusionMatrix()
-        self.trainStep()
