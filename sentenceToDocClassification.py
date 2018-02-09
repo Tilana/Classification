@@ -19,7 +19,7 @@ splitValidationDataInSentences = 0
 sentences_train_size = 75
 doc_train_size = 100
 random_state = 42
-classificationType = 'multi'
+classificationType = 'binary'
 
 configFile = 'dataConfig.json'
 
