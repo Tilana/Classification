@@ -12,7 +12,6 @@ class NeuralNet:
         self.Y_ = tf.placeholder(tf.int64, [None, self.output_size], name='Y_')
         self.learning_rate = tf.placeholder(tf.float32, shape=(), name='learning_rate')
         self.pkeep = tf.placeholder(tf.float32, shape=(), name='pkeep')
-        self.step = tf.placeholder(tf.float32, shape=(), name='step')
 
     def buildNeuralNet(self, nnType='cnn', vocab_size=None, hidden_layer_size=100, optimizerType='GD', sequence_length=None, filter_sizes=[3,4,5], secondLayer=False):
         tf.flags.DEFINE_string("nnType", nnType, "Neural Network Type (CNN, oneLayerNN, multiLayerNN)")
@@ -32,9 +31,16 @@ class NeuralNet:
         tf.add_to_collection("train_step", self.train_step)
         self.getAccuracy()
         self.getConfusionMatrix()
-        self.evaluationSummary()
         self.gradients(optimizer)
+
+    def setupSummaries(self, graph, directory):
+        self.summaryWriter = tf.summary.FileWriter(directory)
+        self.summaryWriter.add_graph(graph)
+        tf.add_to_collection("summaryWriter", self.summaryWriter)
+        self.evaluationSummary()
         self.gradientSummary()
+        self.summaries = tf.summary.merge_all()
+        tf.add_to_collection("summaries", self.summaries)
 
     def setSaver(self):
         self.saver = tf.train.Saver(tf.global_variables())
@@ -52,6 +58,9 @@ class NeuralNet:
         acc_summary = tf.summary.scalar("accuracy", self.accuracy)
         lr_summary = tf.summary.scalar("learning rate", self.learning_rate)
         self.summary = tf.summary.merge([loss_summary, acc_summary, lr_summary])
+
+    def saveSummary(self, summary, step):
+        self.summaryWriter.add_summary(summary, step)
 
     def writeSummary(self, summary, step, phase='train'):
         if phase=='train':
@@ -191,7 +200,9 @@ class NeuralNet:
         self.Y = graph.get_operation_by_name("Y").outputs[0]
         self.pkeep = graph.get_operation_by_name("pkeep").outputs[0]
         self.learning_rate = graph.get_operation_by_name("learning_rate").outputs[0]
-        self.step = graph.get_operation_by_name("step").outputs[0]
+
+        self.summaryWriter = tf.summary.FileWriter(checkpoint_path)
+        self.summaries = graph.get_collection("summaries")[0]
 
         self.predictions = graph.get_operation_by_name("predictions").outputs[0]
         self.Ylogits = graph.get_operation_by_name("scores").outputs[0]
@@ -200,4 +211,6 @@ class NeuralNet:
         self.h_pool = graph.get_operation_by_name("h_pool").outputs[0]
         self.h_pool_flat = graph.get_operation_by_name("feature").outputs[0]
         self.train_step = tf.get_collection("train_step")[0]
+
+
 
