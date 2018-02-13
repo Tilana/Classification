@@ -1,9 +1,12 @@
 from flask import Flask, request
+import lda.osHelper as osHelper
 from tensorflow import errors as tensorflowErrors
 from train import train;
 from predictDoc import predictDoc;
+from shutil import rmtree
 import pandas as pd
 import json
+import os
 
 app = Flask(__name__)
 
@@ -14,6 +17,21 @@ def train_route():
     sentence = data['evidence']['text']
 
     train(sentence, data['value'] + data['property'], data['isEvidence'])
+
+    return "{}"
+
+@app.route('/classification/retrain', methods=['POST'])
+def retrain_route():
+    data = json.loads(request.data)
+    property = data['property']
+    value = data['value']
+    evidences = data['evidences']
+    rmtree(os.path.join('runs', value+property), ignore_errors=True)
+
+    print data;
+
+    for evidence in evidences:
+        train(evidence['evidence']['text'], value + property, evidence['isEvidence'])
 
     return "{}"
 
