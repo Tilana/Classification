@@ -28,8 +28,6 @@ def retrain_route():
     evidences = data['evidences']
     rmtree(os.path.join('runs', value+property), ignore_errors=True)
 
-    print data;
-
     for evidence in evidences:
         train(evidence['evidence']['text'], value + property, evidence['isEvidence'])
 
