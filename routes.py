@@ -35,6 +35,30 @@ def retrain_route():
 
     return "{}"
 
+@app.route('/classification/predictOneModel', methods=['POST'])
+def predict_one_model():
+    data = json.loads(request.data)
+    docs = pd.read_json(json.dumps(data['docs']));
+
+    property = data['property'];
+    value = data['value'];
+
+    model = value+property;
+
+    results = [];
+    for doc in docs.iterrows():
+        try:
+            predictions = predictDoc(doc[1], model);
+            predictions = predictions.rename(index=str, columns={'text': 'evidence'});
+            predictions['property'] = property;
+            predictions['value'] = value;
+            predictions['document'] = doc[1]['_id']
+            results.append(predictions);
+        except:
+            print 'model not trained'
+
+    return pd.concat(results).to_json(orient='records')
+
 @app.route('/classification/predict', methods=['POST'])
 def predict_route():
     data = json.loads(request.data)
