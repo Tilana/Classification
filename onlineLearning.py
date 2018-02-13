@@ -35,7 +35,7 @@ def onlineLearning():
         try:
             evidenceSentences = predictDoc(sample, categoryID)
         except:
-            pdb.set_trace()
+            print 'WARNING: PredictDoc.py of sample ' + str(sample.text) + ' was not successful'
 
         if len(evidenceSentences)>=1:
             classifier.testData.loc[ind, 'predLabel'] = 1
