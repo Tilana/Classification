@@ -5,6 +5,7 @@ from collections import Counter
 import tensorflow as tf
 from lda import Preprocessor, NeuralNet, Info
 import numpy as np
+import pdb
 import pandas as pd
 import os
 import json
@@ -43,6 +44,7 @@ def train(sentence, category, valid):
         nn = NeuralNet()
         tf.reset_default_graph()
         graph = tf.Graph()
+
         with graph.as_default():
             with tf.Session() as sess:
 
@@ -55,6 +57,7 @@ def train(sentence, category, valid):
                 else:
                     nn = NeuralNet(maxSentenceLength, 2)
                     nn.buildNeuralNet('cnn', sequence_length=maxSentenceLength, vocab_size=len(vocabulary), optimizerType='Adam', filter_sizes=FILTER_SIZES)
+                    nn.setupSummaries(sess.graph, checkpoint_dir)
                     sess.run(tf.global_variables_initializer())
                     sess.run(tf.local_variables_initializer())
 
@@ -64,7 +67,6 @@ def train(sentence, category, valid):
 
                     nn.setSaver()
 
-
                 info.updateWordFrequency(batch.groupby('label'), vocabulary)
 
                 X = np.array(list(vocabProcessor.transform(batch.sentence.tolist())))
@@ -72,9 +74,11 @@ def train(sentence, category, valid):
                 Ylabels = batch.label.astype('category', categories=[0,1])
                 Y = pd.get_dummies(Ylabels).as_matrix()
 
-                trainData = {nn.X: X, nn.Y_:Y, nn.step:STEP, nn.learning_rate: LEARNING_RATE,  nn.pkeep:DROPOUT}
-                _ = sess.run(nn.train_step, feed_dict=trainData)
-                nn.saveCheckpoint(sess, checkpoint_dir + '/model', STEP)
+                trainData = {nn.X: X, nn.Y_:Y, nn.learning_rate:LEARNING_RATE,  nn.pkeep:DROPOUT}
+                [_, summary] = sess.run([nn.train_step, nn.summaries], feed_dict=trainData)
+
+                nn.saveSummary(summary, len(memory)) #, 10)
+                nn.saveCheckpoint(sess, checkpoint_dir + '/model', len(memory))
 
                 sess.close()
 
