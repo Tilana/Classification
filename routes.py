@@ -7,6 +7,8 @@ from shutil import rmtree
 import pandas as pd
 import json
 import os
+import tensorflow as tf
+import argparse as _argparse
 
 app = Flask(__name__)
 
@@ -26,7 +28,9 @@ def retrain_route():
     property = data['property']
     value = data['value']
     evidences = data['evidences']
+
     rmtree(os.path.join('runs', value+property), ignore_errors=True)
+    tf.app.flags._global_parser = _argparse.ArgumentParser()
 
     for evidence in evidences:
         train(evidence['evidence']['text'], value + property, evidence['isEvidence'])
