@@ -13,6 +13,7 @@ class Info:
         self.TOTAL_NR_TRAIN_SENTENCES = 0
         self.NR_TRAIN_SENTENCES_POS = 0
         self.NR_TRAIN_SENTENCES_NEG = 0
+        self.global_step = 0
         self.OOV = []
         self.NEG_WORD_FREQUENCY = {}
         self.POS_WORD_FREQUENCY = {}
