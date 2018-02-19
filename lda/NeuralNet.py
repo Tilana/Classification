@@ -7,38 +7,79 @@ class NeuralNet:
 
     def __init__(self, input_size=None, output_size=None):
         self.input_size = input_size
-        self.X = tf.placeholder(tf.int32, [None, self.input_size], name='X')
+        self.X = tf.placeholder(tf.int32, [None, self.input_size], name='INPUT_X')
         self.output_size = output_size
-        self.Y_ = tf.placeholder(tf.int64, [None, self.output_size], name='Y_')
-        self.learning_rate = tf.placeholder(tf.float32, shape=(), name='learning_rate')
+        self.Y_ = tf.placeholder(tf.int64, [None, self.output_size], name='INPUT_Y')
         self.pkeep = tf.placeholder(tf.float32, shape=(), name='pkeep')
 
-    def buildNeuralNet(self, nnType='cnn', vocab_size=None, hidden_layer_size=100, optimizerType='GD', sequence_length=None, filter_sizes=[3,4,5], secondLayer=False):
-        tf.flags.DEFINE_string("nnType", nnType, "Neural Network Type (CNN, oneLayerNN, multiLayerNN)")
-        self.FLAGS = tf.flags.FLAGS
-        self.FLAGS._parse_flags()
-        self.vocab_size = vocab_size
-        self.sequence_length = sequence_length
-        if nnType=='multi':
-            self.multiLayerNN(hidden_layer_size)
-        elif nnType =='cnn':
-            self.cnn(filter_sizes=filter_sizes, secondLayer=secondLayer)
-        else:
-            self.oneLayerNN()
-        self.crossEntropy()
-        optimizer = self.getOptimizer(optimizerType)
-        self.train_step = optimizer.minimize(self.cross_entropy)
+
+    def buildNeuralNet(self, vocab_size=None, filter_sizes=[3,4,5], embedding_size=300, num_filters=128, learning_rate=1e-3):
+
+        self.l2_loss=tf.constant(0.0, name='l2_loss')
+
+        with tf.device('/cpu:0'), tf.name_scope("embedding"):
+            self.W = tf.Variable(tf.random_uniform([vocab_size, embedding_size], -1.0, 1.0), name='embedding_weights')
+            self.embedded_chars = tf.nn.embedding_lookup(self.W, self.X, name='embedded_chars')
+            self.embedded_chars_expanded = tf.expand_dims(self.embedded_chars, -1, name='embedded_chars_expanded')
+
+        pooled_outputs = []
+        for i, filter_size in enumerate(filter_sizes):
+            with tf.name_scope("conv-maxpool-%s" % filter_size):
+                filter_shape = [filter_size, embedding_size, 1, num_filters]
+                W_filter = tf.Variable(tf.truncated_normal(filter_shape, stddev=0.1), name="W_filter")
+                b_filter = tf.Variable(tf.constant(0.1, shape=[num_filters]), name="b_filter")
+                self.conv = tf.nn.conv2d(self.embedded_chars_expanded, W_filter, strides=[1, 1, 1, 1], padding="VALID", name="conv")
+                h = tf.nn.relu(tf.nn.bias_add(self.conv, b_filter), name="relu")
+                pooled = tf.nn.max_pool(h, ksize=[1, self.input_size - filter_size + 1, 1, 1], strides=[1, 1, 1, 1], padding='VALID', name="pool")
+                pooled_outputs.append(pooled)
+                tf.summary.histogram("weights", W_filter)
+                tf.summary.histogram("biases", b_filter)
+                tf.summary.histogram("relu activation", h)
+
+        num_filters_total = num_filters * len(filter_sizes)
+        self.h_pool = tf.concat(pooled_outputs, 3, name='pooled_outputs')
+        self.h_pool_flat = tf.reshape(self.h_pool, [-1, num_filters_total], name='feature_vector')
+
+        with tf.name_scope("dropout"):
+            self.h_drop = tf.nn.dropout(self.h_pool_flat, self.pkeep)
+
+        with tf.name_scope("output"):
+            W = tf.get_variable("W", shape=[num_filters_total, self.output_size], initializer=tf.contrib.layers.xavier_initializer())
+
+            self.b = tf.Variable(tf.constant(0.1, shape=[self.output_size]), name="b")
+            self.l2_loss += tf.nn.l2_loss(W)
+            self.l2_loss += tf.nn.l2_loss(self.b)
+            self.Ylogits = tf.nn.xw_plus_b(self.h_drop, W, self.b, name="scores")
+            #self.Y = tf.argmax(self.Ylogits, 1, name='Y')
+            self.predictions = tf.argmax(self.Ylogits, 1, name='predictions')
+            self.probability = tf.reduce_max(tf.nn.softmax(self.Ylogits), 1, name='probability')
+
+        with tf.name_scope("loss"):
+            cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=self.Ylogits, labels=self.Y_, name="cross_entropy_with_logits")
+            l2_reg_lambda = 3.0
+            self.loss = tf.reduce_mean(cross_entropy) + l2_reg_lambda * self.l2_loss
+            loss_summary = tf.summary.scalar("loss", self.loss)
+
+
+        self.global_step = tf.Variable(0, name='global_step', trainable=False)
+        optimizer = tf.train.AdamOptimizer(learning_rate, name='optimizer')
+        lr_summary = tf.summary.scalar("learning_rate", learning_rate)
+        self.train_step = optimizer.minimize(self.loss)
         tf.add_to_collection("train_step", self.train_step)
         self.getAccuracy()
-        self.getConfusionMatrix()
-        self.gradients(optimizer)
+        #self.getConfusionMatrix()
+        #self.gradients(optimizer)
 
     def setupSummaries(self, graph, directory):
-        self.summaryWriter = tf.summary.FileWriter(directory)
-        self.summaryWriter.add_graph(graph)
-        tf.add_to_collection("summaryWriter", self.summaryWriter)
-        self.evaluationSummary()
-        self.gradientSummary()
+        #self.summaryWriter = tf.summary.FileWriter(directory)
+        #self.summaryWriter.add_graph(graph)
+        #tf.add_to_collection("summaryWriter", self.summaryWriter)
+
+        #loss_summary = tf.summary.scalar("loss", self.loss)
+
+        ##self.evaluationSummary()
+        ##self.gradientSummary()
+        ##self.imageSummary = tf.summary.Image(
         self.summaries = tf.summary.merge_all()
         tf.add_to_collection("summaries", self.summaries)
 
@@ -54,10 +95,11 @@ class NeuralNet:
             setattr(self, '_'.join([state, 'summary']), summary_writer)
 
     def evaluationSummary(self):
-        loss_summary = tf.summary.scalar("loss", self.cross_entropy)
+        loss_summary = tf.summary.scalar("loss", self.loss)
         acc_summary = tf.summary.scalar("accuracy", self.accuracy)
-        lr_summary = tf.summary.scalar("learning rate", self.learning_rate)
-        self.summary = tf.summary.merge([loss_summary, acc_summary, lr_summary])
+        #lr_summary = tf.summary.scalar("learning rate", self.learning_rate)
+        #self.summary = tf.summary.merge([loss_summary, acc_summary, lr_summary])
+        self.summary = tf.summary.merge([loss_summary, acc_summary])
 
     def saveSummary(self, summary, step):
         self.summaryWriter.add_summary(summary, step)
@@ -70,93 +112,14 @@ class NeuralNet:
         else:
             print 'WARNING: Phase %s in write summary is not known'
 
-    def oneLayerNN(self):
-        self.W = tf.Variable(tf.zeros([self.input_size, self.output_size]))
-        self.b = tf.Variable(tf.zeros([self.output_size]))
-        self.Ylogits = tf.matmul(self.X, self.W) + self.b
-        self.Y = tf.nn.softmax(self.Ylogits)
-
-    def multiLayerNN(self, hidden_layer_size=100):
-        self.W1 = tf.Variable(tf.truncated_normal([self.input_size, hidden_layer_size]))
-        self.W2 = tf.Variable(tf.truncated_normal([hidden_layer_size, self.output_size]))
-        self.b1 = tf.Variable(tf.ones([hidden_layer_size])/10)
-        self.b2 = tf.Variable(tf.zeros([self.output_size]))
-
-        self.Y1 = tf.nn.relu(tf.matmul(self.X, self.W1) + self.b1)
-        self.Y1d = tf.nn.dropout(self.Y1, self.pkeep)
-
-        self.Ylogits = tf.matmul(self.Y1d, self.W2) + self.b2
-        self.Y = tf.nn.softmax(self.Ylogits)
-
-    def cnn(self, embedding_size=300, filter_sizes=[4,5,6,7], num_filters=128, secondLayer=False):
-        self.l2_loss=tf.constant(0.0)
-
-        with tf.device('/cpu:0'), tf.name_scope("embedding"):
-            self.W = tf.Variable(tf.random_uniform([self.vocab_size, embedding_size], -1.0, 1.0, seed=42), name='W')
-            self.embedded_chars = tf.nn.embedding_lookup(self.W, self.X)
-            self.embedded_chars_expanded = tf.expand_dims(self.embedded_chars, -1)
-
-        pooled_outputs = []
-        for i, filter_size in enumerate(filter_sizes):
-            filter_shape = [filter_size, embedding_size, 1, num_filters]
-            W_filter = tf.Variable(tf.truncated_normal(filter_shape, stddev=0.1), name="W_filter")
-            b_filter = tf.Variable(tf.constant(0.1, shape=[num_filters]), name="b_filter")
-            self.conv = tf.nn.conv2d(self.embedded_chars_expanded, W_filter, strides=[1, 1, 1, 1], padding="VALID", name="conv")
-            h = tf.nn.relu(tf.nn.bias_add(self.conv, b_filter), name="relu")
-            pooled = tf.nn.max_pool(h, ksize=[1, self.sequence_length - filter_size + 1, 1, 1], strides=[1, 1, 1, 1], padding='VALID', name="pool")
-            pooled_outputs.append(pooled)
-
-        num_filters_total = num_filters * len(filter_sizes)
-        self.h_pool = tf.concat(pooled_outputs, 3, name='h_pool')
-
-        if secondLayer:
-            conv2 = tf.layers.conv2d(inputs=self.h_pool, filters=num_filters, kernel_size=[2,2], padding="same", activation=tf.nn.relu)
-            self.h_pool_flat = tf.reshape(conv2, [-1, num_filters_total])
-        else:
-            self.h_pool_flat = tf.reshape(self.h_pool, [-1, num_filters_total], name='feature')
-
-        self.h_drop = tf.nn.dropout(self.h_pool_flat, self.pkeep, name='h_drop')
-
-        W = tf.get_variable("W", shape=[num_filters_total, self.output_size], initializer=tf.contrib.layers.xavier_initializer())
-
-        self.b = tf.Variable(tf.constant(0.1, shape=[self.output_size]), name="b")
-        self.l2_loss += tf.nn.l2_loss(W)
-        self.l2_loss += tf.nn.l2_loss(self.b)
-        self.Ylogits = tf.nn.xw_plus_b(self.h_drop, W, self.b, name="scores")
-        self.Y = tf.argmax(self.Ylogits, 1, name='Y')
-        self.predictions = tf.argmax(self.Ylogits, 1, name='predictions')
-        self.probability = tf.reduce_max(tf.nn.softmax(self.Ylogits), 1, name='probability')
-
-
-    def crossEntropy(self):
-        cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=self.Ylogits, labels=self.Y_)
-        if self.FLAGS.nnType == 'cnn':
-            l2_reg_lambda = 0.0
-            self.cross_entropy = tf.reduce_mean(cross_entropy) #+ l2_reg_lambda * self.l2_loss
-        else:
-            self.cross_entropy = tf.reduce_mean(cross_entropy)*100
-
-    def getOptimizer(self, optimizerType='GD', learning_rate=1e-3, decay=False):
-        if optimizerType == 'GD':
-            optimizer = tf.train.GradientDescentOptimizer(learning_rate, name='optimizer')
-        elif optimizerType == 'Adam':
-            optimizer = tf.train.AdamOptimizer(learning_rate, name='optimizer')
-        else:
-            print 'Warning: unkown Optimizer Type'
-        return optimizer
-
 
     def gradients(self, optimizer):
-        self.grads_and_vars = optimizer.compute_gradients(self.cross_entropy)
+        self.grads_and_vars = optimizer.compute_gradients(self.loss)
 
 
     def getAccuracy(self):
-        if self.FLAGS.nnType == 'cnn':
-            is_correct = tf.equal(self.Y, tf.argmax(self.Y_,1))
-        else:
-            is_correct = tf.equal(tf.argmax(self.Y, 1), tf.argmax(self.Y_, 1))
-        self.accuracy = tf.reduce_mean(tf.cast(is_correct, tf.float32))
-
+        is_correct = tf.equal(self.predictions, tf.argmax(self.Y_,1))
+        self.accuracy = tf.reduce_mean(tf.cast(is_correct, tf.float32), name="accuracy")
 
     def getConfusionMatrix(self):
         self.confusion_matrix = tf.confusion_matrix(tf.argmax(self.Y_,1), self.Y)
@@ -175,8 +138,10 @@ class NeuralNet:
                 grad_summaries.append(sparsity_summary)
         self.grad_summaries = tf.summary.merge(grad_summaries)
 
-    def imageSummary(self, image):
-        tf.summary.image('image', image)
+    def imageSummary(self, inputImages):
+        for image in inputImages:
+            tf.summary.image('image', image)
+
 
     def variable_summaries(self, var):
         mean = tf.reduce_mean(var)
@@ -189,27 +154,29 @@ class NeuralNet:
 
     def saveCheckpoint(self, session, path, step):
         self.saver.save(session, path, global_step=step)
+        #self.summaryWriter.close()
 
     def loadCheckpoint(self, graph, session, checkpoint_path):
         checkpoint_file = tf.train.latest_checkpoint(checkpoint_path)
         self.saver = tf.train.import_meta_graph('{}.meta'.format(checkpoint_file))
         self.saver.restore(session, checkpoint_file)
 
-        self.X = graph.get_operation_by_name("X").outputs[0]
-        self.Y_ = graph.get_operation_by_name("Y_").outputs[0]
-        self.Y = graph.get_operation_by_name("Y").outputs[0]
+        self.X = graph.get_operation_by_name("INPUT_X").outputs[0]
+        self.Y_ = graph.get_operation_by_name("INPUT_Y").outputs[0]
+        #self.Y = graph.get_operation_by_name("Y").outputs[0]
         self.pkeep = graph.get_operation_by_name("pkeep").outputs[0]
-        self.learning_rate = graph.get_operation_by_name("learning_rate").outputs[0]
+        #self.learning_rate = graph.get_operation_by_name("learning_rate").outputs[0]
 
-        self.summaryWriter = tf.summary.FileWriter(checkpoint_path)
+        #self.summaryWriter = tf.summary.FileWriter(checkpoint_path)
+        self.global_step = graph.get_operation_by_name('global_step').outputs[0]
         self.summaries = graph.get_collection("summaries")[0]
 
-        self.predictions = graph.get_operation_by_name("predictions").outputs[0]
-        self.Ylogits = graph.get_operation_by_name("scores").outputs[0]
-        self.probability = graph.get_operation_by_name("probability").outputs[0]
+        self.predictions = graph.get_operation_by_name("output/predictions").outputs[0]
+        self.Ylogits = graph.get_operation_by_name("output/scores").outputs[0]
+        self.probability = graph.get_operation_by_name("output/probability").outputs[0]
 
-        self.h_pool = graph.get_operation_by_name("h_pool").outputs[0]
-        self.h_pool_flat = graph.get_operation_by_name("feature").outputs[0]
+        self.h_pool = graph.get_operation_by_name("pooled_outputs").outputs[0]
+        self.h_pool_flat = graph.get_operation_by_name("feature_vector").outputs[0]
         self.train_step = tf.get_collection("train_step")[0]
 
 
