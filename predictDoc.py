@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 import tensorflow as tf
-from lda import NeuralNet
+from lda import NeuralNet, Preprocessor
 import numpy as np
 import os
 import pandas as pd
@@ -38,7 +38,7 @@ def predictDoc(doc, category):
             predictions = []
 
             validationData = {nn.X: np.asarray(X_val), nn.pkeep:1.0}
-            predictions, probability = sess.run([nn.Y, nn.probability], feed_dict=validationData)
+            predictions, probability = sess.run([nn.predictions, nn.probability], feed_dict=validationData)
 
             sentenceDB['predictedLabel'] = predictions
             sentenceDB['probability'] = probability
