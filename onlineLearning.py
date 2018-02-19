@@ -26,13 +26,12 @@ def onlineLearning():
     classifier.splitDataset(train_size=0.97, random_state=7)
 
     # Train Classifier
-    for numberSample in xrange(20):
+    for numberSample in xrange(10):
         sample = classifier.trainData.sample(1)
         train(sample.text.tolist()[0], categoryID, sample.category.tolist()[0])
 
     # Predict label of sentences in documents
     for ind, sample in classifier.testData.iterrows():
-        #pdb.set_trace()
         try:
             evidenceSentences = predictDoc(sample, categoryID)
             if len(evidenceSentences)>=1:

@@ -9,7 +9,8 @@ class Info:
             self.load()
 
 
-    def setup(self):
+    def setup(self, category=''):
+        self.category = category
         self.TOTAL_NR_TRAIN_SENTENCES = 0
         self.NR_TRAIN_SENTENCES_POS = 0
         self.NR_TRAIN_SENTENCES_NEG = 0

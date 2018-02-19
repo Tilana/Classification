@@ -28,7 +28,7 @@ def setUp(categoryID):
     vocabProcessor.save(processorDir)
 
     info = Info(infoFile)
-    info.setup()
+    info.setup(categoryID)
 
     batch = pd.DataFrame(columns=['orgSentence', 'sentence', 'label'])
     batch.to_csv(batchFile, index=False)
