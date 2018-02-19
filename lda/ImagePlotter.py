@@ -44,16 +44,23 @@ class ImagePlotter:
         self.closeFigure()
 
 
-    def barplot(self, data, title='', xlabel='', ylabel='', xticks=None, path=''):
+    def barplot(self, data, title='', xlabel='', ylabel='', xticks=None, path='', log=False):
         self.createFigure()
         if not xticks:
             xticks = np.arange(len(data))
-        plt.barh(xticks, data, alpha=0.5)
+        plt.barh(xticks, data, alpha=0.5, log=log)
         plt.yticks(xticks, ylabel)
         self.labelFigure(title, xlabel, ylabel='')
         self.showFigure()
         self.save(path)
         self.closeFigure()
+
+    def multiBar(self, data1, data2, title='', xlabel='', ylabel='', xticks=None, path='', log=False):
+        self.createFigure()
+        if not xticks:
+            xticks = np.arange(len(data1))
+        plt.bar(xticks, data1, color='g')
+
 
 
     def createFigure(self):
@@ -67,7 +74,7 @@ class ImagePlotter:
     def save(self, path):
         try:
             self.figure.savefig(path)
-            self.figure.savefig(path, bbox_inches='tight')
+            #self.figure.savefig(path, bbox_inches='tight')
         except:
             print 'Error ImagePlotter: Figure cannot be saved'
 
