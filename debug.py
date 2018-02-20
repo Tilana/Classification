@@ -63,7 +63,7 @@ def debug(sentence, category):
 
     import matplotlib.pyplot as plt
     plt.figure()
-    occurences.plot(kind='bar', title='Word Occurence In Training Data')
+    occurences.plot(kind='bar', title='Word Occurence In Training Data', color=['g', 'r'])
     plt.savefig(model_path+'/'+'WordOccurence.jpg')
     plt.close()
 
@@ -94,9 +94,16 @@ def debug(sentence, category):
     infoFeatures = ['TOTAL_NR_TRAIN_SENTENCES', 'NR_TRAIN_SENTENCES_POS', 'NR_TRAIN_SENTENCES_NEG']
     for infoFeature in infoFeatures:
         f.write('<tr><td>%s: </td> <td> %d </td></tr>' % (infoFeature, getattr(info, infoFeature)))
+
+    f.write('<tr><td>%s</td> <td> %s </td></tr>' % ('', ''))
+    f.write('<tr><td>%s</td> <td> %s </td></tr>' % ('', ''))
+
+    for wordFrequency in wordFrequencies:
+        f.write('<tr><td>%s: </td> <td> %d </td></tr>' % (wordFrequency, len(getattr(info,wordFrequency))))
+
+
+    f.write('<tr><td>DISPLAY_THRESHOLD: </td> <td> %d </td></tr>' % DISPLAY_THRESHOLD)
     f.write('</table>')
-
-
     for wordFrequency in wordFrequencies:
         plotPath= model_path + '/' + wordFrequency + '.jpg'
         frequency = getattr(info, wordFrequency)
@@ -109,6 +116,7 @@ def debug(sentence, category):
 
 
     f.write('<img src="%s" alt="wrong path" height="580">' % ('WordOccurence.jpg'))
+    f.write('<p> OOV:  %s</p>' % info.OOV)
 
     f.write('</body></html>')
     f.close()
