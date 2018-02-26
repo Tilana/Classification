@@ -37,18 +37,21 @@ def userWorkflow():
         sample = data.sample(1).iloc[0]
         evidenceSentences = predictDoc(sample[['text', 'title']], categoryID)
 
-        #print evidenceSentences
+        print evidenceSentences
 
-    # Remove model
+    # Remove and retrain model
     rmtree(os.path.join('runs', categoryID), ignore_errors=True)
-    #tf.app.flags._global_parser = _argparse.ArgumentParser()
-
     print 'RETRAIN'
 
     for numberSample in xrange(10):
         sentence,category,value = getSentenceSample(sentences, categoryID, sentences_config)
         train(sentence, category, value)
-        #train(evidence['evidence']['text'], value + property, evidence['isEvidence'])
+
+    for numberSample in xrange(5):
+        sample = data.sample(1).iloc[0]
+        evidenceSentences = predictDoc(sample[['text', 'title']], categoryID)
+
+        print evidenceSentences
 
 
 
