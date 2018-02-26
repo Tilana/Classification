@@ -12,12 +12,12 @@ import os
 import json
 
 DROPOUT = 0.5
-#LEARNING_RATE = 1e-3
 STEP=20
 FILTER_SIZES = [2,2,2]
 BATCH_SIZE = 3
 PRETRAINED_WORDEMBEDDINGS = True
 debug = 0
+PREPROCESSING = 1
 
 def train(sentence, category, valid):
 
@@ -29,18 +29,22 @@ def train(sentence, category, valid):
     memoryFile = os.path.join(model_path, 'memory.csv')
 
     if not os.path.exists(processor_dir):
-        setUp(category)
+        setUp(category, PREPROCESSING)
 
-    preprocessor = Preprocessor()
-    cleanSentence = preprocessor.cleanText(sentence)
+    info = Info(infoFile)
+    info.updateTrainingCounter(valid)
+
+    if info.preprocessing:
+        preprocessor = Preprocessor()
+        cleanSentence = preprocessor.cleanText(sentence)
+    else:
+        cleanSentence = sentence.lower()
 
     batch = pd.read_csv(batchFile)
     memory = pd.read_csv(memoryFile)
 
     batch = batch.append({'orgSentence':sentence, 'sentence':cleanSentence, 'label':valid}, ignore_index=True)
 
-    info = Info(infoFile)
-    info.updateTrainingCounter(valid)
 
     if len(batch)==BATCH_SIZE:
         nn = NeuralNet()
@@ -50,7 +54,6 @@ def train(sentence, category, valid):
 
         with graph.as_default():
             with tf.Session() as sess:
-
 
                 vocabProcessor = tf.contrib.learn.preprocessing.VocabularyProcessor.restore(processor_dir)
                 vocabulary = vocabProcessor.vocabulary_._mapping
@@ -118,7 +121,7 @@ def train(sentence, category, valid):
 
                 sess.close()
 
-        batch['sentenceNoOOV'] = batch.sentence.apply(preprocessor.removeOOV, vocabulary=vocabulary)
+        #batch['sentenceNoOOV'] = batch.sentence.apply(preprocessor.removeOOV, vocabulary=vocabulary)
         memory = memory.append(batch, ignore_index=True)
         batch = pd.DataFrame(columns=['orgSentence', 'sentence', 'label'])
 

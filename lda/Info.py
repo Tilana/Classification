@@ -9,7 +9,7 @@ class Info:
             self.load()
 
 
-    def setup(self, category=''):
+    def setup(self, category='', preprocessing=False):
         self.category = category
         self.TOTAL_NR_TRAIN_SENTENCES = 0
         self.NR_TRAIN_SENTENCES_POS = 0
@@ -18,7 +18,7 @@ class Info:
         self.OOV = []
         self.NEG_WORD_FREQUENCY = {}
         self.POS_WORD_FREQUENCY = {}
-
+        self.preprocessing = preprocessing
         self.save()
 
 

@@ -10,13 +10,10 @@ from scripts.createSentenceDB import filterSentenceLength, setSentenceLength
 from lda.osHelper import generateModelDirectory
 import pdb
 
-PREPROCESSING= 1
 DISPLAY_THRESHOLD = 30
 wordFrequencies = ['POS_WORD_FREQUENCY', 'NEG_WORD_FREQUENCY']
 
-
 def debug(sentence, category):
-
 
     model_path = generateModelDirectory(category)
 
@@ -37,8 +34,7 @@ def debug(sentence, category):
 
     plotter = ImagePlotter(False)
 
-
-    if PREPROCESSING:
+    if info.preprocessing:
         f.write('<h4><br>PREPROCESSING</br></h4>')
         preprocessor = Preprocessor()
         sentence = preprocessor.cleanText(sentence)
@@ -126,4 +122,6 @@ def debug(sentence, category):
 
 if __name__=='__main__':
     debug('This is a test sentence with domestic violence in ITS name', 'ICAAD_DV_sentences')
+    debug('Mr. XX is beating his wife which cause grievous pain.', 'ICAAD_DV_sentences')
+    debug('The incedent was a misunderstanding and could be resolved without further problems', 'ICAAD_DV_sentences')
 

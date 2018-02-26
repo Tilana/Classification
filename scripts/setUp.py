@@ -1,14 +1,13 @@
 import lda.osHelper as osHelper
 from lda import Info
 import tensorflow as tf
-import json
 import os
 import pandas as pd
 
 
 MAX_SENTENCE_LENGTH = 90
 
-def setUp(categoryID):
+def setUp(categoryID, preprocessing=False):
 
     modelPath = osHelper.generateModelDirectory(categoryID)
     processorDir = os.path.join(modelPath, 'preprocessor')
@@ -28,7 +27,7 @@ def setUp(categoryID):
     vocabProcessor.save(processorDir)
 
     info = Info(infoFile)
-    info.setup(categoryID)
+    info.setup(categoryID, preprocessing)
 
     batch = pd.DataFrame(columns=['orgSentence', 'sentence', 'label'])
     batch.to_csv(batchFile, index=False)

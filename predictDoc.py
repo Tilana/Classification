@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 import tensorflow as tf
-from lda import NeuralNet, Preprocessor
+from lda import NeuralNet, Preprocessor, Info
 import numpy as np
 import os
 import pandas as pd
@@ -17,14 +17,21 @@ def predictDoc(doc, category):
     checkpoint_dir = os.path.join(model_path, 'checkpoints')
     processor_dir = os.path.join(model_path, 'preprocessor')
 
+    infoFile = os.path.join(model_path, 'info.json')
+    info = Info(infoFile)
+
     vocab_processor = tf.contrib.learn.preprocessing.VocabularyProcessor.restore(processor_dir)
 
     sentences = sent_tokenize(doc.text)
     sentenceDB = pd.DataFrame(sentences, columns=['text'])
 
-    sentenceDB['sentenceLength'] = sentenceDB.text.map(setSentenceLength)
-    sentenceDB = sentenceDB[sentenceDB.sentenceLength.map(filterSentenceLength)]
-    sentenceDB['text'] = sentenceDB['text'].str.lower()
+    #sentenceDB['sentenceLength'] = sentenceDB.text.map(setSentenceLength)
+    #sentenceDB = sentenceDB[sentenceDB.sentenceLength.map(filterSentenceLength)]
+    if info.preprocessing:
+        preprocessor = Preprocessor()
+        sentenceDB['text'] = sentenceDB['text'].apply(preprocessor.cleanText)
+    else:
+        sentenceDB['text'] = sentenceDB['text'].str.lower()
 
     X_val = np.array(list(vocab_processor.transform(sentenceDB.text.tolist())))
 
