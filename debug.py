@@ -121,7 +121,8 @@ def debug(sentence, category):
 
 
 if __name__=='__main__':
-    debug('This is a test sentence with domestic violence in ITS name', 'ICAAD_DV_sentences')
-    debug('Mr. XX is beating his wife which cause grievous pain.', 'ICAAD_DV_sentences')
-    debug('The incedent was a misunderstanding and could be resolved without further problems', 'ICAAD_DV_sentences')
+    #debug('This is a test sentence with domestic violence in ITS name', 'ICAAD_DV_sentences')
+    debug('the accused has been charged with assault occasioning actual boily harm contrary to section 275 of the crimes decree no 4', 'ICAAD_DV_sentences')
+    #debug('He beats his wife cause grievous pain.', 'ICAAD_DV_sentences')
+    #debug('The incedent was a misunderstanding and could be resolved without further problems', 'ICAAD_DV_sentences')
 
