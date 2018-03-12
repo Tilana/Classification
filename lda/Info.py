@@ -31,12 +31,13 @@ class Info:
         for name, value in attributes.iteritems():
             setattr(self, name, value)
 
-    def updateTrainingCounter(self, valid):
-        if valid:
-            self.NR_TRAIN_SENTENCES_POS += 1
-        else:
-            self.NR_TRAIN_SENTENCES_NEG += 1
-        self.TOTAL_NR_TRAIN_SENTENCES += 1
+    def updateTrainingCounter(self, labels):
+        for label in labels:
+            if label:
+                self.NR_TRAIN_SENTENCES_POS += 1
+            else:
+                self.NR_TRAIN_SENTENCES_NEG += 1
+            self.TOTAL_NR_TRAIN_SENTENCES += 1
 
 
     def updateWordFrequencyInSentence(self, sentence, wordFrequency, vocabulary):

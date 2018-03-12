@@ -28,7 +28,8 @@ def onlineLearning():
     # Train Classifier
     for numberSample in xrange(10):
         sample = classifier.trainData.sample(1)
-        train(sample.text.tolist()[0], categoryID, sample.category.tolist()[0])
+        evidence = pd.DataFrame({'sentence':sample.text.tolist(), 'label': sample.category.tolist()})
+        train(evidence, categoryID)
 
     # Predict label of sentences in documents
     for ind, sample in classifier.testData.iterrows():

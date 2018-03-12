@@ -29,7 +29,8 @@ def userWorkflow():
     # Train Classifier
     for numberSample in xrange(10):
         sentence,category,value = getSentenceSample(sentences, categoryID, sentences_config)
-        train(sentence, category, value)
+        evidence = pd.DataFrame({'sentence':[sentence], 'label':[value]})
+        train(evidence, category)
 
     # Get Full text documents
     data = pd.read_pickle(sentences_config['full_doc_path'])
@@ -45,7 +46,8 @@ def userWorkflow():
 
     for numberSample in xrange(10):
         sentence,category,value = getSentenceSample(sentences, categoryID, sentences_config)
-        train(sentence, category, value)
+        evidence = pd.DataFrame({'sentence':[sentence], 'label':[value]})
+        train(evidence, category)
 
     for numberSample in xrange(5):
         sample = data.sample(1).iloc[0]
