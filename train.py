@@ -27,13 +27,11 @@ def train(evidences, category):
     infoFile = os.path.join(model_path, 'info.json')
     memoryFile = os.path.join(model_path, 'memory.csv')
 
-    if not os.path.exists(processor_dir):
+    if not os.path.exists(checkpoint_dir):
         setUp(category, PREPROCESSING)
 
     info = Info(infoFile)
     info.updateTrainingCounter(evidences.label.tolist())
-
-
 
     if info.preprocessing:
         preprocessor = Preprocessor()
@@ -53,6 +51,7 @@ def train(evidences, category):
             vocabProcessor = tf.contrib.learn.preprocessing.VocabularyProcessor.restore(processor_dir)
             vocabulary = vocabProcessor.vocabulary_._mapping
             maxSentenceLength = vocabProcessor.max_document_length
+
 
             if os.path.exists(checkpoint_dir):
                 nn.loadCheckpoint(graph, sess, checkpoint_dir)
