@@ -33,13 +33,10 @@ def onlineLearning():
 
     # Predict label of sentences in documents
     for ind, sample in classifier.testData.iterrows():
-        try:
-            evidenceSentences = predictDoc(sample, categoryID)
-            if len(evidenceSentences)>=1:
-                classifier.testData.loc[ind, 'predLabel'] = 1
-                classifier.testData.loc[ind, 'probability'] = evidenceSentences.probability.tolist()[0]
-        except:
-            print 'WARNING: PredictDoc.py of sample "' + str(sample.text) + '" was not successful'
+        evidenceSentences = predictDoc(sample, categoryID)
+        if len(evidenceSentences)>=1:
+            classifier.testData.loc[ind, 'predLabel'] = 1
+            classifier.testData.loc[ind, 'probability'] = evidenceSentences.probability.tolist()[0]
 
 
     classifier.testData.predLabel.fillna(0, inplace=True)
