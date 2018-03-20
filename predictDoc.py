@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 import tensorflow as tf
+import pickle
 from lda import NeuralNet, Preprocessor, Info
 import numpy as np
 import os
@@ -7,33 +8,31 @@ import pandas as pd
 from nltk.tokenize import sent_tokenize
 from scripts.createSentenceDB import filterSentenceLength, setSentenceLength
 from lda.osHelper import generateModelDirectory
-import pdb
 
+MAX_SENTENCE_LENGTH = 90
 
 def predictDoc(doc, category):
 
     model_path = generateModelDirectory(category)
-
     checkpoint_dir = os.path.join(model_path, 'checkpoints')
-    processor_dir = os.path.join(model_path, 'preprocessor')
 
     infoFile = os.path.join(model_path, 'info.json')
     info = Info(infoFile)
+    vocab_file = os.path.join(model_path, 'vocabulary.pkl')
 
-    vocab_processor = tf.contrib.learn.preprocessing.VocabularyProcessor.restore(processor_dir)
+    with open(vocab_file, 'rb') as vocab:
+        vocabulary = pickle.load(vocab)
 
     sentences = sent_tokenize(doc.text)
-    sentenceDB = pd.DataFrame(sentences, columns=['text'])
+    sentenceDB = pd.DataFrame(sentences, columns=['sentence'])
 
-    #sentenceDB['sentenceLength'] = sentenceDB.text.map(setSentenceLength)
-    #sentenceDB = sentenceDB[sentenceDB.sentenceLength.map(filterSentenceLength)]
-    if info.preprocessing:
-        preprocessor = Preprocessor()
-        sentenceDB['text'] = sentenceDB['text'].apply(preprocessor.cleanText)
-    else:
-        sentenceDB['text'] = sentenceDB['text'].str.lower()
+    preprocessor = Preprocessor(vocabulary=vocabulary, maxSentenceLength=MAX_SENTENCE_LENGTH)
+    sentenceDB['tokens'] = sentenceDB.sentence.apply(preprocessor.tokenize)
+    vocabIds = sentenceDB.tokens.apply(preprocessor.mapVocabularyIds).tolist()
+    sentenceDB['mapping'], sentenceDB['oov'] = zip(*vocabIds)
+    sentenceDB['mapping'] = sentenceDB.mapping.apply(preprocessor.padding)
 
-    X_val = np.array(list(vocab_processor.transform(sentenceDB.text.tolist())))
+    X_val = np.array(sentenceDB.mapping.tolist())
 
     nn = NeuralNet()
     tf.reset_default_graph()

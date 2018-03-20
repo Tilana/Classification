@@ -12,12 +12,14 @@ numberDict = {'zero': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5, '
 
 class Preprocessor:
 
-    def __init__(self, processor='tfIdf', min_df=10, max_df=0.5, stop_words='english', ngram_range=(1,2), max_features=8000, vocabulary=None, token_pattern=r'(?u)\b\w\w+\b', binary=False):
+    def __init__(self, processor='tfIdf', min_df=10, max_df=0.5, stop_words='english', ngram_range=(1,2), max_features=8000, vocabulary=None, token_pattern=r'(?u)\b\w\w+\b', binary=False, maxSentenceLength=90):
         self.vectorizer = TfidfVectorizer(min_df=min_df, max_df=max_df, stop_words=stop_words, ngram_range=ngram_range, max_features=max_features, vocabulary = vocabulary, tokenizer=self.createPosLemmaTokens, binary=binary)
         if processor=='tf':
             self.vectorizer = CountVectorizer(min_df=min_df, max_df=max_df, stop_words=stop_words, ngram_range=ngram_range, max_features = max_features, tokenizer=self.createPosLemmaTokens, vocabulary=vocabulary, binary=binary)
+        self.vocabulary = vocabulary
         self.WordNet = WordNetLemmatizer()
         self.token_pattern = token_pattern
+        self.maxSentenceLength = maxSentenceLength
 
 
     def trainVectorizer(self, docs):
@@ -115,12 +117,31 @@ class Preprocessor:
             text = re.sub(word, digitNum, text)
         return text
 
+    def tokenize(self, sentence):
+        return word_tokenize(sentence)
+
 
     def cleanText(self, text):
         tokens = self.wordTokenize(text.lower())
         posTags = self.posTagging(tokens)
         lemmas = self.posLemmatize(posTags)
         return ' '.join(lemmas)
+
+    def mapVocabularyIds(self, listOfTokens):
+        mapping = []
+        oov = []
+        for word in listOfTokens:
+            try:
+                mapping.append(self.vocabulary[word])
+            except:
+                mapping.append(0)
+                oov.append(word)
+        return (mapping, oov)
+
+
+    def padding(self, itemList):
+        itemList = itemList[:self.maxSentenceLength]
+        return itemList + [0]*(self.maxSentenceLength-len(itemList))
 
 
     #def removeHTMLtags(self, text):
