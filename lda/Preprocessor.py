@@ -84,11 +84,11 @@ class Preprocessor:
 
     def save(self, path):
         self.saveVectorizer(path)
-        with open(path+'_preprocessor.pkl', 'wb') as f:
+        with open(path, 'wb') as f:
             pickle.dump(self, f, -1)
 
     def load(self, path):
-        preprocessor = pickle.load(open(path+'_preprocessor.pkl', 'rb'))
+        preprocessor = pickle.load(open(path, 'rb'))
         preprocessor.vectorizer = preprocessor.loadVectorizer(path)
         preprocessor.vectorizer.tokenizer = self.createPosLemmaTokens
         return preprocessor

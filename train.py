@@ -24,6 +24,7 @@ def train(evidences, category):
     model_path = osHelper.generateModelDirectory(category)
     checkpoint_dir = os.path.join(model_path, 'checkpoints')
     vocab_file = os.path.join(model_path, 'vocabulary.pkl')
+    processor_dir = os.path.join(model_path, 'processor.pkl')
     infoFile = os.path.join(model_path, 'info.json')
     memoryFile = os.path.join(model_path, 'memory.csv')
 
@@ -44,10 +45,11 @@ def train(evidences, category):
 
             if os.path.exists(checkpoint_dir):
                 nn.loadCheckpoint(graph, sess, checkpoint_dir)
-                with open(vocab_file, 'rb') as vocab:
-                    vocabulary = pickle.load(vocab)
+
+                preprocessor = Preprocessor().load(processor_dir)
                 summaryCache = tf.summary.FileWriterCache()
                 summaryWriter = summaryCache.get(checkpoint_dir)
+
             else:
                 nn = NeuralNet(MAX_SENTENCE_LENGTH, 2)
                 nn.buildNeuralNet(vocab_size=VOCAB_SIZE, filter_sizes=FILTER_SIZES)
@@ -58,18 +60,18 @@ def train(evidences, category):
                 embedding, vocabulary = getPretrainedEmbedding()
                 sess.run(nn.W.assign(embedding))
 
-                with open(vocab_file, 'wb') as vocab:
-                    pickle.dump(vocabulary, vocab, protocol=pickle.HIGHEST_PROTOCOL)
+                preprocessor = Preprocessor(vocabulary=vocabulary, maxSentenceLength=MAX_SENTENCE_LENGTH)
+                preprocessor.save(processor_dir)
 
                 summaryWriter = tf.summary.FileWriter(checkpoint_dir, sess.graph)
                 nn.setSaver()
 
-            preprocessor = Preprocessor(vocabulary=vocabulary, maxSentenceLength=MAX_SENTENCE_LENGTH)
             evidences['tokens'] = evidences.sentence.apply(preprocessor.tokenize)
             vocabIds = evidences.tokens.apply(preprocessor.mapVocabularyIds).tolist()
             evidences['mapping'], evidences['oov'] = zip(*vocabIds)
             evidences['mapping'] = evidences.mapping.apply(preprocessor.padding)
-            info.updateWordFrequency(evidences.groupby('label'), vocabulary)
+            info.updateWordFrequency(evidences.groupby('label'), preprocessor.vocabulary)
+
 
             X = np.array(evidences.mapping.tolist())
 

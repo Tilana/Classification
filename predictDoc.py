@@ -9,24 +9,20 @@ from nltk.tokenize import sent_tokenize
 from scripts.createSentenceDB import filterSentenceLength, setSentenceLength
 from lda.osHelper import generateModelDirectory
 
-MAX_SENTENCE_LENGTH = 90
 
 def predictDoc(doc, category):
 
     model_path = generateModelDirectory(category)
     checkpoint_dir = os.path.join(model_path, 'checkpoints')
+    processor_dir = os.path.join(model_path, 'processor.pkl')
 
     infoFile = os.path.join(model_path, 'info.json')
     info = Info(infoFile)
-    vocab_file = os.path.join(model_path, 'vocabulary.pkl')
-
-    with open(vocab_file, 'rb') as vocab:
-        vocabulary = pickle.load(vocab)
 
     sentences = sent_tokenize(doc.text)
     sentenceDB = pd.DataFrame(sentences, columns=['sentence'])
 
-    preprocessor = Preprocessor(vocabulary=vocabulary, maxSentenceLength=MAX_SENTENCE_LENGTH)
+    preprocessor = Preprocessor().load(processor_dir)
     sentenceDB['tokens'] = sentenceDB.sentence.apply(preprocessor.tokenize)
     vocabIds = sentenceDB.tokens.apply(preprocessor.mapVocabularyIds).tolist()
     sentenceDB['mapping'], sentenceDB['oov'] = zip(*vocabIds)
