@@ -32,8 +32,6 @@ def train(evidences, category):
         setUp(category, PREPROCESSING)
 
     info = Info(infoFile)
-    info.updateTrainingCounter(evidences.label.tolist())
-
     memory = pd.read_csv(memoryFile)
 
     nn = NeuralNet()
@@ -70,8 +68,6 @@ def train(evidences, category):
             vocabIds = evidences.tokens.apply(preprocessor.mapVocabularyIds).tolist()
             evidences['mapping'], evidences['oov'] = zip(*vocabIds)
             evidences['mapping'] = evidences.mapping.apply(preprocessor.padding)
-            info.updateWordFrequency(evidences.groupby('label'), preprocessor.vocabulary)
-
 
             X = np.array(evidences.mapping.tolist())
 
@@ -87,11 +83,10 @@ def train(evidences, category):
 
             sess.close()
 
-    memory = memory.append(evidences, ignore_index=True)
-
-    info.global_step += 1
-
+    info.update(evidences)
     info.save()
+
+    memory = memory.append(evidences, ignore_index=True)
     memory.to_csv(memoryFile, index=False)
 
     return True

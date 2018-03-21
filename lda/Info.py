@@ -31,32 +31,35 @@ class Info:
         for name, value in attributes.iteritems():
             setattr(self, name, value)
 
-    def updateTrainingCounter(self, labels):
-        for label in labels:
-            if label:
-                self.NR_TRAIN_SENTENCES_POS += 1
-            else:
-                self.NR_TRAIN_SENTENCES_NEG += 1
-            self.TOTAL_NR_TRAIN_SENTENCES += 1
 
-
-    def updateWordFrequencyInSentence(self, sentence, wordFrequency, vocabulary):
-        for word in sentence.split(' '):
-            if word in vocabulary:
+    def updateWordFrequencyInSentence(self, tokens, wordFrequency):
+        for word in tokens:
+            if word not in self.OOV:
                 if wordFrequency.get(word):
                     wordFrequency[word] += 1
                 else:
                     wordFrequency[word] = 1
-            else:
-                self.OOV.append(word)
+
+    def updateOOV(self, oov):
+        self.OOV.extend(oov)
         self.OOV = list(set(self.OOV))
 
 
-    def updateWordFrequency(self, groupedDataframe, vocabulary):
-        for name, group in groupedDataframe:
-            wordFrequency = self.NEG_WORD_FREQUENCY
+    def update(self, evidences):
+        oov = sum(evidences.oov.tolist(),[])
+        self.updateOOV(oov)
+
+        groupedEvidences = evidences.groupby('label')
+        for name, group in groupedEvidences:
             if name==True:
                 wordFrequency = self.POS_WORD_FREQUENCY
-            group.sentence.apply(self.updateWordFrequencyInSentence, wordFrequency=wordFrequency, vocabulary=vocabulary)
+                self.NR_TRAIN_SENTENCES_POS += len(group)
+            else:
+                wordFrequency = self.NEG_WORD_FREQUENCY
+                self.NR_TRAIN_SENTENCES_NEG += len(group)
+            group.tokens.apply(self.updateWordFrequencyInSentence, wordFrequency=wordFrequency)
+
+        self.TOTAL_NR_TRAIN_SENTENCES += len(evidences)
+        self.global_step += 1
 
 
