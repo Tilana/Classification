@@ -2,69 +2,65 @@
 import tensorflow as tf
 import webbrowser
 from lda import NeuralNet, Preprocessor, Info, ImagePlotter
+import matplotlib.pyplot as plt
 import numpy as np
-import os
 import pandas as pd
-from nltk.tokenize import sent_tokenize
-from scripts.createSentenceDB import filterSentenceLength, setSentenceLength
 from lda.osHelper import generateModelDirectory
+import os
 import pdb
 
 DISPLAY_THRESHOLD = 30
 wordFrequencies = ['POS_WORD_FREQUENCY', 'NEG_WORD_FREQUENCY']
 
-def debug(sentence, category):
+def debug(sentenceDB, category):
 
     model_path = generateModelDirectory(category)
 
     checkpoint_dir = os.path.join(model_path, 'checkpoints')
-    processor_dir = os.path.join(model_path, 'preprocessor')
+    processor_dir = os.path.join(model_path, 'processor.pkl')
     infoFile = os.path.join(model_path, 'info.json')
 
     debugFile = os.path.join(model_path, 'debug.html')
     f = open(debugFile, 'w')
     f.write('<html><head><h1>DEBUG MODE</h1></head><body>')
     f.write('<p>Category:  %s </p>' % category)
-    f.write('<p>Sentence:  %s </p>' % sentence)
+    f.write('<p>Sentence:  %s </p>' % sentenceDB.sentence[0])
 
     info = Info(infoFile)
 
-    vocab_processor = tf.contrib.learn.preprocessing.VocabularyProcessor.restore(processor_dir)
-    vocabulary = vocab_processor.vocabulary_
+    preprocessor = Preprocessor().load(processor_dir)
+    vocabulary = preprocessor.vocabulary
+
+    sentenceDB['tokens'] = sentenceDB.sentence.apply(preprocessor.tokenize)
+    vocabIds = sentenceDB.tokens.apply(preprocessor.mapVocabularyIds).tolist()
+    sentenceDB['mapping'], sentenceDB['oov'] = zip(*vocabIds)
+    sentenceDB['mapping'] = sentenceDB.mapping.apply(preprocessor.padding)
 
     plotter = ImagePlotter(False)
 
-    if info.preprocessing:
-        f.write('<h4><br>PREPROCESSING</br></h4>')
-        preprocessor = Preprocessor()
-        sentence = preprocessor.cleanText(sentence)
-        f.write('<p>%s</p>' % sentence)
-
-    #sentences = sent_tokenize(doc.text)
-    #sentenceDB = pd.DataFrame(sentences, columns=['text'])
-
-    #sentenceDB['sentenceLength'] = sentenceDB.text.map(setSentenceLength)
-    #sentenceDB = sentenceDB[sentenceDB.sentenceLength.map(filterSentenceLength)]
-    #sentenceDB['text'] = sentenceDB['text'].str.lower()
+    f.write('<h4><br>PREPROCESSING</br></h4>')
+    f.write('<p>%s</p>' % sentenceDB.sentence[0])
+    f.write('<p>%s</p>' % sentenceDB.tokens[0])
 
     f.write('<h4><br>VOCAB MAPPING </br></h4>')
 
     occurences = pd.DataFrame(columns=['word', 'POS', 'NEG'])
 
-    for word in sentence.split():
-        f.write('<tr><td>%s: </td> <td> %d </td></tr>' % (word, vocabulary.get(word)))
-        occurences = occurences.append({'word':word, 'POS':info.POS_WORD_FREQUENCY.get(word), 'NEG':info.NEG_WORD_FREQUENCY.get(word)}, ignore_index=True)
+    for ind, word in enumerate(sentenceDB.tokens[0]):
+        f.write('<tr><td>%s: </td> <td> %d </td></tr>' % (word, sentenceDB['mapping'][0][ind]))
+        try:
+            occurences = occurences.append({'word':word, 'POS':info.POS_WORD_FREQUENCY.get(word), 'NEG':info.NEG_WORD_FREQUENCY.get(word)}, ignore_index=True)
+        except:
+            occurences = occurences.append({'word':word, 'POS':-1, 'NEG':-1}, ignore_index=True)
     occurences.fillna(0, inplace=True)
     occurences.set_index('word', inplace=True)
 
-    import matplotlib.pyplot as plt
     plt.figure()
     occurences.plot(kind='bar', title='Word Occurence In Training Data', color=['g', 'r'])
     plt.savefig(model_path+'/'+'WordOccurence.jpg')
     plt.close()
 
-
-    X_val = np.array(list(vocab_processor.transform([sentence])))
+    X_val = np.array(sentenceDB.mapping.tolist())
 
     f.write('<p> Model Input:  %s</p>' % X_val[0])
 
@@ -121,8 +117,7 @@ def debug(sentence, category):
 
 
 if __name__=='__main__':
-    #debug('This is a test sentence with domestic violence in ITS name', 'ICAAD_DV_sentences')
-    debug('the accused has been charged with assault occasioning actual boily harm contrary to section 275 of the crimes decree no 4', 'ICAAD_DV_sentences')
-    #debug('He beats his wife cause grievous pain.', 'ICAAD_DV_sentences')
-    #debug('The incedent was a misunderstanding and could be resolved without further problems', 'ICAAD_DV_sentences')
+    sentences = ['The accused has been charged with assault causing actual bodily harm contrary to section 275 of the crimes decree no 4'] #, 'He beats his wife', 'There is a non-contact order in place']
+    sentenceDB = pd.DataFrame({'sentence': sentences})
+    debug(sentenceDB, 'ICAAD_DV_sentences')
 
