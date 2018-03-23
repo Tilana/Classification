@@ -1,4 +1,3 @@
-#from gensim.models import word2vec
 import gensim.models.keyedvectors as word2vec
 import os
 import listUtils as utils
