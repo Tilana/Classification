@@ -16,7 +16,7 @@ import json
 DROPOUT = 0.5
 FILTER_SIZES = [2,2,2]
 PREPROCESSING = 1
-VOCAB_SIZE = 40000
+VOCAB_SIZE = 45000
 MAX_SENTENCE_LENGTH = 90
 
 def train(evidences, category):
@@ -55,11 +55,10 @@ def train(evidences, category):
                 sess.run(tf.global_variables_initializer())
                 sess.run(tf.local_variables_initializer())
 
-                embedding, vocabulary = getPretrainedEmbedding()
-                sess.run(nn.W.assign(embedding))
+                preprocessor = Preprocessor(maxSentenceLength=MAX_SENTENCE_LENGTH)
+                preprocessor.setupWordEmbedding()
+                sess.run(nn.W.assign(preprocessor.embedding))
 
-                preprocessor = Preprocessor(vocabulary=vocabulary, maxSentenceLength=MAX_SENTENCE_LENGTH)
-                preprocessor.save(processor_dir)
 
                 summaryWriter = tf.summary.FileWriter(checkpoint_dir, sess.graph)
                 nn.setSaver()
@@ -80,6 +79,8 @@ def train(evidences, category):
             summaryWriter.add_session_log(tf.SessionLog(status=tf.SessionLog.START), info.global_step+1)
             summaryWriter.add_summary(summary, info.global_step) #, 10)
             nn.saveCheckpoint(sess, checkpoint_dir + '/model', info.global_step)
+
+            preprocessor.save(processor_dir)
 
             sess.close()
 
