@@ -86,7 +86,8 @@ class Preprocessor:
 
 
     def save(self, path):
-        del self.wordEmbedding
+        if hasattr(self, 'wordEmbedding'):
+            del self.wordEmbedding
         self.saveVectorizer(path)
         with open(path, 'wb') as f:
             pickle.dump(self, f, -1)
