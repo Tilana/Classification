@@ -2,7 +2,7 @@ import gensim.models.keyedvectors as w2v_model
 import numpy as np
 import tensorflow as tf
 
-PATH = 'Word2Vec/GoogleNews-vectors-negative300.bin'
+PATH = 'WordEmbedding/Word2Vec_GoogleNews-vectors-negative300.bin'
 
 def getPretrainedEmbedding(vocab):
 
