@@ -6,6 +6,7 @@ import numpy as np
 import os
 import pandas as pd
 from nltk.tokenize import sent_tokenize
+import matplotlib.pyplot as plt
 from scripts.createSentenceDB import filterSentenceLength, setSentenceLength
 from lda.osHelper import generateModelDirectory
 import pdb
@@ -57,7 +58,6 @@ def wordRelevance(sentence, category):
     occurences.fillna(0, inplace=True)
     occurences.set_index('word', inplace=True)
 
-    import matplotlib.pyplot as plt
     plt.figure()
     occurences.plot(kind='bar', title='Word Occurence In Training Data', color=['g', 'r'])
     plt.savefig(model_path+'/'+'WordOccurence.jpg')
@@ -85,34 +85,28 @@ def wordRelevance(sentence, category):
             f.write('<p> Prediction:  %s </p>' % prediction[0])
             f.write('<p> Probability: %s </p>' % probability[0])
 
+            wordIDs = X_val[0]
+            sentenceLength = len(wordIDs)
+            probabilities = [0] * sentenceLength
 
-            combinations = X_val[0]
-
-            nrCombinations = len(combinations)
-
-            predictions = [0] * nrCombinations
-            probabilities = [0] * nrCombinations
-
-
-
-            for blankPos in range(len(combinations)):
-                if combinations[blankPos] != 0:
-                    blankedInput = combinations
+            for blankPos in range(sentenceLength):
+                if wordIDs[blankPos] != 0:
+                    blankedInput = wordIDs
                     blankedInput[blankPos] = 0
 
-                    validationData = {nn.X: np.asarray([blankedInput]), nn.pkeep:1.0}
-                    prediction, probability = sess.run([nn.predictions, nn.probability], feed_dict=validationData)
-
-                    predictions[blankPos] = prediction[0]
+                    wordRelevanceData = {nn.X: np.asarray([blankedInput]), nn.pkeep:1.0}
+                    probability = sess.run(nn.probability, feed_dict=wordRelevanceData)
                     probabilities[blankPos] = probability[0]
 
-            print predictions
             print probabilities
 
-
-            #pdb.set_trace()
+            plotter.heatmap(pd.DataFrame(probabilities), model_path+'/wordRelevance.jpg')
 
             sess.close()
+
+
+    f.write('<h4><br>Word Relevance<br></h4><table>')
+    f.write('<img src="%s" alt="wrong path" height="580">' % ('wordRelevance.jpg'))
 
     f.write('<h4><br>MODEL ANALYSIS</br></h4><table>')
     infoFeatures = ['TOTAL_NR_TRAIN_SENTENCES', 'NR_TRAIN_SENTENCES_POS', 'NR_TRAIN_SENTENCES_NEG']

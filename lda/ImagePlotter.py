@@ -35,6 +35,13 @@ class ImagePlotter:
             item.set_rotation(90)
         self.showFigure()
         self.save(path)
+        self.closeFigure()
+
+    def listToHeatmap(self, data, path):
+        self.createFigure()
+        sns.heatmap(data)
+        self.showFigure()
+        self.save(path)
 
 
     def boxplot(self, data):
