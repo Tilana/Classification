@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import unittest
-from lda import Preprocessor 
+from lda import Preprocessor
+import numpy as np
 
 class testPreprocessor(unittest.TestCase):
 
@@ -28,14 +29,23 @@ class testPreprocessor(unittest.TestCase):
 
     def test_wordTokenize(self):
         text = 'This is a text. Split it in tokens.'
-        tokens = ['This', 'is', 'a', 'text', '.', 'Split', 'it', 'in', 'tokens', '.'] 
+        tokens = ['This', 'is', 'a', 'text', '.', 'Split', 'it', 'in', 'tokens', '.']
         self.assertEqual(self.processor.wordTokenize(text), tokens)
 
 
-    def test_removeHTMLtags(self):
-        text = '<h>title<\h> <p>text<\p>'
-        target = 'title text'
-        self.assertEqual(self.processor.removeHTMLtags(text), target)
+    def test_addOOVToEmbedding(self):
+        self.processor.loadWordEmbedding()
+        self.processor.vocabulary = {'0':0, '1':1, '2':2}
+        self.processor.embedding = np.random.uniform(size=(5,300))
+        self.processor.addOOVWordToEmbedding('3')
+        self.assertDictEqual(self.processor.vocabulary, {'0':0, '1':1, '2':2, '3':3})
+        self.assertNotEqual(sum(self.processor.embedding[3]-np.zeros((300,))), 0)
+        self.processor.addOOVWordToEmbedding('4')
+        self.assertDictEqual(self.processor.vocabulary, {'0':0, '1':1, '2':2, '3':3, '4':4})
+        self.assertNotEqual(sum(self.processor.embedding[3]-np.zeros((300,))), 0)
+        self.assertNotEqual(sum(self.processor.embedding[4]-np.zeros((300,))), 0)
+
+
 
 
 

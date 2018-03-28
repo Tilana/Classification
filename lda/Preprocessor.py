@@ -135,19 +135,18 @@ class Preprocessor:
     def mapVocabularyIds(self, listOfTokens):
         mapping = []
         oov = []
-        currentOOV = []
         for ind,word in enumerate(listOfTokens):
             try:
                 mapping.append(self.vocabulary[word])
             except:
-                currentOOV.append((word, ind))
-                oov.append(word)
+                oov.append((word, ind))
                 mapping.append(-1)
-        if len(currentOOV)>0:
+        if len(oov)>0:
             self.loadWordEmbedding()
-            for word,pos in currentOOV:
+            for word,pos in oov:
                 self.addOOVWordToEmbedding(word)
                 mapping[pos] = self.vocabulary[word]
+            oov = list(zip(*oov)[1])
         return (mapping, oov)
 
 
@@ -162,11 +161,6 @@ class Preprocessor:
         return itemList + [0]*(self.maxSentenceLength-len(itemList))
 
 
-    #def removeHTMLtags(self, text):
-    #    html = BeautifulSoup(text, 'lxml')
-    #    return html.get_text()
-
-
     def removeStopwords(self, text, stopchars=None):
         if not stopchars:
             stopchars= stopwords.words('english') + list(string.punctuation) + ['--', "''", '``', "'s"]
@@ -179,7 +173,8 @@ class Preprocessor:
 
 
     def loadWordEmbedding(self, path='WordEmbedding/wiki.en.bin'):
-        self.wordEmbedding = fastText.load_model(path)
+        if not hasattr(self, 'wordEmbedding'):
+            self.wordEmbedding = fastText.load_model(path)
 
     def setVocabulary(self, nTop=40000):
         words = self.wordEmbedding.get_labels()[:nTop]
@@ -203,7 +198,6 @@ class Preprocessor:
         self.setVocabulary()
         self.setEmbedding()
         self.addSpareEmbeddings()
-
 
 
 
