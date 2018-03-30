@@ -39,7 +39,7 @@ def train(evidences, category):
     else:
         evidences['cleanSentence'] = evidences.sentence.str.lower()
 
-    memory = pd.read_csv(memoryFile)
+    memory = pd.read_csv(memoryFile, encoding='utf8')
 
     nn = NeuralNet()
     tf.reset_default_graph()
@@ -111,7 +111,7 @@ def train(evidences, category):
     info.global_step += 1
 
     info.save()
-    memory.to_csv(memoryFile, index=False)
+    memory.to_csv(memoryFile, index=False, encoding='utf8')
 
     return True
 
