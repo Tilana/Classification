@@ -9,6 +9,7 @@ import json
 import os
 import tensorflow as tf
 import argparse as _argparse
+# import pdb
 
 app = Flask(__name__)
 
@@ -16,9 +17,12 @@ app = Flask(__name__)
 def train_route():
     data = json.loads(request.data)
 
-    sentence = data['evidence']['text']
+    sentences = pd.read_json('[' + json.dumps(data) + ']');
+    sentences['sentence'] = sentences['evidence'][0]['text']
+    sentences['label'] = sentences['isEvidence'][0]
+    # pdb.set_trace()
 
-    train(sentence, data['value'] + data['property'], data['isEvidence'])
+    train(sentences, data['value'] + data['property'])
 
     return "{}"
 
@@ -27,13 +31,12 @@ def retrain_route():
     data = json.loads(request.data)
     property = data['property']
     value = data['value']
-    evidences = data['evidences']
+    evidences = pd.read_json(json.dumps(data['evidences']));
 
     rmtree(os.path.join('runs', value+property), ignore_errors=True)
     tf.app.flags._global_parser = _argparse.ArgumentParser()
 
-    for evidence in evidences:
-        train(evidence['evidence']['text'], value + property, evidence['isEvidence'])
+    train(evidences, value + property)
 
     return "{}"
 
