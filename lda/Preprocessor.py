@@ -8,6 +8,7 @@ from nltk.tokenize import word_tokenize, sent_tokenize, wordpunct_tokenize
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 import fastText
 import numpy as np
+import Pyro.core
 
 numberDict = {'zero': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10, 'eleven': 11, 'twelve': 12, 'thirteen': 13, 'fourteen': 14, 'fifteen': 15, 'sixteen': 16, 'seventeen': 17, 'eighteen': 18, 'nineteen': 19, 'twenty': 20, 'thirty': 30, 'forty': 40, 'fifty': 50, 'sixty': 60, 'seventy': 70, 'eighty': 80, 'ninety': 90}
 WORDEMBEDDING_DIM = 300
@@ -86,8 +87,6 @@ class Preprocessor:
 
 
     def save(self, path):
-        if hasattr(self, 'wordEmbedding'):
-            del self.wordEmbedding
         self.saveVectorizer(path)
         with open(path, 'wb') as f:
             pickle.dump(self, f, -1)
@@ -153,7 +152,7 @@ class Preprocessor:
     def addOOVWordToEmbedding(self, word):
         index = len(self.vocabulary)
         self.vocabulary.update({word:index})
-        self.embedding[index] = self.wordEmbedding.get_word_vector(word)
+        self.embedding[index] = self.wordEmbedding.getWordVector(word)
 
 
     def padding(self, itemList):
@@ -172,12 +171,12 @@ class Preprocessor:
         return ' '.join(words)
 
 
-    def loadWordEmbedding(self, path='WordEmbedding/wiki.en.bin'):
-        if not hasattr(self, 'wordEmbedding'):
-            self.wordEmbedding = fastText.load_model(path)
+    def loadWordEmbedding(self):
+        self.wordEmbedding = Pyro.core.getProxyForURI("PYROLOC://localhost:7766/wordEmbedding")
+
 
     def setVocabulary(self, nTop=40000):
-        words = self.wordEmbedding.get_labels()[:nTop]
+        words = self.wordEmbedding.getLabels(nTop)
         indices = range(0,nTop)
         self.vocabulary = dict(zip(words, indices))
 
@@ -185,7 +184,7 @@ class Preprocessor:
     def setEmbedding(self, nTop=40000):
         self.embedding = np.random.uniform(-0.25, 0.25, (nTop, WORDEMBEDDING_DIM))
         for word,idx in self.vocabulary.iteritems():
-            self.embedding[idx] = self.wordEmbedding.get_word_vector(word)
+            self.embedding[idx] = self.wordEmbedding.getWordVector(word)
 
 
     def addSpareEmbeddings(self, nSpare=5000):

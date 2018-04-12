@@ -57,6 +57,15 @@ The word embeddings used for sentence classification with a convolutional neural
 Google provides such pre-trained word embeddings which are trained on parts of the Google News dataset (about 100 billion words). The model contains 300-dimensional vectors for 3 million words and phrases. The archive (1.5 GB) is [here](https://drive.google.com/file/d/0B7XkCwpI5KDYNlNUTTlSS21pQmM/edit) available.
 To make use of it, just download the file and unpack it in the **Word2Vec** folder in the main directory.
 
+FastText also provides pretrained word embeddings for different languages which can be found [here](https://fasttext.cc/docs/en/crawl-vectors.html). As fasttext is trained on character n-grams it is possible to provide vectors of words that were not included in the training data. To load this model in an efficient way a daemon process build on *Pyro* is used.
+Start the daemon process with:
+```
+python lda/WordEmbedding.py
+```
+Then run the respective script, e.g.:
+```
+python onlineLearning.py
+```
 
 ## Detailed list of dependencies
 * [Tensorflow - An Open-Source Software Library for Machine Intelligence](https://www.tensorflow.org/install/) <br />
