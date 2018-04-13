@@ -22,13 +22,15 @@ def predictDoc(doc, category):
 
     vocab_processor = tf.contrib.learn.preprocessing.VocabularyProcessor.restore(processor_dir)
 
-    sentences = sent_tokenize(doc.text)
+    preprocessor = Preprocessor()
+
+    #sentences = sent_tokenize(doc.text)
+    sentences = preprocessor.splitInChunks(doc.text)
     sentenceDB = pd.DataFrame(sentences, columns=['text'])
 
     #sentenceDB['sentenceLength'] = sentenceDB.text.map(setSentenceLength)
     #sentenceDB = sentenceDB[sentenceDB.sentenceLength.map(filterSentenceLength)]
     if info.preprocessing:
-        preprocessor = Preprocessor()
         sentenceDB['text'] = sentenceDB['text'].apply(preprocessor.cleanText)
     else:
         sentenceDB['text'] = sentenceDB['text'].str.lower()

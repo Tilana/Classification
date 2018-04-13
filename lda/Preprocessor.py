@@ -138,6 +138,20 @@ class Preprocessor:
         words = [word for word in text.split(' ') if word in vocabulary]
         return ' '.join(words)
 
+    def splitInChunks(self, text, n=25, overlap=3):
+        tokens = word_tokenize(text)
+        listOfTokenChunks = self.splitListInChunks(tokens, n=n, overlap=overlap)
+        return [' '.join(chunk) for chunk in listOfTokenChunks]
+
+
+    def splitListInChunks(self, lst, n=25, overlap=3):
+        listOfChunks = []
+        maxInd = 0
+        for i in range(0, len(lst), n-overlap):
+            if maxInd < len(lst):
+                listOfChunks.append(lst[i:i+n])
+            maxInd = i+n
+        return listOfChunks
 
 
 
