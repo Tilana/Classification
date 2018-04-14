@@ -8,51 +8,41 @@ from nltk.tokenize import sent_tokenize
 from scripts.createSentenceDB import filterSentenceLength, setSentenceLength
 from lda.osHelper import generateModelDirectory
 import pdb
+import pickle
 
 
 def predictDoc(doc, category):
 
     model_path = generateModelDirectory(category)
 
+    model_dir = os.path.join(model_path, 'model.pkl')
     checkpoint_dir = os.path.join(model_path, 'checkpoints')
     processor_dir = os.path.join(model_path, 'preprocessor')
 
     infoFile = os.path.join(model_path, 'info.json')
     info = Info(infoFile)
 
-    vocab_processor = tf.contrib.learn.preprocessing.VocabularyProcessor.restore(processor_dir)
+    preprocessor = Preprocessor().load(processor_dir)
 
-    preprocessor = Preprocessor()
-
-    #sentences = sent_tokenize(doc.text)
     sentences = preprocessor.splitInChunks(doc.text)
     sentenceDB = pd.DataFrame(sentences, columns=['text'])
 
-    #sentenceDB['sentenceLength'] = sentenceDB.text.map(setSentenceLength)
-    #sentenceDB = sentenceDB[sentenceDB.sentenceLength.map(filterSentenceLength)]
-    if info.preprocessing:
-        sentenceDB['text'] = sentenceDB['text'].apply(preprocessor.cleanText)
-    else:
-        sentenceDB['text'] = sentenceDB['text'].str.lower()
+    sentenceDB['text'] = sentenceDB['text'].apply(preprocessor.cleanText)
 
-    X_val = np.array(list(vocab_processor.transform(sentenceDB.text.tolist())))
 
-    nn = NeuralNet()
-    tf.reset_default_graph()
-    graph = tf.Graph()
-    with graph.as_default():
-        with tf.Session() as sess:
+    texts = sentenceDB.text.tolist()
+    sentenceDB['tfidf'] = preprocessor.vectorizer.transform(texts)
 
-            nn.loadCheckpoint(graph, sess, checkpoint_dir)
-            predictions = []
 
-            validationData = {nn.X: np.asarray(X_val), nn.pkeep:1.0}
-            predictions, probability = sess.run([nn.predictions, nn.probability], feed_dict=validationData)
+    with open(model_dir, 'rb') as f:
+        classifier = pickle.load(f)
 
-            sentenceDB['predictedLabel'] = predictions
-            sentenceDB['probability'] = probability
+    data = sentenceDB['tfidf'].tolist()
 
-            sess.close()
+    probability = classifier.predict_log_proba(sentenceDB['tfidf'].tolist()[0])
+    #sentenceDB['probability'] = probability
+    sentenceDB['predictedLabel'] = np.argmax(probability, axis=1)
+
 
     evidenceSentences = sentenceDB[sentenceDB['predictedLabel']==1]
     return evidenceSentences
