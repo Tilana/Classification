@@ -7,8 +7,6 @@ import pandas as pd
 from nltk.tokenize import sent_tokenize
 from scripts.createSentenceDB import filterSentenceLength, setSentenceLength
 from lda.osHelper import generateModelDirectory
-import pdb
-
 
 def predictDoc(doc, category):
 
@@ -28,8 +26,6 @@ def predictDoc(doc, category):
     sentences = preprocessor.splitInChunks(doc.text)
     sentenceDB = pd.DataFrame(sentences, columns=['text'])
 
-    #sentenceDB['sentenceLength'] = sentenceDB.text.map(setSentenceLength)
-    #sentenceDB = sentenceDB[sentenceDB.sentenceLength.map(filterSentenceLength)]
     if info.preprocessing:
         sentenceDB['text'] = sentenceDB['text'].apply(preprocessor.cleanText)
     else:
@@ -49,12 +45,12 @@ def predictDoc(doc, category):
             validationData = {nn.X: np.asarray(X_val), nn.pkeep:1.0}
             predictions, probability = sess.run([nn.predictions, nn.probability], feed_dict=validationData)
 
-            sentenceDB['predictedLabel'] = predictions
+            sentenceDB['predLabel'] = predictions
             sentenceDB['probability'] = probability
 
             sess.close()
 
-    evidenceSentences = sentenceDB[sentenceDB['predictedLabel']==1]
+    evidenceSentences = sentenceDB[sentenceDB['predLabel']==1]
     return evidenceSentences
 
 
