@@ -1,9 +1,9 @@
 import pandas as pd
+import numpy as np
 from lda.docLoader import loadConfigFile
 from lda import ClassificationModel, Evaluation
 from predictDoc import predictDoc
 from train import train
-import pdb
 
 def onlineLearning():
 
@@ -24,6 +24,7 @@ def onlineLearning():
     classifier.createTarget()
 
     classifier.splitDataset(train_size=0.97, random_state=7)
+    classifier.testData['predLabel'] = np.nan
 
     # Train Classifier
     for numberSample in xrange(10):
@@ -38,15 +39,14 @@ def onlineLearning():
         try:
             evidenceSentences = predictDoc(sample, categoryID)
             if len(evidenceSentences)>=1:
-                classifier.testData.loc[ind, 'predictedLabel'] = 1
+                classifier.testData.loc[ind, 'predLabel'] = 1
                 classifier.testData.loc[ind, 'probability'] = evidenceSentences.probability.tolist()[0]
         except:
             print 'WARNING: PredictDoc.py of sample "' + str(sample.text) + '" was not successful'
 
+    classifier.testData.predLabel.fillna(0, inplace=True)
 
-    classifier.testData.predictedLabel.fillna(0, inplace=True)
-
-    evaluation = Evaluation(target=classifier.testData.category.tolist(), prediction=classifier.testData.predictiedLabel.tolist())
+    evaluation = Evaluation(target=classifier.testData.category.tolist(), prediction=classifier.testData.predLabel.tolist())
     evaluation.computeMeasures()
     evaluation.confusionMatrix()
     print 'Accuracy: ' + str(evaluation.accuracy)

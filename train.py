@@ -1,15 +1,13 @@
 import lda.osHelper as osHelper
 from scripts import setUp
 from scripts.getPretrainedEmbedding import getPretrainedEmbedding
-from sklearn.naive_bayes import MultinomialNB
-from collections import Counter
+from sklearn import linear_model
 import tensorflow as tf
 from lda import Preprocessor, NeuralNet, Info, ClassificationModel
 from tensorflow.python import debug as tf_debug
 import numpy as np
 import pdb
 import pandas as pd
-import pdb
 import os
 import json
 import pickle
@@ -34,6 +32,9 @@ def train(evidences, category):
 
     vocabulary = pd.read_pickle(VOCABULARY_PATH)
 
+    if not os.path.exists(model_dir):
+        setUp(category, PREPROCESSING)
+
 
     info = Info(infoFile)
     info.updateTrainingCounter(evidences.label.tolist())
@@ -51,8 +52,9 @@ def train(evidences, category):
         with open(model_dir, 'rb') as f:
             classifier = pickle.load(f)
     else:
-        classifier = MultinomialNB().fit(evidences['tfidf'].tolist(), evidences['label'].tolist())
+        classifier = linear_model.SGDClassifier(loss='log')
 
+    classifier.partial_fit(evidences['tfidf'].tolist(), evidences['label'].tolist(), classes=[0,1])
 
     with open(model_dir, 'wb') as f:
         pickle.dump(classifier, f)

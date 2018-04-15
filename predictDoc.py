@@ -29,22 +29,19 @@ def predictDoc(doc, category):
 
     sentenceDB['text'] = sentenceDB['text'].apply(preprocessor.cleanText)
 
-
     texts = sentenceDB.text.tolist()
     sentenceDB['tfidf'] = preprocessor.vectorizer.transform(texts)
-
 
     with open(model_dir, 'rb') as f:
         classifier = pickle.load(f)
 
     data = sentenceDB['tfidf'].tolist()
 
-    probability = classifier.predict_log_proba(sentenceDB['tfidf'].tolist()[0])
-    #sentenceDB['probability'] = probability
-    sentenceDB['predictedLabel'] = np.argmax(probability, axis=1)
+    probability = classifier.predict_proba(sentenceDB['tfidf'].tolist()[0])
+    sentenceDB['predLabel'] = np.argmax(probability, axis=1)
+    sentenceDB['probability'] = np.max(probability, axis=1)
 
-
-    evidenceSentences = sentenceDB[sentenceDB['predictedLabel']==1]
+    evidenceSentences = sentenceDB[sentenceDB['predLabel']==1]
     return evidenceSentences
 
 
