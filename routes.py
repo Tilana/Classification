@@ -9,6 +9,7 @@ import json
 import os
 import tensorflow as tf
 import argparse as _argparse
+# import pdb
 
 app = Flask(__name__)
 
@@ -16,9 +17,12 @@ app = Flask(__name__)
 def train_route():
     data = json.loads(request.data)
 
-    sentence = data['evidence']['text']
+    sentences = pd.read_json('[' + json.dumps(data) + ']', encoding='utf8');
+    sentences['sentence'] = sentences['evidence'][0]['text']
+    sentences['label'] = sentences['isEvidence'][0]
+    # pdb.set_trace()
 
-    train(sentence, data['value'] + data['property'], data['isEvidence'])
+    train(sentences, data['value'] + data['property'])
 
     return "{}"
 
@@ -27,20 +31,19 @@ def retrain_route():
     data = json.loads(request.data)
     property = data['property']
     value = data['value']
-    evidences = data['evidences']
+    evidences = pd.read_json(json.dumps(data['evidences']), encoding='utf8');
 
     rmtree(os.path.join('runs', value+property), ignore_errors=True)
     tf.app.flags._global_parser = _argparse.ArgumentParser()
 
-    for evidence in evidences:
-        train(evidence['evidence']['text'], value + property, evidence['isEvidence'])
+    train(evidences, value + property)
 
     return "{}"
 
 @app.route('/classification/predictOneModel', methods=['POST'])
 def predict_one_model():
     data = json.loads(request.data)
-    docs = pd.read_json(json.dumps(data['docs']));
+    docs = pd.read_json(json.dumps(data['docs']), encoding='utf8');
 
     property = data['property'];
     value = data['value'];
@@ -59,13 +62,13 @@ def predict_one_model():
         except:
             print 'model not trained'
 
-    return pd.concat(results).to_json(orient='records')
+    return pd.concat(results).sort_values(by=['probability'], ascending=False).head(100).to_json(orient='records')
 
 @app.route('/classification/predict', methods=['POST'])
 def predict_route():
     data = json.loads(request.data)
     evidencesData = data['properties']
-    doc = pd.read_json('[' + json.dumps(data['doc']) + ']').loc[0];
+    doc = pd.read_json('[' + json.dumps(data['doc']) + ']', encoding='utf8').loc[0];
     results = [];
     for evidence in evidencesData:
         try:
@@ -78,4 +81,4 @@ def predict_route():
         except:
             print 'model not trained'
 
-    return pd.concat(results).to_json(orient='records')
+    return pd.concat(results).sort_values(by=['probability'], ascending=False).head(100).to_json(orient='records')
