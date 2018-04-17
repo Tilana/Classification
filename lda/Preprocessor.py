@@ -175,14 +175,14 @@ class Preprocessor:
         self.wordEmbedding = Pyro.core.getProxyForURI("PYROLOC://localhost:7766/wordEmbedding")
 
 
-    def setVocabulary(self, nTop=40000):
-        words = self.wordEmbedding.getLabels(nTop)
-        indices = range(0,nTop)
+    def setVocabulary(self, nTop=50000):
+        words = self.wordEmbedding.getVocabulary(nTop)
+        indices = range(0,len(words))
         self.vocabulary = dict(zip(words, indices))
 
 
-    def setEmbedding(self, nTop=40000):
-        self.embedding = np.random.uniform(-0.25, 0.25, (nTop, WORDEMBEDDING_DIM))
+    def setEmbedding(self):
+        self.embedding = np.random.uniform(-0.25, 0.25, (self.vocabulary.__len__(), WORDEMBEDDING_DIM))
         for word,idx in self.vocabulary.iteritems():
             self.embedding[idx] = self.wordEmbedding.getWordVector(word)
 
@@ -192,9 +192,9 @@ class Preprocessor:
         self.embedding = np.append(self.embedding, oovReserve, axis=0)
 
 
-    def setupWordEmbedding(self):
+    def setupWordEmbedding(self, nTop=50000):
         self.loadWordEmbedding()
-        self.setVocabulary()
+        self.setVocabulary(nTop)
         self.setEmbedding()
         self.addSpareEmbeddings()
 
