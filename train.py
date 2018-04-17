@@ -16,7 +16,7 @@ import json
 DROPOUT = 0.5
 FILTER_SIZES = [2,2,2]
 PREPROCESSING = 1
-VOCAB_SIZE = 45000
+VOCAB_SIZE = 55000
 MAX_SENTENCE_LENGTH = 90
 
 def train(evidences, category):
@@ -59,7 +59,6 @@ def train(evidences, category):
                 preprocessor.setupWordEmbedding()
                 sess.run(nn.W.assign(preprocessor.embedding))
 
-
                 summaryWriter = tf.summary.FileWriter(checkpoint_dir, sess.graph)
                 nn.setSaver()
 
@@ -88,7 +87,7 @@ def train(evidences, category):
     info.save()
 
     memory = memory.append(evidences, ignore_index=True)
-    memory.to_csv(memoryFile, index=False)
+    memory.to_csv(memoryFile, index=False, encoding='utf8')
 
     return True
 
