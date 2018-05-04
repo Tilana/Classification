@@ -1,30 +1,23 @@
-from nltk import sent_tokenize
-from nltk.tokenize.punkt import PunktSentenceTokenizer, PunktTrainer
 import pandas as pd
 import numpy as np
+import nltk
 import re
 
 PATH = '../../data/sampleTexts/'
 data = pd.read_csv(PATH + 'sample.csv', encoding='utf8')
+
 MAX_SENTENCE_LENGTH = 50
 MIN_SENTENCE_LENGTH = 6
+
+LEGAL_ABBREVATIONS = ['chap', 'distr', 'paras', 'cf', 'cfr', 'para', 'no', 'al', 'br', 'dr', 'hon', 'app', 'cr', 'crim', 'l.r', 'cri', 'cap', 'e.g', 'vol', 'd', 'a', 'ph']
+
+def insertSpaceAfterPunctuation(text):
+    return re.sub(r'\.(?=[A-Z])', '. ', text)
 
 def insertNewlineAfterSpeech(text):
     text = re.sub(ur'\.\u2019', ur'.\u2019\n', text)
     text = re.sub(ur'\.\u201d', ur'.\u201d\n', text)
     return text
-
-def splitAtNewline(sentences):
-    sentences = [sentence.split('\n') for sentence in sentences]
-    return sum(sentences, [])
-
-def insertSpaceAfterPunctuation(text):
-    return re.sub(r'\.(?=[A-Z])', '. ', text)
-
-def splitInChunks(sentence, MAX_SENTENCE_LENGTH):
-    listOfWords = sentence.split()
-    splittedSentences = np.array_split(listOfWords, len(listOfWords)/MAX_SENTENCE_LENGTH + 1)
-    return [' '.join(sentence.tolist()) for sentence in splittedSentences]
 
 def insertNewLine(text, indicator, minimumSentenceLength):
     previousPos = 0
@@ -37,13 +30,14 @@ def insertNewLine(text, indicator, minimumSentenceLength):
             shift += 3
     return text
 
-def trainTokenizer(texts):
-    trainer = PunktTrainer()
-    trainer.INCLUDE_ALL_COLLOCS = True
-    trainer.train(texts)
-    tokenizer = PunktSentenceTokenizer(trainer.get_params())
-    print tokenizer._params.abbrev_types
-    return tokenizer
+def splitAtNewline(sentences):
+    sentences = [sentence.split('\n') for sentence in sentences]
+    return sum(sentences, [])
+
+def splitInChunks(sentence, MAX_SENTENCE_LENGTH):
+    listOfWords = sentence.split()
+    splittedSentences = np.array_split(listOfWords, len(listOfWords)/MAX_SENTENCE_LENGTH + 1)
+    return [' '.join(sentence.tolist()) for sentence in splittedSentences]
 
 def flattenList(listOfElems):
     flatList = []
@@ -69,13 +63,32 @@ def splitTooLongSentencesInChunks(sentences, MAX_SENTENCE_LENGTH):
             sentences[ind] = splitInChunks(sentence, MAX_SENTENCE_LENGTH)
     return flattenList(sentences)
 
+def loadTokenizerWithExtraAbbrevations(language='english', abbrevations=[]):
+    tokenizer = nltk.data.load('tokenizers/punkt/{0}.pickle'.format(language))
+    tokenizer._params.abbrev_types.update(abbrevations)
+    return tokenizer
 
+def tokenize(text):
+    doc.text = insertSpaceAfterPunctuation(doc.text)
+    doc.text = insertNewlineAfterSpeech(doc.text)
+    sentences = sent_tokenizer.tokenize(doc.text)
+    sentences = splitAtNewline(sentences)
+
+    sentences = splitTooLongSentencesAtCharacter(sentences, ':', MIN_SENTENCE_LENGTH)
+    sentences = splitTooLongSentencesAtCharacter(sentences, ';', MIN_SENTENCE_LENGTH)
+    sentences = splitTooLongSentencesInChunks(sentences, MAX_SENTENCE_LENGTH)
+
+    return sentences
+
+
+
+sent_tokenizer = loadTokenizerWithExtraAbbrevations(abbrevations=LEGAL_ABBREVATIONS)
 
 for ind,doc in data.iterrows():
 
     doc.text = insertSpaceAfterPunctuation(doc.text)
     doc.text = insertNewlineAfterSpeech(doc.text)
-    sentences = sent_tokenize(doc.text)
+    sentences = sent_tokenizer.tokenize(doc.text)
     sentences = splitAtNewline(sentences)
 
     sentences = splitTooLongSentencesAtCharacter(sentences, ':', MIN_SENTENCE_LENGTH)
