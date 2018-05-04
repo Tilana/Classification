@@ -7,6 +7,7 @@ import re
 PATH = '../../data/sampleTexts/'
 data = pd.read_csv(PATH + 'sample.csv', encoding='utf8')
 MAX_SENTENCE_LENGTH = 50
+MIN_SENTENCE_LENGTH = 6
 
 def insertNewlineAfterSpeech(text):
     text = re.sub(ur'\.\u2019', ur'.\u2019\n', text)
@@ -25,7 +26,7 @@ def splitInChunks(sentence, MAX_SENTENCE_LENGTH):
     splittedSentences = np.array_split(listOfWords, len(listOfWords)/MAX_SENTENCE_LENGTH + 1)
     return [' '.join(sentence.tolist()) for sentence in splittedSentences]
 
-def insertNewLine(text, indicator, minimumSentenceLength=5):
+def insertNewLine(text, indicator, minimumSentenceLength):
     previousPos = 0
     shift = 0
     for match in re.finditer(indicator, text):
@@ -35,7 +36,6 @@ def insertNewLine(text, indicator, minimumSentenceLength=5):
             previousPos = pos
             shift += 3
     return text
-
 
 def trainTokenizer(texts):
     trainer = PunktTrainer()
@@ -55,33 +55,32 @@ def flattenList(listOfElems):
             flatList.append(elem)
     return flatList
 
-
-def splitTooLongSentencesAtCharacter(sentences, character):
+def splitTooLongSentencesAtCharacter(sentences, character, minimumSentenceLength=5):
     for ind, sentence in enumerate(sentences):
         if len(sentence.split()) > MAX_SENTENCE_LENGTH:
-            semicolonSplit = insertNewLine(sentence, character)
+            semicolonSplit = insertNewLine(sentence, character, minimumSentenceLength)
             if len(semicolonSplit.split('\n')) > 1:
                 sentences[ind] = semicolonSplit.split('\n')
     return flattenList(sentences)
 
+def splitTooLongSentencesInChunks(sentences, MAX_SENTENCE_LENGTH):
+    for ind, sentence in enumerate(sentences):
+        if len(sentence.split()) > MAX_SENTENCE_LENGTH:
+            sentences[ind] = splitInChunks(sentence, MAX_SENTENCE_LENGTH)
+    return flattenList(sentences)
+
+
 
 for ind,doc in data.iterrows():
-
-    print doc['_id']
 
     doc.text = insertSpaceAfterPunctuation(doc.text)
     doc.text = insertNewlineAfterSpeech(doc.text)
     sentences = sent_tokenize(doc.text)
     sentences = splitAtNewline(sentences)
 
-    sentences = splitTooLongSentencesAtCharacter(sentences, ':')
-    sentences = splitTooLongSentencesAtCharacter(sentences, ';')
-
-    for ind, sentence in enumerate(sentences):
-        if len(sentence.split()) > MAX_SENTENCE_LENGTH:
-            print sentence
-            print len(sentence.split())
-            print '\n'
+    sentences = splitTooLongSentencesAtCharacter(sentences, ':', MIN_SENTENCE_LENGTH)
+    sentences = splitTooLongSentencesAtCharacter(sentences, ';', MIN_SENTENCE_LENGTH)
+    sentences = splitTooLongSentencesInChunks(sentences, MAX_SENTENCE_LENGTH)
 
     sentences = [(sentence + '\n\n').encode('utf8') for sentence in sentences]
 
