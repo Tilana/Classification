@@ -5,7 +5,7 @@ from lda import NeuralNet, Preprocessor, Info
 import numpy as np
 import os
 import pandas as pd
-from nltk.tokenize import sent_tokenize
+from sentenceTokenizer import tokenize
 from scripts.createSentenceDB import filterSentenceLength, setSentenceLength
 from lda.osHelper import generateModelDirectory
 
@@ -19,7 +19,7 @@ def predictDoc(doc, category):
     infoFile = os.path.join(model_path, 'info.json')
     info = Info(infoFile)
 
-    sentences = sent_tokenize(doc.text)
+    sentences = tokenize(doc.text)
     sentenceDB = pd.DataFrame(sentences, columns=['sentence'])
 
     preprocessor = Preprocessor().load(processor_dir)
