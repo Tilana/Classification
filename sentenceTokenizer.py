@@ -3,13 +3,17 @@ import numpy as np
 import nltk
 import re
 
-PATH = '../../data/sampleTexts/'
-data = pd.read_csv(PATH + 'sample.csv', encoding='utf8')
-
 MAX_SENTENCE_LENGTH = 50
 MIN_SENTENCE_LENGTH = 6
 
 LEGAL_ABBREVATIONS = ['chap', 'distr', 'paras', 'cf', 'cfr', 'para', 'no', 'al', 'br', 'dr', 'hon', 'app', 'cr', 'crim', 'l.r', 'cri', 'cap', 'e.g', 'vol', 'd', 'a', 'ph']
+
+def loadTokenizerWithExtraAbbrevations(language='english', abbrevations=[]):
+    tokenizer = nltk.data.load('tokenizers/punkt/{0}.pickle'.format(language))
+    tokenizer._params.abbrev_types.update(abbrevations)
+    return tokenizer
+
+LEGAL_TOKENIZER = loadTokenizerWithExtraAbbrevations(abbrevations=LEGAL_ABBREVATIONS)
 
 def insertSpaceAfterPunctuation(text):
     return re.sub(r'\.(?=[A-Z])', '. ', text)
@@ -63,43 +67,36 @@ def splitTooLongSentencesInChunks(sentences, MAX_SENTENCE_LENGTH):
             sentences[ind] = splitInChunks(sentence, MAX_SENTENCE_LENGTH)
     return flattenList(sentences)
 
-def loadTokenizerWithExtraAbbrevations(language='english', abbrevations=[]):
-    tokenizer = nltk.data.load('tokenizers/punkt/{0}.pickle'.format(language))
-    tokenizer._params.abbrev_types.update(abbrevations)
-    return tokenizer
 
-def tokenize(text):
-    doc.text = insertSpaceAfterPunctuation(doc.text)
-    doc.text = insertNewlineAfterSpeech(doc.text)
-    sentences = sent_tokenizer.tokenize(doc.text)
+def tokenize(text, maxSentenceLength, minSentenceLength):
+    text = insertSpaceAfterPunctuation(text)
+    text = insertNewlineAfterSpeech(text)
+    sentences = LEGAL_TOKENIZER.tokenize(text)
     sentences = splitAtNewline(sentences)
 
-    sentences = splitTooLongSentencesAtCharacter(sentences, ':', MIN_SENTENCE_LENGTH)
-    sentences = splitTooLongSentencesAtCharacter(sentences, ';', MIN_SENTENCE_LENGTH)
-    sentences = splitTooLongSentencesInChunks(sentences, MAX_SENTENCE_LENGTH)
+    sentences = splitTooLongSentencesAtCharacter(sentences, ':', minSentenceLength)
+    sentences = splitTooLongSentencesAtCharacter(sentences, ';', minSentenceLength)
+    sentences = splitTooLongSentencesInChunks(sentences, maxSentenceLength)
 
     return sentences
 
 
+def sampleScript():
 
-sent_tokenizer = loadTokenizerWithExtraAbbrevations(abbrevations=LEGAL_ABBREVATIONS)
+    PATH = '../data/sampleTexts/'
+    data = pd.read_csv(PATH + 'sample.csv', encoding='utf8')
 
-for ind,doc in data.iterrows():
+    for ind,doc in data.iterrows():
 
-    doc.text = insertSpaceAfterPunctuation(doc.text)
-    doc.text = insertNewlineAfterSpeech(doc.text)
-    sentences = sent_tokenizer.tokenize(doc.text)
-    sentences = splitAtNewline(sentences)
+        sentences = tokenize(doc.text, MAX_SENTENCE_LENGTH, MIN_SENTENCE_LENGTH)
+        sentences = [(sentence + '\n\n').encode('utf8') for sentence in sentences]
 
-    sentences = splitTooLongSentencesAtCharacter(sentences, ':', MIN_SENTENCE_LENGTH)
-    sentences = splitTooLongSentencesAtCharacter(sentences, ';', MIN_SENTENCE_LENGTH)
-    sentences = splitTooLongSentencesInChunks(sentences, MAX_SENTENCE_LENGTH)
+        with open(PATH + doc['collection'] + '_' + doc['_id'][:5] + '_2.txt', 'wb') as f:
+            f.writelines(sentences)
 
-    sentences = [(sentence + '\n\n').encode('utf8') for sentence in sentences]
+        f.close()
 
-    with open(PATH + doc['collection'] + '_' + doc['_id'][:5] + '_2.txt', 'wb') as f:
-        f.writelines(sentences)
 
-    f.close()
-
+if __name__=='__main__':
+    sampleScript()
 
