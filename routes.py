@@ -103,14 +103,15 @@ def predict_one_model():
         for doc in docs.iterrows():
             try:
                 predictions = predictDoc(doc[1], model);
-                predictions = predictions.rename(index=str, columns={'text': 'evidence'});
+                predictions = predictions.rename(index=str, columns={'sentence': 'evidence', 'predictedLabel':'label'});
                 predictions['property'] = data['property'];
                 predictions['value'] = data['value'];
                 predictions['document'] = doc[1]['_id']
-                results.append(predictions);
+                results.append(predictions)
             except:
                 print 'model not trained'
-        return pd.concat(results).sort_values(by=['probability'], ascending=False).head(100).to_json(orient='records')
+        suggestions = pd.concat(results).sort_values(by=['probability'], ascending=False).head(100)
+        return suggestions.to_json(orient='records')
 
 
 
@@ -130,5 +131,5 @@ def predict_route():
             results.append(predictions);
         except:
             print 'model not trained'
-
     return pd.concat(results).sort_values(by=['probability'], ascending=False).head(100).to_json(orient='records')
+
