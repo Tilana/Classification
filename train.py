@@ -3,7 +3,7 @@ from scripts import setUp
 from scripts.getPretrainedEmbedding import getPretrainedEmbedding
 from collections import Counter
 import tensorflow as tf
-from lda import Preprocessor, NeuralNet, Info
+from lda import Preprocessor, NeuralNet, Info, data_helpers
 from tensorflow.python import debug as tf_debug
 import pickle
 import numpy as np
@@ -12,11 +12,15 @@ import pandas as pd
 import os
 import json
 
+BATCH_SIZE = 10
+ITERATIONS = 70
 DROPOUT = 0.5
 FILTER_SIZES = [2,2,2]
+
 PREPROCESSING = 1
 VOCAB_SIZE = 55000
 MAX_SENTENCE_LENGTH = 40
+
 
 def train(evidences, category):
 
@@ -34,53 +38,55 @@ def train(evidences, category):
     memory = pd.read_csv(memoryFile)
 
     nn = NeuralNet()
-    tf.reset_default_graph()
-    graph = tf.Graph()
+    with tf.Session() as sess:
 
-    with graph.as_default():
-        with tf.Session() as sess:
+        if os.path.exists(checkpoint_dir):
+            nn.loadCheckpoint(sess.graph, sess, checkpoint_dir)
 
-            if os.path.exists(checkpoint_dir):
-                nn.loadCheckpoint(graph, sess, checkpoint_dir)
+            preprocessor = Preprocessor().load(processor_dir)
+            summaryCache = tf.summary.FileWriterCache()
+            summaryWriter = summaryCache.get(checkpoint_dir)
 
-                preprocessor = Preprocessor().load(processor_dir)
-                summaryCache = tf.summary.FileWriterCache()
-                summaryWriter = summaryCache.get(checkpoint_dir)
+        else:
+            nn = NeuralNet(MAX_SENTENCE_LENGTH, 2)
+            nn.buildNeuralNet(vocab_size=VOCAB_SIZE, filter_sizes=FILTER_SIZES)
+            nn.setupSummaries(sess.graph, checkpoint_dir)
+            sess.run(tf.global_variables_initializer())
+            sess.run(tf.local_variables_initializer())
 
-            else:
-                nn = NeuralNet(MAX_SENTENCE_LENGTH, 2)
-                nn.buildNeuralNet(vocab_size=VOCAB_SIZE, filter_sizes=FILTER_SIZES)
-                nn.setupSummaries(sess.graph, checkpoint_dir)
-                sess.run(tf.global_variables_initializer())
-                sess.run(tf.local_variables_initializer())
+            preprocessor = Preprocessor(maxSentenceLength=MAX_SENTENCE_LENGTH)
+            preprocessor.setupWordEmbedding()
+            sess.run(nn.W.assign(preprocessor.embedding))
 
-                preprocessor = Preprocessor(maxSentenceLength=MAX_SENTENCE_LENGTH)
-                preprocessor.setupWordEmbedding()
-                sess.run(nn.W.assign(preprocessor.embedding))
+            summaryWriter = tf.summary.FileWriter(checkpoint_dir, sess.graph)
+            nn.setSaver()
 
-                summaryWriter = tf.summary.FileWriter(checkpoint_dir, sess.graph)
-                nn.setSaver()
+        evidences['tokens'] = evidences.sentence.apply(preprocessor.tokenize)
+        vocabIds = evidences.tokens.apply(preprocessor.mapVocabularyIds).tolist()
+        evidences['mapping'], evidences['oov'] = zip(*vocabIds)
+        evidences['mapping'] = evidences.mapping.apply(preprocessor.padding)
 
-            evidences['tokens'] = evidences.sentence.apply(preprocessor.tokenize)
-            vocabIds = evidences.tokens.apply(preprocessor.mapVocabularyIds).tolist()
-            evidences['mapping'], evidences['oov'] = zip(*vocabIds)
-            evidences['mapping'] = evidences.mapping.apply(preprocessor.padding)
 
-            X = np.array(evidences.mapping.tolist())
+        X = np.array(evidences.mapping.tolist())
 
-            Ylabels = evidences.label.astype('category', categories=[0,1])
-            Y = pd.get_dummies(Ylabels).as_matrix()
+        Ylabels = evidences.label.astype('category', categories=[0,1])
+        Y = pd.get_dummies(Ylabels).as_matrix()
 
-            trainData = {nn.X: X, nn.Y_:Y, nn.pkeep:DROPOUT}
+        batches = data_helpers.batch_iter(list(zip(X, Y)), BATCH_SIZE, ITERATIONS, shuffle=True)
+
+        for batch in batches:
+
+            x_batch, y_batch = zip(*batch)
+            trainData = {nn.X: x_batch, nn.Y_:y_batch, nn.pkeep:DROPOUT}
 
             [_, summary, step] = sess.run([nn.train_step, nn.summaries, nn.global_step], feed_dict=trainData)
             summaryWriter.add_session_log(tf.SessionLog(status=tf.SessionLog.START), info.global_step+1)
             summaryWriter.add_summary(summary, info.global_step) #, 10)
-            nn.saveCheckpoint(sess, checkpoint_dir + '/model', info.global_step)
 
-            preprocessor.save(processor_dir)
+        nn.saveCheckpoint(sess, checkpoint_dir + '/model', info.global_step)
+        preprocessor.save(processor_dir)
 
-            sess.close()
+        sess.close()
 
     info.update(evidences)
     info.save()
