@@ -25,9 +25,6 @@ MIN_SENTENCE_LENGTH = 5
 
 TRAINING_FILE = 'training.csv'
 
-sentenceEncoder = hub.Module("https://tfhub.dev/google/universal-sentence-encoder/1")
-
-
 def get_similar_sentences(similarity, evidences, sentences, doc_id):
     similar_sentences = pd.DataFrame(columns=['probability'])
     for ind, sentence in enumerate(sentences):
@@ -79,8 +76,13 @@ def predict_one_model():
     if len(model_evidences)==0:
         return "{}"
 
-    if len(model_evidences)<10:
+    if len(model_evidences)<20:
+        print 'UNIVERSAL SENTENCE ENCODER'
+        tf.reset_default_graph()
+        sentenceEncoder = hub.Module("https://tfhub.dev/google/universal-sentence-encoder/1")
+
         suggestions = pd.DataFrame(columns=['probability'])
+
         with tf.Session() as session:
             session.run([tf.global_variables_initializer(), tf.tables_initializer()])
             evidence_embedding = session.run(sentenceEncoder(model_evidences.sentence.tolist()))
@@ -98,6 +100,7 @@ def predict_one_model():
         return suggestions.to_json(orient='records')
 
     else:
+        print 'CONVOLUTIONAL NEURAL NET'
         model = data['value']+data['property'];
         results = [];
         for doc in docs.iterrows():
@@ -124,7 +127,7 @@ def predict_route():
     for evidence in evidencesData:
         try:
             predictions = predictDoc(doc, evidence['value'] + evidence['property']);
-            predictions = predictions.rename(index=str, columns={'text': 'evidence'});
+            predictions = predictions.rename(index=str, columns={'sentence': 'evidence'});
             predictions['property'] = evidence['property'];
             predictions['document'] = evidence['document'];
             predictions['value'] = evidence['value'];
