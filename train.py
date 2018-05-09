@@ -18,7 +18,7 @@ DROPOUT = 0.5
 FILTER_SIZES = [2,2,2]
 
 PREPROCESSING = 1
-VOCAB_SIZE = 55000
+VOCAB_SIZE = 45000
 MAX_SENTENCE_LENGTH = 40
 
 
@@ -38,6 +38,7 @@ def train(evidences, category):
     memory = pd.read_csv(memoryFile)
 
     nn = NeuralNet()
+    tf.reset_default_graph()
     with tf.Session() as sess:
 
         if os.path.exists(checkpoint_dir):

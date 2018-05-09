@@ -3,8 +3,8 @@ import Pyro.core
 import fastText
 import csv
 
-#path = 'WordEmbedding/wiki.en'
-path = 'WordEmbedding/FastText_wiki-news-300d-1M-subword'
+#path = 'WordEmbedding/FastText_wiki-news-300d-1M-subword'
+path = 'WordEmbedding/FastText_wiki-news-300d-40000-subword'
 
 class WordEmbedding(Pyro.core.ObjBase):
 
@@ -46,7 +46,5 @@ print("The daemon runs on port: {port}".format(port=daemon))
 print("The object's uri is: {uri}".format(uri=uri))
 
 daemon.requestLoop()
-
-
 
 
