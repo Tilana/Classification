@@ -17,13 +17,17 @@ import os
 import tensorflow as tf
 import argparse as _argparse
 import pdb
+import subprocess
 app = Flask(__name__)
 
 THRESHOLD = 0.67
 MAX_SENTENCE_LENGTH = 40
 MIN_SENTENCE_LENGTH = 5
+MIN_NUM_TRAINING_SENTENCES = 20
 
 TRAINING_FILE = 'training.csv'
+
+subprocess.Popen('python lda/WordEmbedding.py', shell=True)
 
 def get_similar_sentences(similarity, evidences, sentences, doc_id):
     similar_sentences = pd.DataFrame(columns=['probability'])
@@ -57,10 +61,14 @@ def retrain_route():
     evidences = pd.read_csv(TRAINING_FILE, encoding='utf8')
     model_evidences = evidences[(evidences['property']==data['property']) & (evidences['value']==data['value'])]
 
-    rmtree(os.path.join('runs', model), ignore_errors=True)
-    tf.app.flags._global_parser = _argparse.ArgumentParser()
-
-    train(model_evidences, model)
+    if len(model_evidences) >= MIN_NUM_TRAINING_SENTENCES:
+        rmtree(os.path.join('runs', model), ignore_errors=True)
+        tf.app.flags._global_parser = _argparse.ArgumentParser()
+        train(model_evidences, model)
+    elif len(model_evidences) == 0:
+        print 'no training data is available for this category'
+    else:
+        print 'not enough training data for CNN'
 
     return "{}"
 
@@ -76,7 +84,7 @@ def predict_one_model():
     if len(model_evidences)==0:
         return "{}"
 
-    if len(model_evidences)<20:
+    elif len(model_evidences)< MIN_NUM_TRAINING_SENTENCES:
         print 'UNIVERSAL SENTENCE ENCODER'
         tf.reset_default_graph()
         sentenceEncoder = hub.Module("https://tfhub.dev/google/universal-sentence-encoder/1")
@@ -121,18 +129,26 @@ def predict_one_model():
 @app.route('/classification/predict', methods=['POST'])
 def predict_route():
     data = json.loads(request.data)
-    evidencesData = data['properties']
-    doc = pd.read_json('[' + json.dumps(data['doc']) + ']', encoding='utf8').loc[0];
-    results = [];
-    for evidence in evidencesData:
-        try:
-            predictions = predictDoc(doc, evidence['value'] + evidence['property']);
-            predictions = predictions.rename(index=str, columns={'sentence': 'evidence'});
-            predictions['property'] = evidence['property'];
-            predictions['document'] = evidence['document'];
-            predictions['value'] = evidence['value'];
-            results.append(predictions);
-        except:
-            print 'model not trained'
-    return pd.concat(results).sort_values(by=['probability'], ascending=False).head(100).to_json(orient='records')
+    doc = pd.read_json('[' + json.dumps(data['doc']) + ']', encoding='utf8').loc[0]
+    evidences = pd.read_csv(TRAINING_FILE, encoding='utf8')
+
+    tf.reset_default_graph()
+    sentenceEncoder = hub.Module("https://tfhub.dev/google/universal-sentence-encoder/1")
+
+    suggestions = pd.DataFrame(columns=['probability'])
+
+    with tf.Session() as session:
+        session.run([tf.global_variables_initializer(), tf.tables_initializer()])
+        evidence_embedding = session.run(sentenceEncoder(evidences.sentence.tolist()))
+
+        sentences = tokenize(doc.text, MAX_SENTENCE_LENGTH, MIN_SENTENCE_LENGTH)
+        sentence_embedding = session.run(sentenceEncoder(sentences))
+
+        similarity = np.matmul(evidence_embedding, np.transpose(sentence_embedding))
+        suggestions = suggestions.append(get_similar_sentences(similarity, evidences, sentences, 'test'))
+        suggestions.sort_values(by=['probability'], ascending=False, inplace=True)
+        suggestions.drop_duplicates(inplace=True)
+
+        session.close()
+    return suggestions.to_json(orient='records')
 
