@@ -6,7 +6,7 @@ import re
 MAX_SENTENCE_LENGTH = 50
 MIN_SENTENCE_LENGTH = 6
 
-LEGAL_ABBREVATIONS = ['chap', 'distr', 'paras', 'cf', 'cfr', 'para', 'no', 'al', 'br', 'dr', 'hon', 'app', 'cr', 'crim', 'l.r', 'cri', 'cap', 'e.g', 'vol', 'd', 'a', 'ph']
+LEGAL_ABBREVATIONS = ['chap', 'distr', 'paras', 'cf', 'cfr', 'para', 'no', 'al', 'br', 'dr', 'hon', 'app', 'cr', 'crim', 'l.r', 'cri', 'cap', 'e.g', 'vol', 'd', 'a', 'ph', 'inc.v', 'prof', 'mrs', 'mrt', 'msn', 'mrj', 'msi', 'mrg', 'mra', 'mst', 'mrd', 'pp', 'seq', 'art', 'p', 'nos', 'op', 'i.e', 'tel']
 
 def loadTokenizerWithExtraAbbrevations(language='english', abbrevations=[]):
     tokenizer = nltk.data.load('tokenizers/punkt/{0}.pickle'.format(language))
@@ -16,7 +16,10 @@ def loadTokenizerWithExtraAbbrevations(language='english', abbrevations=[]):
 LEGAL_TOKENIZER = loadTokenizerWithExtraAbbrevations(abbrevations=LEGAL_ABBREVATIONS)
 
 def insertSpaceAfterPunctuation(text):
-    return re.sub(r'\.(?=[A-Z])', '. ', text)
+    text = re.sub(r'\.(?=[A-Z0-9])', '. ', text)
+    text = re.sub(r'\)(?=[A-Z0-9])', ') ', text)
+    text = re.sub(r'(?<=[a-zA-Z0-9])\(', ' (', text)
+    return re.sub(r',(?=[a-zA-Z0-9])', ', ', text)
 
 def insertNewlineAfterSpeech(text):
     text = re.sub(ur'\.\u2019', ur'.\u2019\n', text)
@@ -67,6 +70,9 @@ def splitTooLongSentencesInChunks(sentences, MAX_SENTENCE_LENGTH):
             sentences[ind] = splitInChunks(sentence, MAX_SENTENCE_LENGTH)
     return flattenList(sentences)
 
+def filterForLength(sentences, MIN_SENTENCE_LENGTH):
+    return [sentence for sentence in sentences if len(sentence.split()) >= MIN_SENTENCE_LENGTH]
+
 
 def tokenize(text, maxSentenceLength=50, minSentenceLength=5):
     text = insertSpaceAfterPunctuation(text)
@@ -77,6 +83,8 @@ def tokenize(text, maxSentenceLength=50, minSentenceLength=5):
     sentences = splitTooLongSentencesAtCharacter(sentences, ':', minSentenceLength)
     sentences = splitTooLongSentencesAtCharacter(sentences, ';', minSentenceLength)
     sentences = splitTooLongSentencesInChunks(sentences, maxSentenceLength)
+
+    sentences = filterForLength(sentences, MIN_SENTENCE_LENGTH)
 
     return sentences
 
