@@ -138,14 +138,12 @@ class Preprocessor:
             try:
                 mapping.append(self.vocabulary[word])
             except:
-                oov.append((word, ind))
-                mapping.append(-1)
+                oov.append(word)
+                mapping.append(0)
         if len(oov)>0:
-            self.loadWordEmbedding()
-            for word,pos in oov:
-                self.addOOVWordToEmbedding(word)
-                mapping[pos] = self.vocabulary[word]
-            oov = list(zip(*oov)[1])
+            f = open('OOV.txt', 'a+')
+            for oov_word in oov:
+                f.write(oov_word.encode('utf8') + '\n')
         return (mapping, oov)
 
 
@@ -179,6 +177,12 @@ class Preprocessor:
         words = self.wordEmbedding.getVocabulary(nTop)
         indices = range(0,len(words))
         self.vocabulary = dict(zip(words, indices))
+
+    def getOOV(self, path='OOV.txt'):
+        f = open(path, 'rb')
+        oov = f.readlines()
+        self.oov = set([word.split('\n')[0].decode('utf8') for word in oov])
+
 
 
     def setEmbedding(self):
