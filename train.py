@@ -18,7 +18,6 @@ DROPOUT = 0.5
 FILTER_SIZES = [2,2,2]
 
 PREPROCESSING = 1
-VOCAB_SIZE = 45000
 MAX_SENTENCE_LENGTH = 40
 
 
@@ -49,14 +48,15 @@ def train(evidences, category):
             summaryWriter = summaryCache.get(checkpoint_dir)
 
         else:
+            preprocessor = Preprocessor(maxSentenceLength=MAX_SENTENCE_LENGTH)
+            preprocessor.setupWordEmbedding()
+
             nn = NeuralNet(MAX_SENTENCE_LENGTH, 2)
-            nn.buildNeuralNet(vocab_size=VOCAB_SIZE, filter_sizes=FILTER_SIZES)
+            nn.buildNeuralNet(vocab_size=preprocessor.vocabSize, filter_sizes=FILTER_SIZES)
             nn.setupSummaries(sess.graph, checkpoint_dir)
             sess.run(tf.global_variables_initializer())
             sess.run(tf.local_variables_initializer())
 
-            preprocessor = Preprocessor(maxSentenceLength=MAX_SENTENCE_LENGTH)
-            preprocessor.setupWordEmbedding()
             sess.run(nn.W.assign(preprocessor.embedding))
 
             summaryWriter = tf.summary.FileWriter(checkpoint_dir, sess.graph)

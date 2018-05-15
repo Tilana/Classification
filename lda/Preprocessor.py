@@ -1,4 +1,5 @@
 import re
+import os
 import cPickle as pickle
 from nltk.stem import WordNetLemmatizer
 from nltk import pos_tag
@@ -12,6 +13,7 @@ import Pyro.core
 
 numberDict = {'zero': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10, 'eleven': 11, 'twelve': 12, 'thirteen': 13, 'fourteen': 14, 'fifteen': 15, 'sixteen': 16, 'seventeen': 17, 'eighteen': 18, 'nineteen': 19, 'twenty': 20, 'thirty': 30, 'forty': 40, 'fifty': 50, 'sixty': 60, 'seventy': 70, 'eighty': 80, 'ninety': 90}
 WORDEMBEDDING_DIM = 300
+OOV_PATH = 'OOV.txt'
 
 
 class Preprocessor:
@@ -28,7 +30,7 @@ class Preprocessor:
 
     def trainVectorizer(self, docs):
         wordCounts = self.vectorizer.fit_transform(docs)
-        self.setVocabulary()
+        self.setVectorizerVocabulary()
         return [docVec for docVec in wordCounts.toarray()]
 
 
@@ -48,6 +50,7 @@ class Preprocessor:
                 lemmas.append(token)
         return lemmas
 
+
     def createPosLemmaTokens(self, text):
         token_pattern = re.compile(self.token_pattern)
         tokens = token_pattern.findall(text)
@@ -55,14 +58,8 @@ class Preprocessor:
         return self.posLemmatize(posTags)
 
 
-    def setVocabulary(self):
+    def setVectorizerVocabulary(self):
         self.vocabulary = self.vectorizer.get_feature_names()
-
-
-    def getVocabDict(self):
-        ids = self.vectorizer.vocabulary_.values()
-        words = self.vectorizer.vocabulary_.keys()
-        return dict(zip(ids,words))
 
 
     def posTagging(self, tokens):
@@ -131,26 +128,23 @@ class Preprocessor:
         lemmas = self.posLemmatize(posTags)
         return ' '.join(lemmas)
 
+
     def mapVocabularyIds(self, listOfTokens):
         mapping = []
-        oov = []
+        self.loadOOV(OOV_PATH)
+        sentence_oov = []
         for ind,word in enumerate(listOfTokens):
             try:
                 mapping.append(self.vocabulary[word])
             except:
-                oov.append(word)
-                mapping.append(0)
-        if len(oov)>0:
-            f = open('OOV.txt', 'a+')
-            for oov_word in oov:
-                f.write(oov_word.encode('utf8') + '\n')
-        return (mapping, oov)
-
-
-    def addOOVWordToEmbedding(self, word):
-        index = len(self.vocabulary)
-        self.vocabulary.update({word:index})
-        self.embedding[index] = self.wordEmbedding.getWordVector(word)
+                try:
+                    mapping.append(self.vocabulary[word.lower()])
+                except:
+                    self.oov.add(word)
+                    sentence_oov.append(word)
+                    mapping.append(0)
+        self.storeOOV(OOV_PATH)
+        return (mapping, sentence_oov)
 
 
     def padding(self, itemList):
@@ -164,25 +158,32 @@ class Preprocessor:
         return [word for word in text.split() if word not in stopchars]
 
 
-    def removeOOV(self, text, vocabulary):
-        words = [word for word in text.split(' ') if word in vocabulary]
-        return ' '.join(words)
-
-
     def loadWordEmbedding(self):
         self.wordEmbedding = Pyro.core.getProxyForURI("PYROLOC://localhost:7766/wordEmbedding")
 
 
-    def setVocabulary(self, nTop=50000):
+    def setVocabulary(self, nTop=50000, additionalVocab=None):
         words = self.wordEmbedding.getVocabulary(nTop)
         indices = range(0,len(words))
+        if additionalVocab:
+            words = words + additionalVocab
+            indices = range(0, len(words) + len(additionalVocab))
         self.vocabulary = dict(zip(words, indices))
+        self.vocabSize = len(self.vocabulary)
 
-    def getOOV(self, path='OOV.txt'):
-        f = open(path, 'rb')
-        oov = f.readlines()
-        self.oov = set([word.split('\n')[0].decode('utf8') for word in oov])
 
+    def loadOOV(self, path):
+        if os.path.exists(path):
+            f = open(path, 'rb')
+            self.oov = set([word.split('\n')[0].decode('utf8') for word in f.readlines()])
+        else:
+            self.oov = set()
+
+
+    def storeOOV(self, path):
+        f = open(path, 'wb')
+        for oov_word in self.oov:
+            f.write(oov_word.encode('utf8') + '\n')
 
 
     def setEmbedding(self):
@@ -191,17 +192,9 @@ class Preprocessor:
             self.embedding[idx] = self.wordEmbedding.getWordVector(word)
 
 
-    def addSpareEmbeddings(self, nSpare=5000):
-        oovReserve = np.zeros((nSpare, WORDEMBEDDING_DIM))
-        self.embedding = np.append(self.embedding, oovReserve, axis=0)
-
-
     def setupWordEmbedding(self, nTop=50000):
         self.loadWordEmbedding()
-        self.setVocabulary(nTop)
+        self.loadOOV(OOV_PATH)
+        self.setVocabulary(nTop, list(self.oov))
         self.setEmbedding()
-        self.addSpareEmbeddings()
-
-
-
 
