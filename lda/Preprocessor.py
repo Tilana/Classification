@@ -9,11 +9,14 @@ from nltk.tokenize import word_tokenize, sent_tokenize, wordpunct_tokenize
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 import fastText
 import numpy as np
+from WordEmbedding import WordEmbedding
 import Pyro.core
 
 numberDict = {'zero': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10, 'eleven': 11, 'twelve': 12, 'thirteen': 13, 'fourteen': 14, 'fifteen': 15, 'sixteen': 16, 'seventeen': 17, 'eighteen': 18, 'nineteen': 19, 'twenty': 20, 'thirty': 30, 'forty': 40, 'fifty': 50, 'sixty': 60, 'seventy': 70, 'eighty': 80, 'ninety': 90}
 WORDEMBEDDING_DIM = 300
 OOV_PATH = 'OOV.txt'
+
+USE_DAEMON = False
 
 
 class Preprocessor:
@@ -159,7 +162,11 @@ class Preprocessor:
 
 
     def loadWordEmbedding(self):
-        self.wordEmbedding = Pyro.core.getProxyForURI("PYROLOC://localhost:7766/wordEmbedding")
+        if USE_DAEMON:
+            self.wordEmbedding = Pyro.core.getProxyForURI("PYROLOC://localhost:7766/wordEmbedding")
+        else:
+            self.wordEmbedding = WordEmbedding()
+
 
 
     def setVocabulary(self, nTop=50000, additionalVocab=None):

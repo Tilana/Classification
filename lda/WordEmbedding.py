@@ -5,11 +5,13 @@ import csv
 
 #path = 'WordEmbedding/FastText_wiki-news-300d-1M-subword'
 path = 'WordEmbedding/FastText_wiki-news-300d-40000-subword'
+USE_DAEMON = False
 
 class WordEmbedding(Pyro.core.ObjBase):
 
     def __init__(self):
-        Pyro.core.ObjBase.__init__(self)
+        if USE_DAEMON:
+            Pyro.core.ObjBase.__init__(self)
         self.wordEmbedding = fastText.load_model(path + '.bin')
         with open(path + '.vec', 'rb') as f:
             self.vocabulary = [line.split(' ')[0] for line in f.readlines()][1:]
@@ -38,13 +40,14 @@ class WordEmbedding(Pyro.core.ObjBase):
             f.writelines(vocabWithLineSeparator)
         f.close()
 
-Pyro.core.initServer()
-daemon = Pyro.core.Daemon()
-uri = daemon.connect(WordEmbedding(), "wordEmbedding")
+if USE_DAEMON:
+    Pyro.core.initServer()
+    daemon = Pyro.core.Daemon()
+    uri = daemon.connect(WordEmbedding(), "wordEmbedding")
 
-print("The daemon runs on port: {port}".format(port=daemon))
-print("The object's uri is: {uri}".format(uri=uri))
+    print("The daemon runs on port: {port}".format(port=daemon))
+    print("The object's uri is: {uri}".format(uri=uri))
 
-daemon.requestLoop()
+    daemon.requestLoop()
 
 

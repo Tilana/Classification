@@ -27,7 +27,7 @@ MIN_NUM_TRAINING_SENTENCES = 20
 
 TRAINING_FILE = 'training.csv'
 
-subprocess.Popen('python lda/WordEmbedding.py', shell=True)
+#subprocess.Popen('python lda/WordEmbedding.py', shell=True)
 
 def get_similar_sentences(similarity, evidences, sentences, doc_id):
     similar_sentences = pd.DataFrame(columns=['probability'])
