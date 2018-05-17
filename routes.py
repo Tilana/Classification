@@ -130,7 +130,16 @@ def predict_one_model():
 def predict_route():
     data = json.loads(request.data)
     doc = pd.read_json('[' + json.dumps(data['doc']) + ']', encoding='utf8').loc[0]
+
+    evidenceData = pd.DataFrame.from_dict(data['properties'])
+    evidenceData['prop+value'] = evidenceData['property'] + '_' + evidenceData['value']
+    categories = evidenceData['prop+value'].unique()
+
     evidences = pd.read_csv(TRAINING_FILE, encoding='utf8')
+    evidences['prop+value'] = evidences['property'] + '_' + evidences['value']
+
+    evidences = evidences[evidences['prop+value'].isin(categories)]
+    evidences.reset_index(inplace=True)
 
     tf.reset_default_graph()
     sentenceEncoder = hub.Module("https://tfhub.dev/google/universal-sentence-encoder/1")
@@ -145,9 +154,11 @@ def predict_route():
         sentence_embedding = session.run(sentenceEncoder(sentences))
 
         similarity = np.matmul(evidence_embedding, np.transpose(sentence_embedding))
-        suggestions = suggestions.append(get_similar_sentences(similarity, evidences, sentences, 'test'))
+        suggestions = suggestions.append(get_similar_sentences(similarity, evidences, sentences, evidenceData.document[0]))
         suggestions.sort_values(by=['probability'], ascending=False, inplace=True)
         suggestions.drop_duplicates(inplace=True)
+
+
 
         session.close()
     return suggestions.to_json(orient='records')
