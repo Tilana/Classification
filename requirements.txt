@@ -9,3 +9,4 @@ scikit_learn>=0.19.1
 Pattern>=2.6
 seaborn>=0.8.1
 Pyro
+tensorflow-hub
