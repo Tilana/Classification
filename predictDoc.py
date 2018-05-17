@@ -20,6 +20,10 @@ def predictDoc(doc, category):
     info = Info(infoFile)
 
     sentences = tokenize(doc.text)
+    if len(sentences)==0:
+        print 'ERROR: Document is too short: No sentences found.'
+        return pd.DataFrame()
+
     sentenceDB = pd.DataFrame(sentences, columns=['sentence'])
 
     preprocessor = Preprocessor().load(processor_dir)

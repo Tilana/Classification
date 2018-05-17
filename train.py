@@ -1,6 +1,5 @@
 import lda.osHelper as osHelper
 from scripts import setUp
-from scripts.getPretrainedEmbedding import getPretrainedEmbedding
 from collections import Counter
 import tensorflow as tf
 from lda import Preprocessor, NeuralNet, Info, data_helpers

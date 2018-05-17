@@ -1,16 +1,14 @@
-import pandas as pd
 from lda.docLoader import loadConfigFile
 from lda import ClassificationModel, Evaluation
 from predictDoc import predictDoc
 from train import train
-import pdb
+import pandas as pd
 
 def onlineLearning():
 
     configFile = 'dataConfig.json'
     sentences_config_name = 'ICAAD_DV_sentences'
     categoryID = 'ICAAD_DV_sentences'
-    summary_config_name = 'ICAAD_DV_summaries'
 
     # Get Sentence dataset
     sentences_config = loadConfigFile(configFile, sentences_config_name)
@@ -23,7 +21,7 @@ def onlineLearning():
     classifier.data = sentences
     classifier.createTarget()
 
-    classifier.splitDataset(train_size=0.97, random_state=7)
+    classifier.splitDataset(train_size=0.97, random_state=42)
 
     # Train Classifier
     for numberSample in xrange(10):
@@ -31,17 +29,17 @@ def onlineLearning():
         evidence = pd.DataFrame({'sentence':sample.text.tolist(), 'label': sample.category.tolist()})
         train(evidence, categoryID)
 
+    classifier.testData['predictedLabel'] = 0
+
     # Predict label of sentences in documents
     for ind, sample in classifier.testData.iterrows():
         evidenceSentences = predictDoc(sample, categoryID)
         if len(evidenceSentences)>=1:
-            classifier.testData.loc[ind, 'predLabel'] = 1
+            classifier.testData.loc[ind, 'predictedLabel'] = 1
             classifier.testData.loc[ind, 'probability'] = evidenceSentences.probability.tolist()[0]
 
 
-    classifier.testData.predLabel.fillna(0, inplace=True)
-
-    evaluation = Evaluation(target=classifier.testData.category.tolist(), prediction=classifier.testData.predLabel.tolist())
+    evaluation = Evaluation(target=classifier.testData.category.tolist(), prediction=classifier.testData.predictedLabel.tolist())
     evaluation.computeMeasures()
     evaluation.confusionMatrix()
     print 'Accuracy: ' + str(evaluation.accuracy)
