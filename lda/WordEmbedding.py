@@ -20,7 +20,6 @@ class WordEmbedding(Pyro.core.ObjBase):
         return self.vocabulary[:nTop]
 
     def getWordVector(self, word):
-        print word
         return self.wordEmbedding.get_word_vector(word)
 
     def toTSV(self, nTop=50000):

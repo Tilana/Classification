@@ -10,6 +10,7 @@ import pdb
 import pandas as pd
 import os
 import json
+from systemd import journal
 
 BATCH_SIZE = 10
 ITERATIONS = 70
@@ -40,6 +41,7 @@ def train(evidences, category):
     with tf.Session() as sess:
 
         if os.path.exists(checkpoint_dir):
+            journal.send('LOAD PRETRAINED MODEL')
             nn.loadCheckpoint(sess.graph, sess, checkpoint_dir)
 
             preprocessor = Preprocessor().load(processor_dir)
@@ -47,6 +49,7 @@ def train(evidences, category):
             summaryWriter = summaryCache.get(checkpoint_dir)
 
         else:
+            journal.send('BUILD NEURAL NETWORK')
             preprocessor = Preprocessor(maxSentenceLength=MAX_SENTENCE_LENGTH)
             preprocessor.setupWordEmbedding()
 
@@ -61,6 +64,7 @@ def train(evidences, category):
             summaryWriter = tf.summary.FileWriter(checkpoint_dir, sess.graph)
             nn.setSaver()
 
+        journal.send('PROCESS EVIDENCE SENTENCES')
         evidences['tokens'] = evidences.sentence.apply(preprocessor.tokenize)
         vocabIds = evidences.tokens.apply(preprocessor.mapVocabularyIds).tolist()
         evidences['mapping'], evidences['oov'] = zip(*vocabIds)
@@ -73,6 +77,7 @@ def train(evidences, category):
         Y = pd.get_dummies(Ylabels).as_matrix()
 
         batches = data_helpers.batch_iter(list(zip(X, Y)), BATCH_SIZE, ITERATIONS, shuffle=True)
+        journal.send('START BATCH TRAINING')
 
         for batch in batches:
 
@@ -83,6 +88,8 @@ def train(evidences, category):
             summaryWriter.add_session_log(tf.SessionLog(status=tf.SessionLog.START), info.global_step+1)
             summaryWriter.add_summary(summary, info.global_step) #, 10)
 
+
+        journal.send('SAVE CNN')
         nn.saveCheckpoint(sess, checkpoint_dir + '/model', info.global_step)
         preprocessor.save(processor_dir)
 

@@ -18,6 +18,8 @@ import tensorflow as tf
 import argparse as _argparse
 import pdb
 import subprocess
+from systemd import journal
+
 app = Flask(__name__)
 
 THRESHOLD = 0.67
@@ -62,13 +64,14 @@ def retrain_route():
     model_evidences = evidences[(evidences['property']==data['property']) & (evidences['value']==data['value'])]
 
     if len(model_evidences) >= MIN_NUM_TRAINING_SENTENCES:
+        journal.send('CNN TRAINING')
         rmtree(os.path.join('runs', model), ignore_errors=True)
         tf.app.flags._global_parser = _argparse.ArgumentParser()
         train(model_evidences, model)
     elif len(model_evidences) == 0:
-        print 'no training data is available for this category'
+        journal.send('NO TRAINING DATA IS AVAILABLE')
     else:
-        print 'not enough training data for CNN'
+        journal.send('NOT ENOUGH DATA FOR CNN TRAINING')
 
     return "{}"
 
@@ -78,24 +81,29 @@ def predict_one_model():
     docs = pd.read_json(json.dumps(data['docs']), encoding='utf8');
 
     evidences = pd.read_csv(TRAINING_FILE, encoding='utf8')
-    model_evidences = evidences[(evidences['property']==data['property']) & (evidences['value']==data['value']) & (evidences['label']==True)]
+    model_evidences = evidences[(evidences['property']==data['property']) & (evidences['value']==data['value'])]
     model_evidences = model_evidences.reset_index()
 
     if len(model_evidences)==0:
         return "{}"
 
     elif len(model_evidences)< MIN_NUM_TRAINING_SENTENCES:
-        print 'UNIVERSAL SENTENCE ENCODER'
+        journal.send('UNIVERSAL SENTENCE ENCODER')
         tf.reset_default_graph()
         sentenceEncoder = hub.Module("https://tfhub.dev/google/universal-sentence-encoder/1")
+        journal.send('LOADED SENTENCE ENCODER')
 
         suggestions = pd.DataFrame(columns=['probability'])
 
         with tf.Session() as session:
             session.run([tf.global_variables_initializer(), tf.tables_initializer()])
+
+            journal.send('ENCODE EVIDENCE SENTENCES')
             evidence_embedding = session.run(sentenceEncoder(model_evidences.sentence.tolist()))
 
-            for doc in docs.iterrows():
+            for doc in docs[:10].iterrows():
+
+                journal.send('ENCODE DOC ' + doc[1]['_id'])
                 sentences = tokenize(doc[1].text, MAX_SENTENCE_LENGTH, MIN_SENTENCE_LENGTH)
                 sentence_embedding = session.run(sentenceEncoder(sentences))
 
@@ -108,7 +116,7 @@ def predict_one_model():
         return suggestions.to_json(orient='records')
 
     else:
-        print 'CONVOLUTIONAL NEURAL NET'
+        journal.send('CONVOLUTIONAL NEURAL NET')
         model = data['value']+data['property'];
         results = [];
         for doc in docs.iterrows():
@@ -120,7 +128,7 @@ def predict_one_model():
                 predictions['document'] = doc[1]['_id']
                 results.append(predictions)
             except:
-                print 'model not trained'
+                journal.send('model not trained')
         suggestions = pd.concat(results).sort_values(by=['probability'], ascending=False).head(100)
         return suggestions.to_json(orient='records')
 

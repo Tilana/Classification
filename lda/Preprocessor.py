@@ -11,6 +11,7 @@ import fastText
 import numpy as np
 from WordEmbedding import WordEmbedding
 import Pyro.core
+from systemd import journal
 
 numberDict = {'zero': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10, 'eleven': 11, 'twelve': 12, 'thirteen': 13, 'fourteen': 14, 'fifteen': 15, 'sixteen': 16, 'seventeen': 17, 'eighteen': 18, 'nineteen': 19, 'twenty': 20, 'thirty': 30, 'forty': 40, 'fifty': 50, 'sixty': 60, 'seventy': 70, 'eighty': 80, 'ninety': 90}
 WORDEMBEDDING_DIM = 300
@@ -195,8 +196,13 @@ class Preprocessor:
 
     def setEmbedding(self):
         self.embedding = np.random.uniform(-0.25, 0.25, (self.vocabulary.__len__(), WORDEMBEDDING_DIM))
+        journal.send('GET WORD VECTORS')
         for word,idx in self.vocabulary.iteritems():
-            self.embedding[idx] = self.wordEmbedding.getWordVector(word)
+            try:
+                self.embedding[idx] = self.wordEmbedding.getWordVector(word)
+            except:
+                journal.send('OOV: ' + word)
+        journal.send('ALL WORD VECTORS COLLECTED')
 
 
     def setupWordEmbedding(self, nTop=50000):
