@@ -1,12 +1,16 @@
 import pandas as pd
 import numpy as np
+import numpy.core.numeric as _nx
+from nltk.tokenize import word_tokenize
 import nltk
 import re
 
 MAX_SENTENCE_LENGTH = 50
 MIN_SENTENCE_LENGTH = 6
 
+
 LEGAL_ABBREVATIONS = ['chap', 'distr', 'paras', 'cf', 'cfr', 'para', 'no', 'al', 'br', 'dr', 'hon', 'app', 'cr', 'crim', 'l.r', 'cri', 'cap', 'e.g', 'vol', 'd', 'a', 'ph', 'inc.v', 'prof', 'mrs', 'mrt', 'msn', 'mrj', 'msi', 'mrg', 'mra', 'mst', 'mrd', 'pp', 'seq', 'art', 'p', 'nos', 'op', 'i.e', 'tel']
+
 
 def loadTokenizerWithExtraAbbrevations(language='english', abbrevations=[]):
     tokenizer = nltk.data.load('tokenizers/punkt/{0}.pickle'.format(language))
@@ -14,6 +18,22 @@ def loadTokenizerWithExtraAbbrevations(language='english', abbrevations=[]):
     return tokenizer
 
 LEGAL_TOKENIZER = loadTokenizerWithExtraAbbrevations(abbrevations=LEGAL_ABBREVATIONS)
+
+
+def splitListAtPunctuationWithVarianz(wordList, sections, wordRange=5):
+    wordsPerSection, extras = divmod(len(wordList), sections)
+    sectionSizes = ([0] + extras * [wordsPerSection+1] + (wordsPerSection-extras) * [wordsPerSection])
+    divInd = _nx.array(sectionSizes).cumsum()
+    divInd = [ind for ind in divInd if ind<=len(wordList)]
+    for indPos, pos in enumerate(divInd[1:len(divInd)-1]):
+        wordListPart = wordList[pos-wordRange:pos+wordRange]
+        indices = range(pos-wordRange, pos+wordRange+1)
+        for wordPos,word in enumerate(wordListPart):
+            if word == ',' or word==')' or word==']':
+                divInd[indPos+1]= indices[wordPos+1]
+    splittedList = np.array_split(wordList, divInd)
+    return splittedList
+
 
 def insertSpaceAfterPunctuation(text):
     text = re.sub(r'\.(?=[A-Z0-9])', '. ', text)
@@ -42,8 +62,10 @@ def splitAtNewline(sentences):
     return sum(sentences, [])
 
 def splitInChunks(sentence, MAX_SENTENCE_LENGTH):
-    listOfWords = sentence.split()
-    splittedSentences = np.array_split(listOfWords, len(listOfWords)/MAX_SENTENCE_LENGTH + 1)
+    listOfWords = word_tokenize(sentence)
+    numberOfSplits = len(listOfWords)/MAX_SENTENCE_LENGTH + 1
+
+    splittedSentences = splitListAtPunctuationWithVarianz(listOfWords, numberOfSplits)
     return [' '.join(sentence.tolist()) for sentence in splittedSentences]
 
 def flattenList(listOfElems):
@@ -58,7 +80,7 @@ def flattenList(listOfElems):
 
 def splitTooLongSentencesAtCharacter(sentences, character, minimumSentenceLength=5):
     for ind, sentence in enumerate(sentences):
-        if len(sentence.split()) > MAX_SENTENCE_LENGTH:
+        if len(word_tokenize(sentence)) > MAX_SENTENCE_LENGTH:
             semicolonSplit = insertNewLine(sentence, character, minimumSentenceLength)
             if len(semicolonSplit.split('\n')) > 1:
                 sentences[ind] = semicolonSplit.split('\n')
@@ -66,7 +88,7 @@ def splitTooLongSentencesAtCharacter(sentences, character, minimumSentenceLength
 
 def splitTooLongSentencesInChunks(sentences, MAX_SENTENCE_LENGTH):
     for ind, sentence in enumerate(sentences):
-        if len(sentence.split()) > MAX_SENTENCE_LENGTH:
+        if len(word_tokenize(sentence)) > MAX_SENTENCE_LENGTH:
             sentences[ind] = splitInChunks(sentence, MAX_SENTENCE_LENGTH)
     return flattenList(sentences)
 
@@ -82,6 +104,7 @@ def tokenize(text, maxSentenceLength=50, minSentenceLength=5):
 
     sentences = splitTooLongSentencesAtCharacter(sentences, ':', minSentenceLength)
     sentences = splitTooLongSentencesAtCharacter(sentences, ';', minSentenceLength)
+
     sentences = splitTooLongSentencesInChunks(sentences, maxSentenceLength)
 
     sentences = filterForLength(sentences, MIN_SENTENCE_LENGTH)
