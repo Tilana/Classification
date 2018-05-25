@@ -19,6 +19,16 @@ def loadTokenizerWithExtraAbbrevations(language='english', abbrevations=[]):
 
 LEGAL_TOKENIZER = loadTokenizerWithExtraAbbrevations(abbrevations=LEGAL_ABBREVATIONS)
 
+def detokenize(wordList):
+    text = ' '.join(wordList)
+    text = re.sub(r' ([.,:;?!%]+)([ \'"`])', r"\1\2", text)
+    text = re.sub(r' ([.,:;?!%]+)$', r"\1", text)
+    text = text.replace('[ ', '[').replace(' ]', ']')
+    text = text.replace('( ', '(').replace(' )', ')')
+    text = text.replace('" ', '"').replace(" '", "'")
+    return text.strip()
+
+
 
 def splitListAtPunctuationWithVarianz(wordList, sections, wordRange=5):
     wordsPerSection, extras = divmod(len(wordList), sections)
@@ -39,6 +49,7 @@ def insertSpaceAfterPunctuation(text):
     text = re.sub(r'\.(?=[A-Z0-9])', '. ', text)
     text = re.sub(r'\)(?=[A-Z0-9])', ') ', text)
     text = re.sub(r'(?<=[a-zA-Z0-9])\(', ' (', text)
+    text = re.sub(r'\](?=[A-Z0-9])', '] ', text)
     return re.sub(r',(?=[a-zA-Z0-9])', ', ', text)
 
 def insertNewlineAfterSpeech(text):
@@ -66,7 +77,7 @@ def splitInChunks(sentence, MAX_SENTENCE_LENGTH):
     numberOfSplits = len(listOfWords)/MAX_SENTENCE_LENGTH + 1
 
     splittedSentences = splitListAtPunctuationWithVarianz(listOfWords, numberOfSplits)
-    return [' '.join(sentence.tolist()) for sentence in splittedSentences]
+    return [detokenize(sentence.tolist()) for sentence in splittedSentences]
 
 def flattenList(listOfElems):
     flatList = []
