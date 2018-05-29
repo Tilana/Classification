@@ -55,7 +55,7 @@ class NeuralNet:
             self.probability = tf.reduce_max(tf.nn.softmax(self.Ylogits), 1, name='probability')
 
         with tf.name_scope("loss"):
-            cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=self.Ylogits, labels=self.Y_, name="cross_entropy_with_logits")
+            cross_entropy = tf.nn.softmax_cross_entropy_with_logits_v2(logits=self.Ylogits, labels=tf.stop_gradient(self.Y_), name="cross_entropy_with_logits")
             l2_reg_lambda = 3.0
             self.loss = tf.reduce_mean(cross_entropy) + l2_reg_lambda * self.l2_loss
             loss_summary = tf.summary.scalar("loss", self.loss)
