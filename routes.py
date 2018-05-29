@@ -60,6 +60,7 @@ def retrain_route():
     model = data['value'] + data['property']
 
     #model_evidences = pd.read_json(json.dumps(data['evidences']), encoding='utf8');
+
     evidences = pd.read_csv(TRAINING_FILE, encoding='utf8')
     model_evidences = evidences[(evidences['property']==data['property']) & (evidences['value']==data['value'])]
 
@@ -77,12 +78,15 @@ def retrain_route():
 
 @app.route('/classification/predictOneModel', methods=['POST'])
 def predict_one_model():
+
     data = json.loads(request.data)
     docs = pd.read_json(json.dumps(data['docs']), encoding='utf8');
+
 
     evidences = pd.read_csv(TRAINING_FILE, encoding='utf8')
     model_evidences = evidences[(evidences['property']==data['property']) & (evidences['value']==data['value'])]
     model_evidences = model_evidences.reset_index()
+
 
     if len(model_evidences)==0:
         return "{}"
@@ -101,18 +105,26 @@ def predict_one_model():
             journal.send('ENCODE EVIDENCE SENTENCES')
             evidence_embedding = session.run(sentenceEncoder(model_evidences.sentence.tolist()))
 
-            for doc in docs[:10].iterrows():
+            docIDs = []
 
-                journal.send('ENCODE DOC ' + doc[1]['_id'])
-                sentences = tokenize(doc[1].text, MAX_SENTENCE_LENGTH, MIN_SENTENCE_LENGTH)
-                sentence_embedding = session.run(sentenceEncoder(sentences))
+            for doc in docs.iterrows():
 
-                similarity = np.matmul(evidence_embedding, np.transpose(sentence_embedding))
-                suggestions = suggestions.append(get_similar_sentences(similarity, model_evidences, sentences, doc[1]['_id']))
-                suggestions.sort_values(by=['probability'], ascending=False, inplace=True)
-                suggestions.drop_duplicates(inplace=True)
+                docID = doc[1]['_id']
+
+                if docID not in docIDs:
+                    journal.send('ENCODE DOC ' + docID)
+                    sentences = tokenize(doc[1].text, MAX_SENTENCE_LENGTH, MIN_SENTENCE_LENGTH)
+                    sentence_embedding = session.run(sentenceEncoder(sentences))
+
+                    similarity = np.matmul(evidence_embedding, np.transpose(sentence_embedding))
+                    suggestions = suggestions.append(get_similar_sentences(similarity, model_evidences, sentences, docID))
+                    suggestions.sort_values(by=['probability'], ascending=False, inplace=True)
+                    suggestions.drop_duplicates(inplace=True)
+
+                    docIDs.append(docID)
 
             session.close()
+
         return suggestions.to_json(orient='records')
 
     else:
@@ -166,8 +178,7 @@ def predict_route():
         suggestions.sort_values(by=['probability'], ascending=False, inplace=True)
         suggestions.drop_duplicates(inplace=True)
 
-
-
         session.close()
+
     return suggestions.to_json(orient='records')
 
