@@ -99,25 +99,27 @@ def predict_one_model():
 
         suggestions = pd.DataFrame(columns=['probability'])
 
+        sentences = tf.placeholder(dtype=tf.string, shape=[None])
+        embedding = sentenceEncoder(sentences)
+
         with tf.Session() as session:
             session.run([tf.global_variables_initializer(), tf.tables_initializer()])
 
             journal.send('ENCODE EVIDENCE SENTENCES')
-            evidence_embedding = session.run(sentenceEncoder(model_evidences.sentence.tolist()))
+            evidence_embedding = session.run(embedding, feed_dict={sentences: model_evidences.sentence.tolist()})
 
             docIDs = []
 
             for doc in docs.iterrows():
-
                 docID = doc[1]['_id']
 
                 if docID not in docIDs:
                     journal.send('ENCODE DOC ' + docID)
-                    sentences = tokenize(doc[1].text, MAX_SENTENCE_LENGTH, MIN_SENTENCE_LENGTH)
-                    sentence_embedding = session.run(sentenceEncoder(sentences))
+                    doc_sentences = tokenize(doc[1].text, MAX_SENTENCE_LENGTH, MIN_SENTENCE_LENGTH)
+                    sentence_embedding = session.run(embedding, feed_dict={sentences: doc_sentences})
 
                     similarity = np.matmul(evidence_embedding, np.transpose(sentence_embedding))
-                    suggestions = suggestions.append(get_similar_sentences(similarity, model_evidences, sentences, docID))
+                    suggestions = suggestions.append(get_similar_sentences(similarity, model_evidences, doc_sentences, docID))
                     suggestions.sort_values(by=['probability'], ascending=False, inplace=True)
                     suggestions.drop_duplicates(inplace=True)
 
@@ -148,6 +150,7 @@ def predict_one_model():
 
 @app.route('/classification/predict', methods=['POST'])
 def predict_route():
+
     data = json.loads(request.data)
     doc = pd.read_json('[' + json.dumps(data['doc']) + ']', encoding='utf8').loc[0]
 
@@ -166,19 +169,21 @@ def predict_route():
 
     suggestions = pd.DataFrame(columns=['probability'])
 
+    sentences = tf.placeholder(dtype=tf.string, shape=[None])
+    embedding = sentenceEncoder(sentences)
+
     with tf.Session() as session:
         session.run([tf.global_variables_initializer(), tf.tables_initializer()])
-        evidence_embedding = session.run(sentenceEncoder(evidences.sentence.tolist()))
 
-        sentences = tokenize(doc.text, MAX_SENTENCE_LENGTH, MIN_SENTENCE_LENGTH)
-        sentence_embedding = session.run(sentenceEncoder(sentences))
+        doc_sentences = tokenize(doc.text, MAX_SENTENCE_LENGTH, MIN_SENTENCE_LENGTH)
+        sentence_embedding = session.run(embedding, feed_dict={sentences: doc_sentences})
+        evidence_embedding = session.run(embedding, feed_dict={sentences: evidences.sentence.tolist()})
 
         similarity = np.matmul(evidence_embedding, np.transpose(sentence_embedding))
-        suggestions = suggestions.append(get_similar_sentences(similarity, evidences, sentences, evidenceData.document[0]))
+        suggestions = suggestions.append(get_similar_sentences(similarity, evidences, doc_sentences, evidenceData.document[0]))
         suggestions.sort_values(by=['probability'], ascending=False, inplace=True)
         suggestions.drop_duplicates(inplace=True)
 
         session.close()
-
     return suggestions.to_json(orient='records')
 
