@@ -120,13 +120,15 @@ def predict_one_model():
 
                     similarity = np.matmul(evidence_embedding, np.transpose(sentence_embedding))
                     suggestions = suggestions.append(get_similar_sentences(similarity, model_evidences, doc_sentences, docID))
-                    suggestions.sort_values(by=['probability'], ascending=False, inplace=True)
-                    suggestions.drop_duplicates(inplace=True)
-
                     docIDs.append(docID)
 
             session.close()
 
+        if len(suggestions)>0:
+            suggestions.sort_values(by=['probability'], ascending=False, inplace=True)
+            suggestions.drop_duplicates(suggestions.columns.difference(['probability']), inplace=True)
+            suggestions = suggestions[~suggestions.evidence.isin(model_evidences.sentence)]
+            suggestions.reset_index(inplace=True)
         return suggestions.to_json(orient='records')
 
     else:
@@ -184,9 +186,10 @@ def predict_route():
 
         session.close()
 
-    suggestions.sort_values(by=['probability'], ascending=False, inplace=True)
-    suggestions.drop_duplicates(suggestions.columns.difference(['probability']), inplace=True)
-    suggestions = suggestions[suggestions.evidence.isin(evidences.sentence)]
-    suggestions.reset_index(inplace=True)
+    if len(suggestions)>0:
+        suggestions.sort_values(by=['probability'], ascending=False, inplace=True)
+        suggestions.drop_duplicates(suggestions.columns.difference(['probability']), inplace=True)
+        suggestions = suggestions[~suggestions.evidence.isin(evidences.sentence)]
+        suggestions.reset_index(inplace=True)
     return suggestions.to_json(orient='records')
 
