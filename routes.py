@@ -181,9 +181,12 @@ def predict_route():
 
         similarity = np.matmul(evidence_embedding, np.transpose(sentence_embedding))
         suggestions = suggestions.append(get_similar_sentences(similarity, evidences, doc_sentences, evidenceData.document[0]))
-        suggestions.sort_values(by=['probability'], ascending=False, inplace=True)
-        suggestions.drop_duplicates(inplace=True)
 
         session.close()
+
+    suggestions.sort_values(by=['probability'], ascending=False, inplace=True)
+    suggestions.drop_duplicates(suggestions.columns.difference(['probability']), inplace=True)
+    suggestions = suggestions[suggestions.evidence.isin(evidences.sentence)]
+    suggestions.reset_index(inplace=True)
     return suggestions.to_json(orient='records')
 
