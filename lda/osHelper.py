@@ -1,6 +1,5 @@
 import os
 import glob
-import pdb
 
 def deleteFolderContent(path):
     files = glob.glob(path + '/*')

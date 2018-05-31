@@ -27,7 +27,8 @@ MAX_SENTENCE_LENGTH = 40
 MIN_SENTENCE_LENGTH = 5
 MIN_NUM_TRAINING_SENTENCES = 20
 
-TRAINING_FILE = 'training.csv'
+TRAINING_FOLDER= 'training/'
+osHelper.createFolderIfNotExistent(TRAINING_FOLDER)
 
 #subprocess.Popen('python lda/WordEmbedding.py', shell=True)
 
@@ -47,11 +48,13 @@ def train_route():
     label = data['property'] + "_" + data['value'] + "_" + str(data['isEvidence']);
     sentence = data['evidence']['text'].encode('utf-8');
 
+    trainingFile = TRAINING_FOLDER + data['property'] + '_' +  data['value']
+
     df = pd.DataFrame({'sentence': sentence, 'property': data['property'], 'value':data['value'], 'label': data['isEvidence']}, index=[0])
-    if os.path.exists(TRAINING_FILE):
-        df.to_csv(TRAINING_FILE, mode='a', header=False, index=False, encoding='utf8')
+    if os.path.exists(trainingFile):
+        df.to_csv(trainingFile, mode='a', header=False, index=False, encoding='utf8')
     else:
-        df.to_csv(TRAINING_FILE, mode='a', index=False, encoding='utf8')
+        df.to_csv(trainingFile, mode='a', index=False, encoding='utf8')
     return "{}"
 
 @app.route('/classification/retrain', methods=['POST'])
@@ -59,17 +62,16 @@ def retrain_route():
     data = json.loads(request.data)
     model = data['value'] + data['property']
 
-    #model_evidences = pd.read_json(json.dumps(data['evidences']), encoding='utf8');
+    trainingFile = TRAINING_FOLDER + data['property'] + '_' + data['value']
+    evidences = pd.read_csv(trainingFile, encoding='utf8')
+    posEvidences = evidences[evidences.label]
 
-    evidences = pd.read_csv(TRAINING_FILE, encoding='utf8')
-    model_evidences = evidences[(evidences['property']==data['property']) & (evidences['value']==data['value'])]
-
-    if len(model_evidences) >= MIN_NUM_TRAINING_SENTENCES:
+    if len(posEvidences) >= MIN_NUM_TRAINING_SENTENCES:
         journal.send('CNN TRAINING')
         rmtree(os.path.join('runs', model), ignore_errors=True)
         tf.app.flags._global_parser = _argparse.ArgumentParser()
-        train(model_evidences, model)
-    elif len(model_evidences) == 0:
+        train(evidences, model)
+    elif len(posEvidences) == 0:
         journal.send('NO TRAINING DATA IS AVAILABLE')
     else:
         journal.send('NOT ENOUGH DATA FOR CNN TRAINING')
@@ -82,16 +84,15 @@ def predict_one_model():
     data = json.loads(request.data)
     docs = pd.read_json(json.dumps(data['docs']), encoding='utf8');
 
+    trainingFile = TRAINING_FOLDER + data['property'] + '_' + data['value']
+    evidences = pd.read_csv(trainingFile , encoding='utf8')
+    evidences = evidences[evidences.label]
+    evidences.reset_index(inplace=True)
 
-    evidences = pd.read_csv(TRAINING_FILE, encoding='utf8')
-    model_evidences = evidences[(evidences['property']==data['property']) & (evidences['value']==data['value'])]
-    model_evidences = model_evidences.reset_index()
-
-
-    if len(model_evidences)==0:
+    if len(evidences)==0:
         return "{}"
 
-    elif len(model_evidences)< MIN_NUM_TRAINING_SENTENCES:
+    elif len(evidences) < MIN_NUM_TRAINING_SENTENCES:
         journal.send('UNIVERSAL SENTENCE ENCODER')
         tf.reset_default_graph()
         sentenceEncoder = hub.Module("https://tfhub.dev/google/universal-sentence-encoder/1")
@@ -106,7 +107,7 @@ def predict_one_model():
             session.run([tf.global_variables_initializer(), tf.tables_initializer()])
 
             journal.send('ENCODE EVIDENCE SENTENCES')
-            evidence_embedding = session.run(embedding, feed_dict={sentences: model_evidences.sentence.tolist()})
+            evidence_embedding = session.run(embedding, feed_dict={sentences: evidences.sentence.tolist()})
 
             docIDs = []
 
@@ -119,7 +120,7 @@ def predict_one_model():
                     sentence_embedding = session.run(embedding, feed_dict={sentences: doc_sentences})
 
                     similarity = np.matmul(evidence_embedding, np.transpose(sentence_embedding))
-                    suggestions = suggestions.append(get_similar_sentences(similarity, model_evidences, doc_sentences, docID))
+                    suggestions = suggestions.append(get_similar_sentences(similarity, evidences, doc_sentences, docID))
                     docIDs.append(docID)
 
             session.close()
@@ -127,7 +128,7 @@ def predict_one_model():
         if len(suggestions)>0:
             suggestions.sort_values(by=['probability'], ascending=False, inplace=True)
             suggestions.drop_duplicates(suggestions.columns.difference(['probability']), inplace=True)
-            suggestions = suggestions[~suggestions.evidence.isin(model_evidences.sentence)]
+            suggestions = suggestions[~suggestions.evidence.isin(evidences.sentence)]
             suggestions.reset_index(inplace=True)
         return suggestions.to_json(orient='records')
 
@@ -158,13 +159,23 @@ def predict_route():
 
     evidenceData = pd.DataFrame.from_dict(data['properties'])
     evidenceData['prop+value'] = evidenceData['property'] + '_' + evidenceData['value']
-    categories = evidenceData['prop+value'].unique()
+    propertyValues = evidenceData['prop+value'].unique()
 
-    evidences = pd.read_csv(TRAINING_FILE, encoding='utf8')
-    evidences['prop+value'] = evidences['property'] + '_' + evidences['value']
+    evidences = pd.DataFrame()
+    for propertyValue in propertyValues:
 
-    evidences = evidences[evidences['prop+value'].isin(categories)]
+        trainingFile = TRAINING_FOLDER + propertyValue
+        try:
+            propEvidences = pd.read_csv(trainingFile, encoding='utf8')
+            propEvidences = propEvidences[propEvidences.label]
+            evidences = evidences.append(propEvidences)
+        except:
+            journal.send('Training file %s not found' % trainingFile)
+
     evidences.reset_index(inplace=True)
+    if len(evidences)==0:
+        journal.send('ERROR: No training data is available')
+        return "{}"
 
     tf.reset_default_graph()
     sentenceEncoder = hub.Module("https://tfhub.dev/google/universal-sentence-encoder/1")
@@ -191,5 +202,6 @@ def predict_route():
         suggestions.drop_duplicates(suggestions.columns.difference(['probability']), inplace=True)
         suggestions = suggestions[~suggestions.evidence.isin(evidences.sentence)]
         suggestions.reset_index(inplace=True)
+
     return suggestions.to_json(orient='records')
 
