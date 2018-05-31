@@ -19,6 +19,13 @@ import argparse as _argparse
 import pdb
 import subprocess
 from systemd import journal
+import pymongo
+from bson.json_util import dumps
+
+from pymongo import MongoClient
+client = MongoClient('localhost', 27017)
+db = client.machine_learning
+mongo_suggestions = db.suggestions
 
 app = Flask(__name__)
 
@@ -35,10 +42,8 @@ def get_similar_sentences(similarity, evidences, sentences, doc_id):
     similar_sentences = pd.DataFrame(columns=['probability'])
     for ind, sentence in enumerate(sentences):
         for pos,sim in enumerate(similarity[:,ind]):
-            if sim>=THRESHOLD:
-                similar_sentences = similar_sentences.append({'evidence':sentence, 'probability':sim, 'label':1, 'document':doc_id, 'property':evidences.loc[pos]['property'], 'value':evidences.loc[pos]['value']}, ignore_index=True)
-    return similar_sentences
-
+            if sim >= THRESHOLD:
+                mongo_suggestions.insert_one({'evidence':sentence, 'probability':str(sim), 'label':1, 'document':doc_id, 'property':evidences.loc[pos]['property'], 'value':evidences.loc[pos]['value']})
 
 @app.route('/classification/train', methods=['POST'])
 def train_route():
@@ -97,7 +102,8 @@ def predict_one_model():
         sentenceEncoder = hub.Module("https://tfhub.dev/google/universal-sentence-encoder/1")
         journal.send('LOADED SENTENCE ENCODER')
 
-        suggestions = pd.DataFrame(columns=['probability'])
+        #suggestions = pd.DataFrame(columns=['probability'])
+        mongo_suggestions.remove()
 
         sentences = tf.placeholder(dtype=tf.string, shape=[None])
         embedding = sentenceEncoder(sentences)
@@ -119,17 +125,21 @@ def predict_one_model():
                     sentence_embedding = session.run(embedding, feed_dict={sentences: doc_sentences})
 
                     similarity = np.matmul(evidence_embedding, np.transpose(sentence_embedding))
-                    suggestions = suggestions.append(get_similar_sentences(similarity, model_evidences, doc_sentences, docID))
+                    get_similar_sentences(similarity, model_evidences, doc_sentences, docID)
+                    #suggestions = suggestions.append(get_similar_sentences(similarity, model_evidences, doc_sentences, docID))
                     docIDs.append(docID)
 
             session.close()
 
-        if len(suggestions)>0:
-            suggestions.sort_values(by=['probability'], ascending=False, inplace=True)
-            suggestions.drop_duplicates(suggestions.columns.difference(['probability']), inplace=True)
-            suggestions = suggestions[~suggestions.evidence.isin(model_evidences.sentence)]
-            suggestions.reset_index(inplace=True)
-        return suggestions.to_json(orient='records')
+        #if len(suggestions)>0:
+        #    suggestions.sort_values(by=['probability'], ascending=False, inplace=True)
+        #    suggestions.drop_duplicates(suggestions.columns.difference(['probability']), inplace=True)
+        #    suggestions = suggestions[~suggestions.evidence.isin(model_evidences.sentence)]
+        #    suggestions.reset_index(inplace=True)
+        #return suggestions.to_json(orient='records')
+
+        result = dumps(mongo_suggestions.find({},{'_id':0}).limit(10).sort("probability", -1))
+        return result
 
     else:
         journal.send('CONVOLUTIONAL NEURAL NET')
@@ -192,4 +202,3 @@ def predict_route():
         suggestions = suggestions[~suggestions.evidence.isin(evidences.sentence)]
         suggestions.reset_index(inplace=True)
     return suggestions.to_json(orient='records')
-
