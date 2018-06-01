@@ -26,7 +26,7 @@ from pymongo import MongoClient
 client = MongoClient('localhost', 27017)
 db = client.machine_learning
 mongo_suggestions = db.suggestions
-mongo_trainning = db.trainning
+mongo_training = db.training
 
 app = Flask(__name__)
 
@@ -50,7 +50,7 @@ def train_route():
 
     sentence = data['evidence']['text'].encode('utf-8');
     label = str(data['isEvidence'])
-    mongo_trainning.insert_one({'property': data['property'], 'value': data['value'], 'sentence': sentence, 'label': label})
+    mongo_training.insert_one({'property': data['property'], 'value': data['value'], 'sentence': sentence, 'label': label})
 
     return "{}"
 
@@ -59,8 +59,10 @@ def retrain_route():
     data = json.loads(request.data)
     model = data['value'] + data['property']
 
-    evidences = mongo_trainning.find({'property': data['property'], 'value':  data['value']})
+    evidences = mongo_training.find({'property': data['property'], 'value':  data['value']})
     evidences = pd.DataFrame(list(evidences))
+
+    pdb.set_trace()
 
     if len(evidences) >= MIN_NUM_TRAINING_SENTENCES:
         journal.send('CNN TRAINING')
@@ -80,7 +82,7 @@ def predict_one_model():
     data = json.loads(request.data)
     docs = pd.read_json(json.dumps(data['docs']), encoding='utf8');
 
-    evidences = mongo_trainning.find({'property': data['property'], 'value':  data['value']})
+    evidences = mongo_training.find({'property': data['property'], 'value':  data['value']})
     evidences = pd.DataFrame(list(evidences))
 
     if len(evidences)==0:
