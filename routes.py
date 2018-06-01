@@ -161,49 +161,31 @@ def predict_route():
     doc = pd.read_json('[' + json.dumps(data['doc']) + ']', encoding='utf8').loc[0]
 
     evidenceData = pd.DataFrame.from_dict(data['properties'])
-    evidenceData['prop+value'] = evidenceData['property'] + '_' + evidenceData['value']
-    propertyValues = evidenceData['prop+value'].unique()
+    evidences = mongo_training.find({'property': {"$in": evidenceData.property.tolist()}, 'value': {"$in": evidenceData.value.tolist()}, 'label':'True'})
+    evidences = pd.DataFrame(list(evidences))
 
-    evidences = pd.DataFrame()
-    for propertyValue in propertyValues:
-
-        trainingFile = TRAINING_FOLDER + propertyValue
-        try:
-            propEvidences = pd.read_csv(trainingFile, encoding='utf8')
-            propEvidences = propEvidences[propEvidences.label]
-            evidences = evidences.append(propEvidences)
-        except:
-            journal.send('Training file %s not found' % trainingFile)
-
-    evidences.reset_index(inplace=True)
     if len(evidences)==0:
         journal.send('ERROR: No training data is available')
         return "{}"
 
     tf.reset_default_graph()
     sentenceEncoder = hub.Module("https://tfhub.dev/google/universal-sentence-encoder/1")
-
-    suggestions = pd.DataFrame(columns=['probability'])
-
     sentences = tf.placeholder(dtype=tf.string, shape=[None])
     embedding = sentenceEncoder(sentences)
+
+    suggestions = pd.DataFrame(columns=['probability'])
+    doc_sentences = tokenize(doc.text, MAX_SENTENCE_LENGTH, MIN_SENTENCE_LENGTH)
 
     with tf.Session() as session:
         session.run([tf.global_variables_initializer(), tf.tables_initializer()])
 
-        doc_sentences = tokenize(doc.text, MAX_SENTENCE_LENGTH, MIN_SENTENCE_LENGTH)
         sentence_embedding = session.run(embedding, feed_dict={sentences: doc_sentences})
         evidence_embedding = session.run(embedding, feed_dict={sentences: evidences.sentence.tolist()})
 
-        similarity = np.matmul(evidence_embedding, np.transpose(sentence_embedding))
-        suggestions = suggestions.append(get_similar_sentences(similarity, evidences, doc_sentences, evidenceData.document[0]))
+    session.close()
 
-        session.close()
+    similarity = np.matmul(evidence_embedding, np.transpose(sentence_embedding))
+    get_similar_sentences(similarity, evidences, doc_sentences, evidenceData.document[0])
+    result = dumps(mongo_suggestions.find({},{'_id':0}).limit(10).sort("probability", -1))
+    return result
 
-    if len(suggestions)>0:
-        suggestions.sort_values(by=['probability'], ascending=False, inplace=True)
-        suggestions.drop_duplicates(suggestions.columns.difference(['probability']), inplace=True)
-        suggestions = suggestions[~suggestions.evidence.isin(evidences.sentence)]
-        suggestions.reset_index(inplace=True)
-
-    return suggestions.to_json(orient='records')
