@@ -35,9 +35,6 @@ MAX_SENTENCE_LENGTH = 40
 MIN_SENTENCE_LENGTH = 5
 MIN_NUM_TRAINING_SENTENCES = 20
 
-TRAINING_FOLDER= 'training/'
-osHelper.createFolderIfNotExistent(TRAINING_FOLDER)
-
 #subprocess.Popen('python lda/WordEmbedding.py', shell=True)
 
 def get_similar_sentences(similarity, evidences, sentences, doc_id):
@@ -51,17 +48,6 @@ def get_similar_sentences(similarity, evidences, sentences, doc_id):
 def train_route():
     data = json.loads(request.data)
 
-    label = data['property'] + "_" + data['value'] + "_" + str(data['isEvidence']);
-    sentence = data['evidence']['text'].encode('utf-8');
-
-    trainingFile = TRAINING_FOLDER + data['property'] + '_' +  data['value']
-
-    df = pd.DataFrame({'sentence': sentence, 'property': data['property'], 'value':data['value'], 'label': data['isEvidence']}, index=[0])
-    if os.path.exists(trainingFile):
-        df.to_csv(trainingFile, mode='a', header=False, index=False, encoding='utf8')
-    else:
-        df.to_csv(TRAINING_FILE, mode='a', index=False, encoding='utf8')
-
     sentence = data['evidence']['text'].encode('utf-8');
     label = str(data['isEvidence'])
     mongo_trainning.insert_one({'property': data['property'], 'value': data['value'], 'sentence': sentence, 'label': label})
@@ -73,19 +59,15 @@ def retrain_route():
     data = json.loads(request.data)
     model = data['value'] + data['property']
 
-    print("hello")
-    print(mongo_trainning.count())
+    evidences = mongo_trainning.find({'property': data['property'], 'value':  data['value']})
+    evidences = pd.DataFrame(list(evidences))
 
-    trainingFile = TRAINING_FOLDER + data['property'] + '_' + data['value']
-    evidences = pd.read_csv(trainingFile, encoding='utf8')
-    posEvidences = evidences[evidences.label]
-
-    if len(posEvidences) >= MIN_NUM_TRAINING_SENTENCES:
+    if len(evidences) >= MIN_NUM_TRAINING_SENTENCES:
         journal.send('CNN TRAINING')
         rmtree(os.path.join('runs', model), ignore_errors=True)
         tf.app.flags._global_parser = _argparse.ArgumentParser()
         train(evidences, model)
-    elif len(posEvidences) == 0:
+    elif len(evidences) == 0:
         journal.send('NO TRAINING DATA IS AVAILABLE')
     else:
         journal.send('NOT ENOUGH DATA FOR CNN TRAINING')
@@ -98,10 +80,8 @@ def predict_one_model():
     data = json.loads(request.data)
     docs = pd.read_json(json.dumps(data['docs']), encoding='utf8');
 
-    trainingFile = TRAINING_FOLDER + data['property'] + '_' + data['value']
-    evidences = pd.read_csv(trainingFile , encoding='utf8')
-    evidences = evidences[evidences.label]
-    evidences.reset_index(inplace=True)
+    evidences = mongo_trainning.find({'property': data['property'], 'value':  data['value']})
+    evidences = pd.DataFrame(list(evidences))
 
     if len(evidences)==0:
         return "{}"
@@ -112,7 +92,6 @@ def predict_one_model():
         sentenceEncoder = hub.Module("https://tfhub.dev/google/universal-sentence-encoder/1")
         journal.send('LOADED SENTENCE ENCODER')
 
-        #suggestions = pd.DataFrame(columns=['probability'])
         mongo_suggestions.remove()
 
         sentences = tf.placeholder(dtype=tf.string, shape=[None])
@@ -135,17 +114,10 @@ def predict_one_model():
                     sentence_embedding = session.run(embedding, feed_dict={sentences: doc_sentences})
 
                     similarity = np.matmul(evidence_embedding, np.transpose(sentence_embedding))
-                    get_similar_sentences(similarity, model_evidences, doc_sentences, docID)
+                    get_similar_sentences(similarity, evidences, doc_sentences, docID)
                     docIDs.append(docID)
 
             session.close()
-
-        #if len(suggestions)>0:
-        #    suggestions.sort_values(by=['probability'], ascending=False, inplace=True)
-        #    suggestions.drop_duplicates(suggestions.columns.difference(['probability']), inplace=True)
-        #    suggestions = suggestions[~suggestions.evidence.isin(model_evidences.sentence)]
-        #    suggestions.reset_index(inplace=True)
-        #return suggestions.to_json(orient='records')
 
         result = dumps(mongo_suggestions.find({},{'_id':0}).limit(10).sort("probability", -1))
         return result
