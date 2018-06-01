@@ -26,6 +26,7 @@ from pymongo import MongoClient
 client = MongoClient('localhost', 27017)
 db = client.machine_learning
 mongo_suggestions = db.suggestions
+mongo_trainning = db.trainning
 
 app = Flask(__name__)
 
@@ -57,6 +58,11 @@ def train_route():
         df.to_csv(TRAINING_FILE, mode='a', header=False, index=False, encoding='utf8')
     else:
         df.to_csv(TRAINING_FILE, mode='a', index=False, encoding='utf8')
+
+    sentence = data['evidence']['text'].encode('utf-8');
+    label = str(data['isEvidence'])
+    mongo_trainning.insert_one({'property': data['property'], 'value': data['value'], 'sentence': sentence, 'label': label})
+
     return "{}"
 
 @app.route('/classification/retrain', methods=['POST'])
@@ -65,6 +71,9 @@ def retrain_route():
     model = data['value'] + data['property']
 
     #model_evidences = pd.read_json(json.dumps(data['evidences']), encoding='utf8');
+
+    print("hello")
+    print(mongo_trainning.count())
 
     evidences = pd.read_csv(TRAINING_FILE, encoding='utf8')
     model_evidences = evidences[(evidences['property']==data['property']) & (evidences['value']==data['value'])]
@@ -91,7 +100,6 @@ def predict_one_model():
     evidences = pd.read_csv(TRAINING_FILE, encoding='utf8')
     model_evidences = evidences[(evidences['property']==data['property']) & (evidences['value']==data['value'])]
     model_evidences = model_evidences.reset_index()
-
 
     if len(model_evidences)==0:
         return "{}"
