@@ -1,19 +1,15 @@
 #! /usr/bin/env python
-import tensorflow as tf
-import pickle
 from lda import Preprocessor, Info
 import numpy as np
 import os
 import pandas as pd
 from sentenceTokenizer import tokenize
-from scripts.createSentenceDB import filterSentenceLength, setSentenceLength
 from lda.osHelper import generateModelDirectory
 
 
 def predictDoc(doc, category, nn, sess):
 
     model_path = generateModelDirectory(category)
-    checkpoint_dir = os.path.join(model_path, 'checkpoints')
     processor_dir = os.path.join(model_path, 'processor.pkl')
 
     infoFile = os.path.join(model_path, 'info.json')
@@ -45,8 +41,4 @@ def predictDoc(doc, category, nn, sess):
     evidenceSentences = sentenceDB[sentenceDB['predictedLabel']==1]
     return evidenceSentences
 
-
-
-if __name__=='__main__':
-    predictDoc()
 
