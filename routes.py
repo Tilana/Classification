@@ -62,8 +62,6 @@ def retrain_route():
     evidences = mongo_training.find({'property': data['property'], 'value':  data['value']})
     evidences = pd.DataFrame(list(evidences))
 
-    pdb.set_trace()
-
     if len(evidences) >= MIN_NUM_TRAINING_SENTENCES:
         journal.send('CNN TRAINING')
         rmtree(os.path.join('runs', model), ignore_errors=True)
@@ -82,7 +80,7 @@ def predict_one_model():
     data = json.loads(request.data)
     docs = pd.read_json(json.dumps(data['docs']), encoding='utf8');
 
-    evidences = mongo_training.find({'property': data['property'], 'value':  data['value']})
+    evidences = mongo_training.find({'property': data['property'], 'value':  data['value'], 'label':True})
     evidences = pd.DataFrame(list(evidences))
 
     if len(evidences)==0:
