@@ -10,6 +10,7 @@ import tensorflow_hub as hub
 from train import train;
 from predictDoc import predictDoc;
 from shutil import rmtree
+from lda import NeuralNet
 import pandas as pd
 import numpy as np
 import json
@@ -61,13 +62,15 @@ def retrain_route():
 
     evidences = mongo_training.find({'property': data['property'], 'value':  data['value']})
     evidences = pd.DataFrame(list(evidences))
+    posEvidences = mongo_training.find({'property': data['property'], 'value':  data['value'], 'label':'True'})
+    nrPosEvidences = len(list(posEvidences))
 
-    if len(evidences) >= MIN_NUM_TRAINING_SENTENCES:
+    if nrPosEvidences >= MIN_NUM_TRAINING_SENTENCES:
         journal.send('CNN TRAINING')
         rmtree(os.path.join('runs', model), ignore_errors=True)
         tf.app.flags._global_parser = _argparse.ArgumentParser()
         train(evidences, model)
-    elif len(evidences) == 0:
+    elif nrPosEvidences == 0:
         journal.send('NO TRAINING DATA IS AVAILABLE')
     else:
         journal.send('NOT ENOUGH DATA FOR CNN TRAINING')
@@ -126,16 +129,26 @@ def predict_one_model():
         journal.send('CONVOLUTIONAL NEURAL NET')
         model = data['value']+data['property'];
         results = [];
-        for doc in docs.iterrows():
-            try:
-                predictions = predictDoc(doc[1], model);
-                predictions = predictions.rename(index=str, columns={'sentence': 'evidence', 'predictedLabel':'label'});
-                predictions['property'] = data['property'];
-                predictions['value'] = data['value'];
-                predictions['document'] = doc[1]['_id']
-                results.append(predictions)
-            except:
-                journal.send('model not trained')
+
+        nn = NeuralNet()
+        tf.reset_default_graph()
+        graph = tf.Graph()
+        with graph.as_default():
+            with tf.Session() as session:
+
+                model_path = osHelper.generateModelDirectory(model)
+                checkpoint_dir = os.path.join(model_path, 'checkpoints')
+                nn.loadCheckpoint(graph, session, checkpoint_dir)
+
+                for doc in docs.iterrows():
+                    predictions = predictDoc(doc[1], model, nn, session);
+                    predictions = predictions.rename(index=str, columns={'sentence': 'evidence', 'predictedLabel':'label'});
+                    predictions['property'] = data['property'];
+                    predictions['value'] = data['value'];
+                    predictions['document'] = doc[1]['_id']
+                    results.append(predictions)
+                session.close()
+
         suggestions = pd.concat(results).sort_values(by=['probability'], ascending=False).head(100)
         return suggestions.to_json(orient='records')
 

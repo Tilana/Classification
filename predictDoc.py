@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 import tensorflow as tf
 import pickle
-from lda import NeuralNet, Preprocessor, Info
+from lda import Preprocessor, Info
 import numpy as np
 import os
 import pandas as pd
@@ -10,7 +10,7 @@ from scripts.createSentenceDB import filterSentenceLength, setSentenceLength
 from lda.osHelper import generateModelDirectory
 
 
-def predictDoc(doc, category):
+def predictDoc(doc, category, nn, sess):
 
     model_path = generateModelDirectory(category)
     checkpoint_dir = os.path.join(model_path, 'checkpoints')
@@ -34,22 +34,13 @@ def predictDoc(doc, category):
 
     X_val = np.array(sentenceDB.mapping.tolist())
 
-    nn = NeuralNet()
-    tf.reset_default_graph()
-    graph = tf.Graph()
-    with graph.as_default():
-        with tf.Session() as sess:
+    predictions = []
 
-            nn.loadCheckpoint(graph, sess, checkpoint_dir)
-            predictions = []
+    validationData = {nn.X: np.asarray(X_val), nn.pkeep:1.0}
+    predictions, probability = sess.run([nn.predictions, nn.probability], feed_dict=validationData)
 
-            validationData = {nn.X: np.asarray(X_val), nn.pkeep:1.0}
-            predictions, probability = sess.run([nn.predictions, nn.probability], feed_dict=validationData)
-
-            sentenceDB['predictedLabel'] = predictions
-            sentenceDB['probability'] = probability
-
-            sess.close()
+    sentenceDB['predictedLabel'] = predictions
+    sentenceDB['probability'] = probability
 
     evidenceSentences = sentenceDB[sentenceDB['predictedLabel']==1]
     return evidenceSentences
