@@ -127,8 +127,9 @@ def predict_one_model():
 
     else:
         journal.send('CONVOLUTIONAL NEURAL NET')
-        model = data['value']+data['property'];
-        results = [];
+        model = data['value']+data['property']
+        results = []
+        docIDs = []
 
         nn = NeuralNet()
         tf.reset_default_graph()
@@ -141,12 +142,17 @@ def predict_one_model():
                 nn.loadCheckpoint(graph, session, checkpoint_dir)
 
                 for doc in docs.iterrows():
-                    predictions = predictDoc(doc[1], model, nn, session);
-                    predictions = predictions.rename(index=str, columns={'sentence': 'evidence', 'predictedLabel':'label'});
-                    predictions['property'] = data['property'];
-                    predictions['value'] = data['value'];
-                    predictions['document'] = doc[1]['_id']
-                    results.append(predictions)
+                    docID = doc[1]['_id']
+
+                    if docID not in docIDs:
+                        journal.send('ENCODE DOC ' + docID)
+                        predictions = predictDoc(doc[1], model, nn, session);
+                        predictions = predictions.rename(index=str, columns={'sentence': 'evidence', 'predictedLabel':'label'});
+                        predictions['property'] = data['property'];
+                        predictions['value'] = data['value'];
+                        predictions['document'] = docID
+                        results.append(predictions)
+                        docIDs.append(docID)
                 session.close()
 
         suggestions = pd.concat(results).sort_values(by=['probability'], ascending=False).head(100)
