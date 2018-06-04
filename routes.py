@@ -86,6 +86,9 @@ def predict_one_model():
     evidences = mongo_training.find({'property': data['property'], 'value':  data['value'], 'label':'True'})
     evidences = pd.DataFrame(list(evidences))
 
+    docIDs = []
+    count = 0
+
     if len(evidences)==0:
         return "{}"
 
@@ -106,12 +109,10 @@ def predict_one_model():
             journal.send('ENCODE EVIDENCE SENTENCES')
             evidence_embedding = session.run(embedding, feed_dict={sentences: evidences.sentence.tolist()})
 
-            docIDs = []
-
             for doc in docs.iterrows():
                 docID = doc[1]['_id']
 
-                if docID not in docIDs:
+                if docID not in docIDs and count < 10:
                     journal.send('ENCODE DOC ' + docID)
                     doc_sentences = tokenize(doc[1].text, MAX_SENTENCE_LENGTH, MIN_SENTENCE_LENGTH)
                     sentence_embedding = session.run(embedding, feed_dict={sentences: doc_sentences})
@@ -119,6 +120,8 @@ def predict_one_model():
                     similarity = np.matmul(evidence_embedding, np.transpose(sentence_embedding))
                     get_similar_sentences(similarity, evidences, doc_sentences, docID)
                     docIDs.append(docID)
+                    count += 1
+                    journal.send('COUNT ' + str(count))
 
             session.close()
 
@@ -129,7 +132,6 @@ def predict_one_model():
         journal.send('CONVOLUTIONAL NEURAL NET')
         model = data['value']+data['property']
         results = []
-        docIDs = []
 
         nn = NeuralNet()
         tf.reset_default_graph()
@@ -144,8 +146,8 @@ def predict_one_model():
                 for doc in docs.iterrows():
                     docID = doc[1]['_id']
 
-                    if docID not in docIDs:
-                        journal.send('ENCODE DOC ' + docID)
+                    if docID not in docIDs and count < 10:
+                        journal.send('PREDICT DOC ' + docID)
                         predictions = predictDoc(doc[1], model, nn, session);
                         predictions = predictions.rename(index=str, columns={'sentence': 'evidence', 'predictedLabel':'label'});
                         predictions['property'] = data['property'];
@@ -153,6 +155,7 @@ def predict_one_model():
                         predictions['document'] = docID
                         results.append(predictions)
                         docIDs.append(docID)
+                        count += 1
                 session.close()
 
         suggestions = pd.concat(results).sort_values(by=['probability'], ascending=False).head(100)
