@@ -39,11 +39,17 @@ MIN_NUM_TRAINING_SENTENCES = 20
 #subprocess.Popen('python lda/WordEmbedding.py', shell=True)
 
 def get_similar_sentences(similarity, evidences, sentences, doc_id):
-    similar_sentences = pd.DataFrame(columns=['probability'])
-    for ind, sentence in enumerate(sentences):
-        for pos,sim in enumerate(similarity[:,ind]):
-            if sim >= THRESHOLD:
-                mongo_suggestions.insert_one({'evidence':sentence, 'probability':str(sim), 'label':1, 'document':doc_id, 'property':evidences.loc[pos]['property'], 'value':evidences.loc[pos]['value']})
+    evidenceIndices, sentenceIndices = np.where(similarity >= THRESHOLD)
+    similarities = [similarity[evidenceInd, sentenceInd] for (evidenceInd, sentenceInd) in zip(evidenceIndices, sentenceIndices)]
+    processedSentences = {}
+    for pos, sentInd in enumerate(sentenceIndices):
+        sentence = sentences[sentInd]
+        evidence = evidences.loc[evidenceIndices[pos]]
+        property = evidence['property']
+        value = evidence['value']
+        if sentence not in processedSentences.keys() or (property, value) != processedSentences[sentence]:
+            mongo_suggestions.insert_one({'evidence': sentence, 'probability':str(similarities[pos]), 'label':1, 'document':doc_id, 'property':property, 'value':value})
+            processedSentences.update({sentence: (property, value)})
 
 @app.route('/classification/train', methods=['POST'])
 def train_route():
