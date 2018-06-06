@@ -20,10 +20,9 @@ import argparse as _argparse
 import pdb
 import subprocess
 from systemd import journal
-import pymongo
 from bson.json_util import dumps
-
 from pymongo import MongoClient
+
 client = MongoClient('localhost', 27017)
 db = client.machine_learning
 mongo_suggestions = db.suggestions
@@ -34,7 +33,7 @@ app = Flask(__name__)
 THRESHOLD = 0.67
 MAX_SENTENCE_LENGTH = 40
 MIN_SENTENCE_LENGTH = 5
-MIN_NUM_TRAINING_SENTENCES = 20
+MIN_NUM_TRAINING_SENTENCES = 12
 
 #subprocess.Popen('python lda/WordEmbedding.py', shell=True)
 
@@ -66,15 +65,17 @@ def retrain_route():
     data = json.loads(request.data)
     model = data['value'] + data['property']
 
-    evidences = mongo_training.find({'property': data['property'], 'value':  data['value']})
+    evidences = mongo_training.find({'property': data['property'], 'value': data['value']})
     evidences = pd.DataFrame(list(evidences))
-    posEvidences = mongo_training.find({'property': data['property'], 'value':  data['value'], 'label':'True'})
+    posEvidences = mongo_training.find({'property': data['property'], 'value': data['value'], 'label':'True'})
     nrPosEvidences = len(list(posEvidences))
 
     if nrPosEvidences >= MIN_NUM_TRAINING_SENTENCES:
         journal.send('CNN TRAINING')
         rmtree(os.path.join('runs', model), ignore_errors=True)
         tf.app.flags._global_parser = _argparse.ArgumentParser()
+        mapping = {'True':True, 'False':False}
+        evidences['label'] = evidences['label'].map(mapping)
         train(evidences, model)
     elif nrPosEvidences == 0:
         journal.send('NO TRAINING DATA IS AVAILABLE')
@@ -131,7 +132,7 @@ def predict_one_model():
 
             session.close()
 
-        result = dumps(mongo_suggestions.find({},{'_id':0}).limit(10).sort("probability", -1))
+        result = dumps(mongo_suggestions.find({},{'_id':0}).sort("probability", -1))
         return result
 
     else:
