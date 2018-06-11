@@ -73,7 +73,11 @@ def train(evidences, category):
 
         X = np.array(evidences.mapping.tolist())
 
-        Ylabels = evidences.label.astype('category', categories=[0,1])
+        if evidences.label.dtype == 'O':
+            mapping = {'True':True, 'False':False}
+            evidences['label'] = evidences['label'].map(mapping)
+
+        Ylabels = evidences.label.astype(pd.api.types.CategoricalDtype(categories=[0,1]))
         Y = pd.get_dummies(Ylabels).as_matrix()
 
         batches = data_helpers.batch_iter(list(zip(X, Y)), BATCH_SIZE, ITERATIONS, shuffle=True)

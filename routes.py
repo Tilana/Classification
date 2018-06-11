@@ -74,8 +74,6 @@ def retrain_route():
         journal.send('CNN TRAINING')
         rmtree(os.path.join('runs', model), ignore_errors=True)
         tf.app.flags._global_parser = _argparse.ArgumentParser()
-        mapping = {'True':True, 'False':False}
-        evidences['label'] = evidences['label'].map(mapping)
         train(evidences, model)
     elif nrPosEvidences == 0:
         journal.send('NO TRAINING DATA IS AVAILABLE')
