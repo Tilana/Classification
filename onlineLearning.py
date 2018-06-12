@@ -1,14 +1,22 @@
 from lda.docLoader import loadConfigFile
-from lda import ClassificationModel, Evaluation
+import tensorflow as tf
+from lda import ClassificationModel, Evaluation, NeuralNet, osHelper
 from predictDoc import predictDoc
 from train import train
 import pandas as pd
+import time
+from shutil import rmtree
+import os
+
+NR_TRAIN_DATA = 15
 
 def onlineLearning():
 
     configFile = 'dataConfig.json'
     sentences_config_name = 'ICAAD_DV_sentences'
     categoryID = 'ICAAD_DV_sentences'
+
+    model_path = osHelper.generateModelDirectory(categoryID)
 
     # Get Sentence dataset
     sentences_config = loadConfigFile(configFile, sentences_config_name)
@@ -21,22 +29,40 @@ def onlineLearning():
     classifier.data = sentences
     classifier.createTarget()
 
-    classifier.splitDataset(train_size=0.97, random_state=42)
+    classifier.splitDataset(train_size=0.90, random_state=20)
 
-    # Train Classifier
-    for numberSample in xrange(10):
-        sample = classifier.trainData.sample(1)
-        evidence = pd.DataFrame({'sentence':sample.text.tolist(), 'label': sample.category.tolist()})
-        train(evidence, categoryID)
+    rmtree(model_path, ignore_errors=True)
+
+    print '*** TRAINING ***'
+    trainSample = classifier.trainData.sample(NR_TRAIN_DATA)
+    trainSample = trainSample[['text', 'category']]. rename(columns={'text':'sentence', 'category':'label'})
+    t0 = time.time()
+    train(trainSample, categoryID)
+    print 'Number of Training Samples: ' + str(NR_TRAIN_DATA)
+    print 'TIME: ' + str(time.time() - t0)
 
     classifier.testData['predictedLabel'] = 0
+    t0 = time.time()
+    print '*** PREDICTION ***'
 
-    # Predict label of sentences in documents
-    for ind, sample in classifier.testData.iterrows():
-        evidenceSentences = predictDoc(sample, categoryID)
-        if len(evidenceSentences)>=1:
-            classifier.testData.loc[ind, 'predictedLabel'] = 1
-            classifier.testData.loc[ind, 'probability'] = evidenceSentences.probability.tolist()[0]
+    nn = NeuralNet()
+    tf.reset_default_graph()
+    graph = tf.Graph()
+
+    with graph.as_default():
+        with tf.Session() as session:
+            print categoryID
+            checkpoint_dir = os.path.join(model_path, 'checkpoints')
+            nn.loadCheckpoint(graph, session, checkpoint_dir)
+
+            for ind, sample in classifier.testData.iterrows():
+                evidenceSentences = predictDoc(sample, categoryID, nn, session)
+                if len(evidenceSentences)>=1:
+                    classifier.testData.loc[ind, 'predictedLabel'] = 1
+                    classifier.testData.loc[ind, 'probability'] = evidenceSentences.probability.tolist()[0]
+            session.close()
+    print 'Number of Test Sentences: ' + str(len(classifier.testData))
+    print 'TIME: ' + str(time.time() - t0)
 
 
     evaluation = Evaluation(target=classifier.testData.category.tolist(), prediction=classifier.testData.predictedLabel.tolist())
@@ -46,7 +72,6 @@ def onlineLearning():
     print 'Recall: ' + str(evaluation.recall)
     print 'Precision: ' + str(evaluation.precision)
     print evaluation.confusionMatrix
-
 
 
 if __name__=='__main__':
