@@ -21,6 +21,7 @@ import pdb
 import subprocess
 from systemd import journal
 from bson.json_util import dumps
+import time
 from pymongo import MongoClient
 
 client = MongoClient('localhost', 27017)
@@ -62,6 +63,7 @@ def train_route():
 
 @app.route('/classification/retrain', methods=['POST'])
 def retrain_route():
+    t0 = time.time()
     data = json.loads(request.data)
     model = data['value'] + data['property']
 
@@ -69,6 +71,8 @@ def retrain_route():
     evidences = pd.DataFrame(list(evidences))
     posEvidences = mongo_training.find({'property': data['property'], 'value': data['value'], 'label':'True'})
     nrPosEvidences = len(list(posEvidences))
+    journal.send('Total training sentences: ' + str(len(evidences)))
+    journal.send('Positive training sentences: ' + str(nrPosEvidences))
 
     if nrPosEvidences >= MIN_NUM_TRAINING_SENTENCES:
         journal.send('CNN TRAINING')
@@ -81,12 +85,13 @@ def retrain_route():
         journal.send('NO TRAINING DATA IS AVAILABLE')
     else:
         journal.send('NOT ENOUGH DATA FOR CNN TRAINING')
-
+    journal.send('TIME: ' + str(time.time() - t0))
     return "{}"
 
 @app.route('/classification/predictOneModel', methods=['POST'])
 def predict_one_model():
 
+    t0 = time.time()
     data = json.loads(request.data)
     docs = pd.read_json(json.dumps(data['docs']), encoding='utf8');
 
@@ -128,11 +133,11 @@ def predict_one_model():
                     get_similar_sentences(similarity, evidences, doc_sentences, docID)
                     docIDs.append(docID)
                     count += 1
-                    journal.send('COUNT ' + str(count))
 
             session.close()
 
         result = dumps(mongo_suggestions.find({},{'_id':0}).sort("probability", -1))
+        journal.send('TIME: ' + str(time.time() - t0))
         return result
 
     else:
@@ -166,12 +171,15 @@ def predict_one_model():
                 session.close()
 
         suggestions = pd.concat(results).sort_values(by=['probability'], ascending=False).head(100)
+        journal.send('TIME: ' + str(time.time() - t0))
         return suggestions.to_json(orient='records')
 
 
 
 @app.route('/classification/predict', methods=['POST'])
 def predict_route():
+
+    t0 = time.time()
 
     data = json.loads(request.data)
     doc = pd.read_json('[' + json.dumps(data['doc']) + ']', encoding='utf8').loc[0]
@@ -203,5 +211,6 @@ def predict_route():
     similarity = np.matmul(evidence_embedding, np.transpose(sentence_embedding))
     get_similar_sentences(similarity, evidences, doc_sentences, evidenceData.document[0])
     result = dumps(mongo_suggestions.find({},{'_id':0}).limit(10).sort("probability", -1))
+    journal.send('TIME: ' + str(time.time() - t0))
     return result
 
