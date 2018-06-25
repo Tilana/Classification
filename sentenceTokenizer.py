@@ -5,8 +5,8 @@ from nltk.tokenize import word_tokenize
 import nltk
 import re
 
-MAX_SENTENCE_LENGTH = 50
-MIN_SENTENCE_LENGTH = 6
+MAX_SENTENCE_LENGTH = 40
+MIN_SENTENCE_LENGTH = 4
 
 
 LEGAL_ABBREVATIONS = ['chap', 'distr', 'paras', 'cf', 'cfr', 'para', 'no', 'al', 'br', 'dr', 'hon', 'app', 'cr', 'crim', 'l.r', 'cri', 'cap', 'e.g', 'vol', 'd', 'a', 'ph', 'inc.v', 'prof', 'mrs', 'mrt', 'msn', 'mrj', 'msi', 'mrg', 'mra', 'mst', 'mrd', 'pp', 'seq', 'art', 'p', 'nos', 'op', 'i.e', 'tel']
