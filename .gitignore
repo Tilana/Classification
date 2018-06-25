@@ -3,6 +3,7 @@
 *.swp
 lda/*.pyc
 *.txt
+*.png
 
 # ignore result folder
 results/**/*
