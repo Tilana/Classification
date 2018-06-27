@@ -9,23 +9,22 @@ from shutil import rmtree
 import os
 import matplotlib.pyplot as plt
 
+categoryID = 'ICAAD_DV_sentences'
+categoryID = 'ICAAD_SA_sentences'
+
 
 def onlineLearning(NR_TRAIN_DATA=20):
 
     configFile = 'dataConfig.json'
-    sentences_config_name = 'ICAAD_DV_sentences'
-    sentences_config_name = 'ICAAD_SA_sentences'
-    categoryID = 'ICAAD_DV_sentences'
-    categoryID = 'ICAAD_SA_sentences'
 
     model_path = osHelper.generateModelDirectory(categoryID)
 
     # Get Sentence dataset
-    sentences_config = loadConfigFile(configFile, sentences_config_name)
+    sentences_config = loadConfigFile(configFile, categoryID)
     sentences = pd.read_csv(sentences_config['data_path'], encoding ='utf8')
 
     noDV = sentences[sentences.category=='Evidence.no.SADV'].sample(655)
-    sentences = sentences[sentences.category=='Evidence.of.DV'].append(noDV)
+    sentences = sentences[sentences.category=='Evidence.of.'+categoryID.split('_')[1]].append(noDV)
 
     classifier = ClassificationModel(target=sentences_config['TARGET'])
     classifier.data = sentences
@@ -81,21 +80,21 @@ def onlineLearning(NR_TRAIN_DATA=20):
 
 if __name__=='__main__':
     results = []
-    NR_TRAIN_DATA_ARY = [10,20,40,60,100,200]
+    NR_TRAIN_DATA_ARY = [10,20,30,60, 100,200]
     for NR_TRAIN_DATA in NR_TRAIN_DATA_ARY:
         results.append(onlineLearning(NR_TRAIN_DATA))
 
     performance = pd.DataFrame(results, index=NR_TRAIN_DATA_ARY, columns=['training_time', 'prediction_time', 'accuracy', 'recall', 'precision', 'nrTestData'])
     print 'Number of test sentences: ' + str(performance['nrTestData'].tolist())
 
-    ax = performance[['training_time', 'prediction_time']].plot(kind='bar', legend=True, title='CNN Computation Time - ICAAD SA sentences')
+    ax = performance[['training_time', 'prediction_time']].plot(kind='bar', legend=True, title='CNN Computation Time - {}'.format(categoryID))
     ax.set_ylabel('Time in s')
     ax.set_xlabel('Number of Training Sentences')
     ax.legend(loc="upper left")
-    plt.savefig('ICAAD_SA_computation_time.png')
+    plt.savefig('{}_computation_time.png'.format(categoryID))
 
-    ax = performance[['accuracy', 'recall', 'precision']].plot(kind='bar', legend=True, title='CNN Performance - ICAAD SA sentences', ylim=(0.6,1))
+    ax = performance[['accuracy', 'recall', 'precision']].plot(kind='bar', legend=True, title='CNN Performance - {}'.format(categoryID), ylim=(0.6,1))
     ax.set_ylabel('Performance in %')
     ax.set_xlabel('Number of Training Sentences')
     ax.legend(loc="upper left")
-    plt.savefig('ICAAD_SA_performance.png')
+    plt.savefig('{}_performance.png'.format(categoryID))
