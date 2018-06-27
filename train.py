@@ -12,16 +12,18 @@ import os
 import json
 from systemd import journal
 
-BATCH_SIZE = 10
-ITERATIONS = 70
+#BATCH_SIZE = 10
+EPOCHS = 150
 DROPOUT = 0.5
-FILTER_SIZES = [2,2,2]
+FILTER_SIZES = [1,2,3]
 
 PREPROCESSING = 1
 MAX_SENTENCE_LENGTH = 40
 
 
 def train(evidences, category):
+
+    BATCH_SIZE = len(evidences)
 
     model_path = osHelper.generateModelDirectory(category)
     checkpoint_dir = os.path.join(model_path, 'checkpoints')
@@ -80,7 +82,7 @@ def train(evidences, category):
         Ylabels = evidences.label.astype(pd.api.types.CategoricalDtype(categories=[0,1]))
         Y = pd.get_dummies(Ylabels).as_matrix()
 
-        batches = data_helpers.batch_iter(list(zip(X, Y)), BATCH_SIZE, ITERATIONS, shuffle=True)
+        batches = data_helpers.batch_iter(list(zip(X, Y)), BATCH_SIZE, EPOCHS, shuffle=True)
         journal.send('START BATCH TRAINING')
 
         for batch in batches:
