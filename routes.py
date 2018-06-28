@@ -117,9 +117,6 @@ def predict_one_model():
                     if docID not in docIDs and count < 10:
                         journal.send('PREDICT DOC ' + docID)
                         predictions = predictDoc(doc[1], model, nn, session);
-                        predictions = predictions.rename(index=str, columns={'sentence': 'evidence', 'predictedLabel':'label'});
-                        predictions['property'] = data['property'];
-                        predictions['value'] = data['value'];
                         predictions['document'] = docID
                         results.append(predictions)
                         docIDs.append(docID)
@@ -127,6 +124,9 @@ def predict_one_model():
                 session.close()
 
         suggestions = pd.concat(results).sort_values(by=['probability'], ascending=False).head(100)
+        suggestions = suggestions.rename(index=str, columns={'sentence': 'evidence', 'predictedLabel':'label'});
+        suggestions['property'] = data['property']
+        suggestions['value'] = data['value']
         journal.send('TIME: ' + str(time.time() - t0))
         return suggestions.to_json(orient='records')
 
