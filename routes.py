@@ -116,10 +116,12 @@ def predict_one_model():
 
                     if docID not in docIDs and count < 10:
                         journal.send('PREDICT DOC ' + docID)
+                        t2 = time.time()
                         predictions = predictDoc(doc[1], model, nn, session);
                         predictions['document'] = docID
                         results.append(predictions)
                         docIDs.append(docID)
+                        journal.send('TIME: ' + str(time.time() - t2))
                         count += 1
                 session.close()
 
@@ -127,7 +129,7 @@ def predict_one_model():
         suggestions = suggestions.rename(index=str, columns={'sentence': 'evidence', 'predictedLabel':'label'});
         suggestions['property'] = data['property']
         suggestions['value'] = data['value']
-        journal.send('TIME: ' + str(time.time() - t0))
+        journal.send('TOTAL TIME: ' + str(time.time() - t0))
         return suggestions.to_json(orient='records')
 
     except:
