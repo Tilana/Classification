@@ -34,7 +34,6 @@ app = Flask(__name__)
 THRESHOLD = 0.67
 MAX_SENTENCE_LENGTH = 40
 MIN_SENTENCE_LENGTH = 5
-MIN_NUM_TRAINING_SENTENCES = 12
 
 #subprocess.Popen('python lda/WordEmbedding.py', shell=True)
 
@@ -69,20 +68,15 @@ def retrain_route():
 
     evidences = mongo_training.find({'property': data['property'], 'value': data['value']})
     evidences = pd.DataFrame(list(evidences))
-    posEvidences = mongo_training.find({'property': data['property'], 'value': data['value'], 'label':'True'})
-    nrPosEvidences = len(list(posEvidences))
     journal.send('Total training sentences: ' + str(len(evidences)))
-    journal.send('Positive training sentences: ' + str(nrPosEvidences))
 
-    if nrPosEvidences >= MIN_NUM_TRAINING_SENTENCES:
+    if len(evidences)>0:
         journal.send('CNN TRAINING')
         rmtree(os.path.join('runs', model), ignore_errors=True)
         tf.app.flags._global_parser = _argparse.ArgumentParser()
         train(evidences, model)
-    elif nrPosEvidences == 0:
-        journal.send('NO TRAINING DATA IS AVAILABLE')
     else:
-        journal.send('NOT ENOUGH DATA FOR CNN TRAINING')
+        journal.send('NO TRAINING DATA IS AVAILABLE')
     journal.send('TIME: ' + str(time.time() - t0))
     return "{}"
 
@@ -102,7 +96,41 @@ def predict_one_model():
     if len(evidences)==0:
         return "{}"
 
-    elif len(evidences) < MIN_NUM_TRAINING_SENTENCES:
+    try:
+        journal.send('CONVOLUTIONAL NEURAL NET')
+        model = data['value']+data['property']
+        results = []
+
+        nn = NeuralNet()
+        tf.reset_default_graph()
+        graph = tf.Graph()
+        with graph.as_default():
+            with tf.Session() as session:
+
+                model_path = osHelper.generateModelDirectory(model)
+                checkpoint_dir = os.path.join(model_path, 'checkpoints')
+                nn.loadCheckpoint(graph, session, checkpoint_dir)
+
+                for doc in docs.iterrows():
+                    docID = doc[1]['_id']
+
+                    if docID not in docIDs and count < 10:
+                        journal.send('PREDICT DOC ' + docID)
+                        predictions = predictDoc(doc[1], model, nn, session);
+                        predictions = predictions.rename(index=str, columns={'sentence': 'evidence', 'predictedLabel':'label'});
+                        predictions['property'] = data['property'];
+                        predictions['value'] = data['value'];
+                        predictions['document'] = docID
+                        results.append(predictions)
+                        docIDs.append(docID)
+                        count += 1
+                session.close()
+
+        suggestions = pd.concat(results).sort_values(by=['probability'], ascending=False).head(100)
+        journal.send('TIME: ' + str(time.time() - t0))
+        return suggestions.to_json(orient='records')
+
+    except:
         journal.send('UNIVERSAL SENTENCE ENCODER')
         tf.reset_default_graph()
         sentenceEncoder = hub.Module("https://tfhub.dev/google/universal-sentence-encoder/1")
@@ -137,40 +165,6 @@ def predict_one_model():
         result = dumps(mongo_suggestions.find({},{'_id':0}).sort("probability", -1))
         journal.send('TIME: ' + str(time.time() - t0))
         return result
-
-    else:
-        journal.send('CONVOLUTIONAL NEURAL NET')
-        model = data['value']+data['property']
-        results = []
-
-        nn = NeuralNet()
-        tf.reset_default_graph()
-        graph = tf.Graph()
-        with graph.as_default():
-            with tf.Session() as session:
-
-                model_path = osHelper.generateModelDirectory(model)
-                checkpoint_dir = os.path.join(model_path, 'checkpoints')
-                nn.loadCheckpoint(graph, session, checkpoint_dir)
-
-                for doc in docs.iterrows():
-                    docID = doc[1]['_id']
-
-                    if docID not in docIDs and count < 10:
-                        journal.send('PREDICT DOC ' + docID)
-                        predictions = predictDoc(doc[1], model, nn, session);
-                        predictions = predictions.rename(index=str, columns={'sentence': 'evidence', 'predictedLabel':'label'});
-                        predictions['property'] = data['property'];
-                        predictions['value'] = data['value'];
-                        predictions['document'] = docID
-                        results.append(predictions)
-                        docIDs.append(docID)
-                        count += 1
-                session.close()
-
-        suggestions = pd.concat(results).sort_values(by=['probability'], ascending=False).head(100)
-        journal.send('TIME: ' + str(time.time() - t0))
-        return suggestions.to_json(orient='records')
 
 
 
