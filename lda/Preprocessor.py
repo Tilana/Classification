@@ -147,7 +147,7 @@ class Preprocessor:
                     self.oov.add(word)
                     sentence_oov.append(word)
                     mapping.append(0)
-        self.storeOOV(OOV_PATH)
+        #self.storeOOV(OOV_PATH)
         return (mapping, sentence_oov)
 
 

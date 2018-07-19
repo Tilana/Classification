@@ -12,7 +12,7 @@ import os
 import json
 from systemd import journal
 
-#BATCH_SIZE = 10
+BATCH_SIZE = 32
 EPOCHS = 150
 DROPOUT = 0.5
 FILTER_SIZES = [1,2,3]
@@ -23,7 +23,7 @@ MAX_SENTENCE_LENGTH = 40
 
 def train(evidences, category):
 
-    BATCH_SIZE = len(evidences)
+    #BATCH_SIZE = len(evidences)
 
     model_path = osHelper.generateModelDirectory(category)
     checkpoint_dir = os.path.join(model_path, 'checkpoints')
