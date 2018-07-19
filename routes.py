@@ -35,6 +35,13 @@ THRESHOLD = 0.67
 MAX_SENTENCE_LENGTH = 40
 MIN_SENTENCE_LENGTH = 5
 
+sent_encoder_graph = tf.get_default_graph()
+sentenceEncoder = hub.Module("https://tfhub.dev/google/universal-sentence-encoder/1")
+
+sentences = tf.placeholder(dtype=tf.string, shape=[None])
+embedding = sentenceEncoder(sentences)
+#journal.send('LOADED SENTENCE ENCODER')
+
 #subprocess.Popen('python lda/WordEmbedding.py', shell=True)
 
 def get_similar_sentences(similarity, evidences, sentences, doc_id):
@@ -90,40 +97,37 @@ def predict_one_model():
     evidences = mongo_training.find({'property': data['property'], 'value':  data['value'], 'label':'True'})
     evidences = pd.DataFrame(list(evidences))
 
-    docIDs = []
-    count = 0
+
+    model = data['value']+data['property']
+    model_path = osHelper.generateModelDirectory(model)
 
     if len(evidences)==0:
         return "{}"
 
-    try:
+    if os.path.exists(model_path):
         journal.send('CONVOLUTIONAL NEURAL NET')
-        model = data['value']+data['property']
         results = []
 
         nn = NeuralNet()
-        tf.reset_default_graph()
-        graph = tf.Graph()
-        with graph.as_default():
-            with tf.Session() as session:
+        #tf.reset_default_graph()
+        cnn_graph = tf.Graph()
+        with cnn_graph.as_default():
+            with tf.Session(graph=cnn_graph) as cnn_session:
 
                 model_path = osHelper.generateModelDirectory(model)
                 checkpoint_dir = os.path.join(model_path, 'checkpoints')
-                nn.loadCheckpoint(graph, session, checkpoint_dir)
+                nn.loadCheckpoint(cnn_graph, cnn_session, checkpoint_dir)
 
                 for doc in docs.iterrows():
                     docID = doc[1]['_id']
 
-                    if docID not in docIDs and count < 10:
-                        journal.send('PREDICT DOC ' + docID)
-                        t2 = time.time()
-                        predictions = predictDoc(doc[1], model, nn, session);
-                        predictions['document'] = docID
-                        results.append(predictions)
-                        docIDs.append(docID)
-                        journal.send('TIME: ' + str(time.time() - t2))
-                        count += 1
-                session.close()
+                    journal.send('PREDICT DOC ' + docID)
+                    t2 = time.time()
+                    predictions = predictDoc(doc[1], model, nn, cnn_session);
+                    predictions['document'] = docID
+                    results.append(predictions)
+                    journal.send('TIME: ' + str(time.time() - t2))
+                cnn_session.close()
 
         suggestions = pd.concat(results).sort_values(by=['probability'], ascending=False).head(100)
         suggestions = suggestions.rename(index=str, columns={'sentence': 'evidence', 'predictedLabel':'label'});
@@ -132,37 +136,34 @@ def predict_one_model():
         journal.send('TOTAL TIME: ' + str(time.time() - t0))
         return suggestions.to_json(orient='records')
 
-    except:
+    else:
         journal.send('UNIVERSAL SENTENCE ENCODER')
-        tf.reset_default_graph()
-        sentenceEncoder = hub.Module("https://tfhub.dev/google/universal-sentence-encoder/1")
-        journal.send('LOADED SENTENCE ENCODER')
 
         mongo_suggestions.remove()
+        #tf.reset_default_graph()
+        #sentenceEncoder = hub.Module("https://tfhub.dev/google/universal-sentence-encoder/1")
 
-        sentences = tf.placeholder(dtype=tf.string, shape=[None])
-        embedding = sentenceEncoder(sentences)
+        #sentences = tf.placeholder(dtype=tf.string, shape=[None])
+        #embedding = sentenceEncoder(sentences)
 
-        with tf.Session() as session:
-            session.run([tf.global_variables_initializer(), tf.tables_initializer()])
+        with sent_encoder_graph.as_default():
+            with tf.Session(graph=sent_encoder_graph) as session:
+                session.run([tf.global_variables_initializer(), tf.tables_initializer()])
 
-            journal.send('ENCODE EVIDENCE SENTENCES')
-            evidence_embedding = session.run(embedding, feed_dict={sentences: evidences.sentence.tolist()})
+                journal.send('ENCODE EVIDENCE SENTENCES')
+                evidence_embedding = session.run(embedding, feed_dict={sentences: evidences.sentence.tolist()})
 
-            for doc in docs.iterrows():
-                docID = doc[1]['_id']
-
-                if docID not in docIDs and count < 10:
+                for doc in docs.iterrows():
+                    docID = doc[1]['_id']
                     journal.send('ENCODE DOC ' + docID)
+
                     doc_sentences = tokenize(doc[1].text, MAX_SENTENCE_LENGTH, MIN_SENTENCE_LENGTH)
                     sentence_embedding = session.run(embedding, feed_dict={sentences: doc_sentences})
 
                     similarity = np.matmul(evidence_embedding, np.transpose(sentence_embedding))
                     get_similar_sentences(similarity, evidences, doc_sentences, docID)
-                    docIDs.append(docID)
-                    count += 1
 
-            session.close()
+                session.close()
 
         result = dumps(mongo_suggestions.find({},{'_id':0}).sort("probability", -1))
         journal.send('TIME: ' + str(time.time() - t0))
