@@ -10,7 +10,9 @@ def resetMLDatabase():
 
 def removeCNNModels():
     shutil.rmtree(model_dir)
-    os.makedirs(model_dir)
+    oldmask = os.umask(000)
+    os.makedirs(model_dir, 0777)
+    os.umask(oldmask)
 
 
 
