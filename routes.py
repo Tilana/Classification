@@ -25,7 +25,7 @@ import time
 from pymongo import MongoClient
 
 client = MongoClient('localhost', 27017)
-db = client.machine_learning
+db = client[os.getenv('ML_DATABASE', 'machine_learning')]
 mongo_suggestions = db.suggestions
 mongo_training = db.training
 
@@ -211,4 +211,3 @@ def predict_route():
     result = dumps(mongo_suggestions.find({},{'_id':0}).limit(10).sort("probability", -1))
     journal.send('TIME: ' + str(time.time() - t0))
     return result
-
