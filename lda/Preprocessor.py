@@ -144,8 +144,8 @@ class Preprocessor:
                 try:
                     mapping.append(self.vocabulary[word.lower()])
                 except:
-                    self.oov.add(word)
-                    sentence_oov.append(word)
+                    #self.oov.add(word)
+                    #sentence_oov.append(word)
                     mapping.append(0)
         #self.storeOOV(OOV_PATH)
         return (mapping, sentence_oov)
