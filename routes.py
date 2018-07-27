@@ -25,6 +25,7 @@ import time
 from pymongo import MongoClient
 
 client = MongoClient('localhost', 27017)
+
 instance = os.getenv('ML_DATABASE', 'machine_learning')
 db = client[instance]
 mongo_suggestions = db.suggestions
@@ -70,9 +71,7 @@ def retrain_route():
     t0 = time.time()
     data = json.loads(request.data)
 
-    journal.send(instance)
     model = os.path.join(instance, data['value'] + data['property'])
-    journal.send(model)
 
     evidences = mongo_training.find({'property': data['property'], 'value': data['value']})
     evidences = pd.DataFrame(list(evidences))
@@ -109,12 +108,10 @@ def predict_one_model():
         results = []
 
         nn = NeuralNet()
-        #tf.reset_default_graph()
         cnn_graph = tf.Graph()
         with cnn_graph.as_default():
             with tf.Session(graph=cnn_graph) as cnn_session:
 
-                #model_path = osHelper.generateModelDirectory(model)
                 checkpoint_dir = os.path.join(model_path, 'checkpoints')
                 nn.loadCheckpoint(cnn_graph, cnn_session, checkpoint_dir)
 
