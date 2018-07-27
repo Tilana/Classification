@@ -25,7 +25,8 @@ import time
 from pymongo import MongoClient
 
 client = MongoClient('localhost', 27017)
-db = client[os.getenv('ML_DATABASE', 'machine_learning')]
+instance = os.getenv('ML_DATABASE', 'machine_learning')
+db = client[instance]
 mongo_suggestions = db.suggestions
 mongo_training = db.training
 
@@ -40,9 +41,6 @@ sentenceEncoder = hub.Module("https://tfhub.dev/google/universal-sentence-encode
 
 sentences = tf.placeholder(dtype=tf.string, shape=[None])
 embedding = sentenceEncoder(sentences)
-#journal.send('LOADED SENTENCE ENCODER')
-
-#subprocess.Popen('python lda/WordEmbedding.py', shell=True)
 
 def get_similar_sentences(similarity, evidences, sentences, doc_id):
     evidenceIndices, sentenceIndices = np.where(similarity >= THRESHOLD)
@@ -71,7 +69,10 @@ def train_route():
 def retrain_route():
     t0 = time.time()
     data = json.loads(request.data)
-    model = data['value'] + data['property']
+
+    journal.send(instance)
+    model = os.path.join(instance, data['value'] + data['property'])
+    journal.send(model)
 
     evidences = mongo_training.find({'property': data['property'], 'value': data['value']})
     evidences = pd.DataFrame(list(evidences))
@@ -97,8 +98,7 @@ def predict_one_model():
     evidences = mongo_training.find({'property': data['property'], 'value':  data['value'], 'label':'True'})
     evidences = pd.DataFrame(list(evidences))
 
-
-    model = data['value']+data['property']
+    model = os.path.join(instance, data['value'] + data['property'])
     model_path = osHelper.generateModelDirectory(model)
 
     if len(evidences)==0:
@@ -114,7 +114,7 @@ def predict_one_model():
         with cnn_graph.as_default():
             with tf.Session(graph=cnn_graph) as cnn_session:
 
-                model_path = osHelper.generateModelDirectory(model)
+                #model_path = osHelper.generateModelDirectory(model)
                 checkpoint_dir = os.path.join(model_path, 'checkpoints')
                 nn.loadCheckpoint(cnn_graph, cnn_session, checkpoint_dir)
 
@@ -140,11 +140,6 @@ def predict_one_model():
         journal.send('UNIVERSAL SENTENCE ENCODER')
 
         mongo_suggestions.remove()
-        #tf.reset_default_graph()
-        #sentenceEncoder = hub.Module("https://tfhub.dev/google/universal-sentence-encoder/1")
-
-        #sentences = tf.placeholder(dtype=tf.string, shape=[None])
-        #embedding = sentenceEncoder(sentences)
 
         with sent_encoder_graph.as_default():
             with tf.Session(graph=sent_encoder_graph) as session:
