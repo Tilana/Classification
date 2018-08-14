@@ -76,7 +76,6 @@ def similarSentences(collection, category, evidences, method='avg'):
 if __name__=='__main__':
 
     methods = ['all', 'avg', 'vec_avg']
-    methods = ['vec_avg']
 
     all_evidences = pd.read_csv('trainingSentences_multiple.csv', encoding='utf8')
     evidence_cols = [col for col in all_evidences.columns if 'evidence' in col]
@@ -86,5 +85,4 @@ if __name__=='__main__':
 
         for method in methods:
             similarSentences('echr', row['ID'], evidences, method=method)
-
 
