@@ -43,18 +43,6 @@ sentenceEncoder = hub.Module("https://tfhub.dev/google/universal-sentence-encode
 sentences = tf.placeholder(dtype=tf.string, shape=[None])
 embedding = sentenceEncoder(sentences)
 
-def get_similar_sentences(similarity, evidences, sentences, doc_id):
-    evidenceIndices, sentenceIndices = np.where(similarity >= THRESHOLD)
-    similarities = [similarity[evidenceInd, sentenceInd] for (evidenceInd, sentenceInd) in zip(evidenceIndices, sentenceIndices)]
-    processedSentences = {}
-    for pos, sentInd in enumerate(sentenceIndices):
-        sentence = sentences[sentInd]
-        evidence = evidences.loc[evidenceIndices[pos]]
-        property = evidence['property']
-        value = evidence['value']
-        if sentence not in processedSentences.keys() or (property, value) != processedSentences[sentence]:
-            mongo_suggestions.insert_one({'evidence': sentence, 'probability':str(similarities[pos]), 'label':1, 'document':doc_id, 'property':property, 'value':value})
-            processedSentences.update({sentence: (property, value)})
 
 @app.route('/classification/train', methods=['POST'])
 def train_route():
@@ -153,7 +141,14 @@ def predict_one_model():
                     sentence_embedding = session.run(embedding, feed_dict={sentences: doc_sentences})
 
                     similarity = np.matmul(evidence_embedding, np.transpose(sentence_embedding))
-                    get_similar_sentences(similarity, evidences, doc_sentences, docID)
+                    similarity = np.average(similarity, axis=0)
+                    similarity = similarity.reshape(1, similarity.shape[0])
+
+                    evidenceIndices, sentenceIndices = np.where(similarity >= THRESHOLD)
+
+                    for evdInd, sentInd in zip(evidenceIndices, sentenceIndices):
+                        evidence = evidences.loc[evidenceIndices[evdInd]]
+                        mongo_suggestions.insert_one({'evidence': doc_sentences[sentInd], 'probability':str(similarity[evdInd, sentInd]), 'label':1, 'document': docID, 'property':evidence['property'], 'value': evidence['value']})
 
                 session.close()
 

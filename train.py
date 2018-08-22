@@ -19,12 +19,14 @@ FILTER_SIZES = [1,2,3]
 PREPROCESSING = 1
 MAX_SENTENCE_LENGTH = 40
 
-def setEpochs(N, batch_size, updates=1000, maxEpochs=200, minEpochs=30):
+def setEpochs(N, batch_size, updates=500, maxEpochs=180, minEpochs=20):
     epochs = int(round((updates * batch_size)/N))
+    journal.send('EPOCHS: {}'.format(epochs))
     if epochs < minEpochs:
         epochs = minEpochs
     if epochs > maxEpochs:
         epochs = maxEpochs
+    journal.send('EPOCHS: {}'.format(epochs))
     return epochs
 
 
@@ -71,6 +73,27 @@ def train(evidences, category):
             summaryWriter = tf.summary.FileWriter(checkpoint_dir, sess.graph)
             nn.setSaver()
 
+        if evidences.label.dtype == 'O':
+            mapping = {'True':True, 'False':False}
+            evidences['label'] = evidences['label'].map(mapping)
+
+
+        nr_pos_evidences = len(evidences[evidences['label']])
+        nr_neg_evidences = len(evidences[evidences['label']==False])
+        journal.send('POS evidences - ' + str(nr_pos_evidences))
+        journal.send('NEG evidences - ' + str(nr_neg_evidences))
+        if nr_neg_evidences < nr_pos_evidences:
+            journal.send('enrich negative evidences with random samples')
+            with open('random_sentences_echr.txt', 'r') as f:
+                random_sentences = json.loads(f.read())
+                random_indices = np.random.randint(0, len(random_sentences),(nr_pos_evidences-nr_neg_evidences,))
+                random_sample = [random_sentences[sample_index] for sample_index in random_indices]
+
+            neg_sample = pd.DataFrame(random_sample, columns=['sentence'])
+            neg_sample['label'] = False
+
+            evidences = pd.concat([evidences, neg_sample])
+
         journal.send('PROCESS EVIDENCE SENTENCES')
         evidences['tokens'] = evidences.sentence.apply(preprocessor.tokenize)
         vocabIds = evidences.tokens.apply(preprocessor.mapVocabularyIds).tolist()
@@ -80,9 +103,20 @@ def train(evidences, category):
 
         X = np.array(evidences.mapping.tolist())
 
-        if evidences.label.dtype == 'O':
-            mapping = {'True':True, 'False':False}
-            evidences['label'] = evidences['label'].map(mapping)
+
+        #import pdb
+        #pdb.set_trace()
+
+        nr_pos_evidences = len(evidences[evidences['label']])
+        if nr_pos_evidences == len(evidences):
+            journal.send('ONLY POSITIVE EVIDENCES!!!')
+
+            with open('random_sentences_echr.txt', 'r') as f:
+                random_sentences = json.loads(f.read())
+                random_indices = np.random.randint(0, len(random_sentences),(nr_pos_evidences,))
+                random_sample = [random_sentences[sample_index] for sample_index in random_indices]
+
+
 
         Ylabels = evidences.label.astype(pd.api.types.CategoricalDtype(categories=[0,1]))
         Y = pd.get_dummies(Ylabels).as_matrix()
