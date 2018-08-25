@@ -141,14 +141,16 @@ def predict_one_model():
                     sentence_embedding = session.run(embedding, feed_dict={sentences: doc_sentences})
 
                     similarity = np.matmul(evidence_embedding, np.transpose(sentence_embedding))
-                    similarity = np.average(similarity, axis=0)
-                    similarity = similarity.reshape(1, similarity.shape[0])
+                    similarity = list(np.average(similarity, axis=0))
 
-                    evidenceIndices, sentenceIndices = np.where(similarity >= THRESHOLD)
+                    sentenceIndices = [pos for pos, sim in enumerate(similarity) if sim >= THRESHOLD]
+                    evidence = evidences.loc[0]
 
-                    for evdInd, sentInd in zip(evidenceIndices, sentenceIndices):
-                        evidence = evidences.loc[evidenceIndices[evdInd]]
-                        mongo_suggestions.insert_one({'evidence': doc_sentences[sentInd], 'probability':str(similarity[evdInd, sentInd]), 'label':1, 'document': docID, 'property':evidence['property'], 'value': evidence['value']})
+                    for sentInd in sentenceIndices:
+                        similarity[sentInd]
+                        evidence['property']
+                        doc_sentences[sentInd]
+                        mongo_suggestions.insert_one({'evidence': doc_sentences[sentInd], 'probability':str(similarity[sentInd]), 'label':1, 'document': docID, 'property':evidence['property'], 'value': evidence['value']})
 
                 session.close()
 
