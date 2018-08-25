@@ -10,7 +10,7 @@ import os
 import matplotlib.pyplot as plt
 
 categoryID = 'ICAAD_DV_sentences'
-categoryID = 'ICAAD_SA_sentences'
+#categoryID = 'ICAAD_SA_sentences'
 
 
 def onlineLearning(NR_TRAIN_DATA=20):
@@ -80,7 +80,8 @@ def onlineLearning(NR_TRAIN_DATA=20):
 
 if __name__=='__main__':
     results = []
-    NR_TRAIN_DATA_ARY = [10,20,30,60, 100,200]
+    #NR_TRAIN_DATA_ARY = [10,20,30,60, 100,200]
+    NR_TRAIN_DATA_ARY = [10,30, 60, 100, 300, 600, 1000]
     for NR_TRAIN_DATA in NR_TRAIN_DATA_ARY:
         results.append(onlineLearning(NR_TRAIN_DATA))
 

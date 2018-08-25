@@ -3,6 +3,7 @@ import tensorflow_hub as hub
 from sentenceTokenizer import tokenize
 from pymongo import MongoClient
 import pandas as pd
+from pymongo import MongoClient
 import numpy as np
 import time
 import re
@@ -11,6 +12,7 @@ import re
 MAX_SENTENCE_LENGTH = 40
 MIN_SENTENCE_LENGTH = 4
 THRESHOLD = 0.65
+AVERAGE = 1
 
 sent_encoder_graph = tf.get_default_graph()
 sentenceEncoder = hub.Module("https://tfhub.dev/google/universal-sentence-encoder/1")
