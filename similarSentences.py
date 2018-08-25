@@ -55,34 +55,45 @@ def similarSentences(collection, category, evidences, method='avg'):
 
                 if similar_sentences != []:
 
+                    avg_evidence_similarity = np.mean(zip(*similar_sentences)[0])
+                    avg_doc_similarity = np.average(np.max(similarity, axis=0),axis=0)
+
                     similar_sentences = pd.DataFrame(similar_sentences, columns=['probability', 'sentences'])
                     similar_sentences.sort_values('probability', inplace=True, ascending=False)
                     similar_sentences.drop_duplicates('sentences', inplace=True)
 
                     similar_sentences = [tuple(sentence) for sentence in similar_sentences.to_records(index=False)]
-                    suggestions.append((doc['sharedId'], doc['title'], similar_sentences[0][0], len(similar_sentences), similar_sentences))
+
+                    suggestions.append((doc['sharedId'], doc['title'], avg_doc_similarity,avg_evidence_similarity, len(similar_sentences), similar_sentences))
 
                 print('ID: {}  -  Title: {}'.format(doc['sharedId'], doc['title'].encode('utf8')))
 
             session.close()
     print 'Time: {} \n'.format(time.time()-t0)
 
-    suggestions = pd.DataFrame(suggestions, columns=['doc_id', 'title', 'max_probability', 'nr_evidences', 'evidences'])
-    suggestions.sort_values(['nr_evidences', 'max_probability'], inplace=True, ascending=False)
+    suggestions = pd.DataFrame(suggestions, columns=['doc_id', 'title', 'avg_doc_similarity', 'avg_similarity', 'nr_evidences', 'evidences'])
+    suggestions.sort_values(['nr_evidences', 'avg_similarity'], inplace=True, ascending=False)
     suggestions.to_csv('similar_sentences/{}/{}_{}.csv'.format(collection, category, method), index=False, encoding='utf8')
 
 
 
 if __name__=='__main__':
 
-    methods = ['all', 'avg', 'vec_avg']
+    methods = ['all']#, 'avg'] #, 'vec_avg']
+    already_processed = ['data_protection_short', 'data_protection_long']
 
     all_evidences = pd.read_csv('trainingSentences_multiple.csv', encoding='utf8')
     evidence_cols = [col for col in all_evidences.columns if 'evidence' in col]
 
     for index, row in all_evidences.iterrows():
-        evidences = row[evidence_cols].tolist()
+        category = row['ID']
 
-        for method in methods:
-            similarSentences('echr', row['ID'], evidences, method=method)
+        if category not in already_processed:
+            print category
+
+            evidences = row[evidence_cols].tolist()
+
+            for method in methods:
+                print 'METHOD: {}'.format(method)
+                similarSentences('echr', category, evidences, method=method)
 
