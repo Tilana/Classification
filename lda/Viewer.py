@@ -309,6 +309,54 @@ class Viewer:
         f.write('</table>')
         f.write('</div>')
 
+    def use_classificationResults(self, name, evidences, data, encoding, we_model, threshold, evaluation, computation_time):
+        pagename = name + '.html'
+        f = open(pagename, 'w')
+        f.write(' <h3> Model: </h3>')
+        f.write('<p> Encoding: %s </p>' % str(encoding))
+        f.write('<p> Embedding Model: %s </p>' % str(we_model))
+        f.write(' <h3> Input: </h3>')
+        f.write('<p> Evidences: %s </p>' % str(evidences))
+        f.write('<p> Threshold: %s </p>' % str(threshold))
+        f.write(' <h3> Computation Time: </h3>')
+        f.write('<p> Time: %s </p>' % str(computation_time))
+        f.write(' <h3> Evaluation: </h3>')
+        f.write('<table> ')
+        f.write('<tr><td> Accuracy: </td><td> %.2f </td></tr>' % evaluation.accuracy)
+        f.write('<tr><td> Precision: </td><td> %.2f </td></tr>' % evaluation.precision)
+        f.write('<tr><td> Recall: </td><td> %.2f </td></tr>' % evaluation.recall)
+        f.write('</table>')
+        f.write(' <h3> Confusion Matrix: </h3>')
+        f.write('<table><tr><td> </td><td>Predicted Labels</td></tr><tr><td> True Labels </td><td>')
+        confusionMatrix = evaluation.confusionMatrix.to_html()
+        f.write(confusionMatrix)
+        f.write('</table> <br> <br>')
+        f.write(' <h3> Similarity Distribution: </h3>')
+        filepath = name + '_prediction.png'
+        f.write("<div><img src=%s alt=%s></div>" % (filepath, name))
+        f.write(' <h3> Similarity distribution with different tags: </h3>')
+        filepath = name + '_tags.png'
+        f.write("<div><img src=%s alt=%s></div>" % (filepath, name))
+        f.write('<div>')
+        f.write('%s' % data.to_html(index=False, col_space=10))
+        f.write('</div>')
+        f.close()
+        webbrowser.open_new_tab(pagename)
+
+    def compareDataFrames(self, name, name1, name2, overview, diff):
+        pagename = name + '.html'
+        f = open(pagename, 'w')
+        f.write(' <h3> Semantic Search: COMPARISON </h3>')
+        f.write('<p> MODEL 1: %s </p>' % name1)
+        f.write('<p> MODEL 2: %s </p>' % name2)
+        f.write('<br> <br>')
+        f.write('<p> Total Differences : %s </p>' % str(len(diff)))
+        f.write('{}'.format(overview.to_html(col_space=10)))
+        f.write('<br> <br>')
+        f.write('{}'.format(diff.to_html(index=False, col_space=10)))
+        f.close()
+        webbrowser.open_new_tab(pagename)
+
     def classificationResults(self, model, name=None, subset='test', normalized=False, docPath=None):
         #targetFolder = self.path + '/' + model.targetFeature
         #self.createFolder(targetFolder)
