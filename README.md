@@ -3,14 +3,20 @@
 This module provides a framework to process, analyse, and categorize collections of documents.
 
 
-## Scripts
-In *dataConfig.json* the for different dataset specific parameters, like the variable to classify, the path to the document, etc. are stored.
-The *scripts* folder contains different methods to analyze and classify documents. For example, with the *classificationScript.py* a sample pipeline for classification based on standard algorithms like *Logistic Regression* or *Naive Bayes* is provided. Similar in *cnnClassification.py* the pipeline for document classification based on a Convolutional Neural Network is demonstrated.
 
-Use the following command to run *sentenceToDocClassification.py* script which combines a sentence classifier to identify relevant word sequences with a document classifier:
-```
-python sentenceToDocClassification.py
-```
+
+## Main Scripts
+**semantic-search.py**  - computes semantic similarity of a search term and sentences in a database.
+
+**compareDataframes.py** - shows the classification differences (shifts from FN to TP, etc.) of two semantic search models.
+
+**explore_fasttext.py**  - change the preprocessing steps (removing stopwords, stemming, splitting sentence in half, etc.) of specified sample sentences to see their effect on semantic similarity
+
+**explore_corpus.py** - get an overview about the number of (unique) words in a document collection. Also, get frequency of specific terms and randomly select context phrases.
+
+**explore_we_model.py** - visualize vector representations of words with heatmaps, show the influence of averaging and a principal component analysis
+
+
 
 
 ## Testing
@@ -69,35 +75,35 @@ python onlineLearning.py
 
 ## Detailed list of dependencies
 * [Tensorflow - An Open-Source Software Library for Machine Intelligence](https://www.tensorflow.org/install/) <br />
-TensorFlow is an open-source software library for dataflow programming across a range of tasks. It is a symbolic math library, and also used for machine learning applications such as neural networks.
+  TensorFlow is an open-source software library for dataflow programming across a range of tasks. It is a symbolic math library, and also used for machine learning applications such as neural networks.
 ```
 pip install tensorflow      # Python 2.7; CPU support
 pip install tensorflow-gpu  # Python 2.7; GPU support
 ```
 
 * [gensim - Topic Modeling for Humans](https://radimrehurek.com/gensim/install.html) <br />
-Gensim is a free Python library designed to automatically extract semantic topics from documents by implementing Latent Semantic Analysis, Latent Dirichlet Allocation and Term-Frequency Inverse-Document Frequency models.
+  Gensim is a free Python library designed to automatically extract semantic topics from documents by implementing Latent Semantic Analysis, Latent Dirichlet Allocation and Term-Frequency Inverse-Document Frequency models.
 ```
 pip install --upgrade gensim
 ```
 * [Scikit-learn - Machine Learning for Python](http://scikit-learn.org/stable/install.html) <br />
-Scikit-learn is an open source machine learning library which includes various classification, regression and clustering algorithms like support vector machines, random forests, naive bayes and k-means.
+  Scikit-learn is an open source machine learning library which includes various classification, regression and clustering algorithms like support vector machines, random forests, naive bayes and k-means.
 ```
 pip install -U scikit-learn
 ```
 * [NLTK](http://www.nltk.org/install.html) <br />
-NLTK provides various tools to work with texts written in natural language. For this project tokenization, stemming and tagging are used.
+  NLTK provides various tools to work with texts written in natural language. For this project tokenization, stemming and tagging are used.
 ```
 sudo pip install -U nltk
-``` 
+```
 
 * [pandas](http://pandas.pydata.org/pandas-docs/stable/install.html) <br />
-pandas is a Python package providing fast, flexible, and expressive data structures designed to make working with structured (tabular, multidimensional, potentially heterogeneous) and time series data both easy and intuitive. To read excel files also the xlrd packages is required.
+  pandas is a Python package providing fast, flexible, and expressive data structures designed to make working with structured (tabular, multidimensional, potentially heterogeneous) and time series data both easy and intuitive. To read excel files also the xlrd packages is required.
 ```
 pip install pandas
 pip install xlrd
 ```
 * [Stanford Named Entity Recognizer (NER)](http://nlp.stanford.edu/software/CRF-NER.shtml) <br />
-Stanford Named Entity Recognizer labels sequences of words in a text which represent proper names for persons, locations and organizations. The Stanford NER is included in this repository.
+  Stanford Named Entity Recognizer labels sequences of words in a text which represent proper names for persons, locations and organizations. The Stanford NER is included in this repository.
 
 

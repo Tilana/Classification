@@ -35,6 +35,7 @@ def similarSentences(collection, category, evidences, method='avg'):
             session.run([tf.global_variables_initializer(), tf.tables_initializer()])
             evidence_embedding = session.run(embedding, feed_dict={sentences: evidences})
 
+
             if method=='vec_avg':
                 evidence_embedding = np.average(evidence_embedding, axis=0)
                 evidence_embedding = evidence_embedding.reshape(1,evidence_embedding.shape[0])
@@ -75,16 +76,16 @@ def similarSentences(collection, category, evidences, method='avg'):
 
     suggestions = pd.DataFrame(suggestions, columns=['doc_id', 'title', 'avg_doc_similarity', 'avg_similarity', 'nr_evidences', 'evidences'])
     suggestions.sort_values(['nr_evidences', 'avg_similarity'], inplace=True, ascending=False)
-    suggestions.to_csv('similar_sentences/{}/{}_{}.csv'.format(collection, category, method), index=False, encoding='utf8')
+    suggestions.to_csv('../data/similarSentences/{}/{}_{}.csv'.format(collection, category, method), index=False, encoding='utf8')
 
 
 
 if __name__=='__main__':
 
     methods = ['all']#, 'avg'] #, 'vec_avg']
-    already_processed = ['data_protection_short', 'data_protection_long']
+    already_processed = ['data_protection_short', 'data_protection_long', 'dress_code_short', 'dress_code_long']
 
-    all_evidences = pd.read_csv('trainingSentences_multiple.csv', encoding='utf8')
+    all_evidences = pd.read_csv('trainingSentences.csv', encoding='utf8')
     evidence_cols = [col for col in all_evidences.columns if 'evidence' in col]
 
     for index, row in all_evidences.iterrows():
