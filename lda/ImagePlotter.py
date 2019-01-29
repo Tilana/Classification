@@ -8,7 +8,6 @@ class ImagePlotter:
     def __init__(self, show=False):
         self.show = show
 
-
     def plotHistogram(self, data, title='', path=None, xlabel='', ylabel='', log=False, start=None, end=None, bins=10, open=False, replaceNAN=False):
         if replaceNAN:
             data = [elem if not np.isnan(elem) else -1 for elem in data]
@@ -26,16 +25,21 @@ class ImagePlotter:
         self.save(path)
         self.closeFigure()
 
-    def heatmap(self, data, path):
+    def heatmap(self, data, path, xlabel, ylabel):
         self.createFigure()
-        ax = sns.heatmap(data.T)
+        ax = sns.heatmap(data.T, cmap='Blues')
+        ax.set_xticks(np.arange(len(xlabel)))
+        ax.set_yticks(np.arange(len(ylabel)))
+
+        ax.set_xticklabels(xlabel)
+        ax.set_yticklabels(ylabel)
+
         for item in ax.get_yticklabels():
             item.set_rotation(0)
         for item in ax.get_xticklabels():
             item.set_rotation(90)
         self.showFigure()
         self.save(path)
-
 
     def boxplot(self, data):
         self.createFigure()
@@ -76,7 +80,7 @@ class ImagePlotter:
             self.figure.savefig(path)
             #self.figure.savefig(path, bbox_inches='tight')
         except:
-            print 'Error ImagePlotter: Figure cannot be saved'
+            print('Error ImagePlotter: Figure cannot be saved')
 
     def showFigure(self):
         if self.show:
