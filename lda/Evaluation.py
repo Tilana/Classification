@@ -46,7 +46,7 @@ class Evaluation:
 
     def checkLength(self):
         if len(self.target) != len(self.prediction):
-            print 'WARNING: Evaluation - length of target and prediction list is unequal'
+            print('WARNING: Evaluation - length of target and prediction list is unequal')
 
 
     def createTags(self):
