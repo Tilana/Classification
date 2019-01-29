@@ -1,5 +1,6 @@
 from __future__ import division
 import webbrowser
+import pandas
 import os
 import pdb
 
@@ -69,11 +70,11 @@ class Viewer:
         for column in dataframe.columns:
             filepath = path + column + '.jpg'
             if os.path.exists(filepath):
-                print 'file exists'
+                print('file exists')
             try:
                 f.write("<tr><td><a href='%s'> %s </a></td></tr>" % (filepath, column))
             except:
-                print 'Error Viewer - printLinkedList: Cannot open figure'
+                print('Error Viewer - printLinkedList: Cannot open figure')
 
         f.write('</table>')
         f.write('</div>')
@@ -140,7 +141,7 @@ class Viewer:
         self.writeHead(f, 'Document Overview')
         f.write('<body>')
         for elem in dir(collection):
-            print elem
+            print(elem)
             attribute = getattr(collection, elem)
             if type(attribute) == str or type(attribute) == int:
                 f.write(' <p><b> %s:  </b> %s </p> ' % (elem, getattr(collection, elem)))
@@ -309,6 +310,39 @@ class Viewer:
         f.write('</table>')
         f.write('</div>')
 
+    def print_evaluation(self, f, evaluation):
+        f.write(' <h3> Evaluation: </h3>')
+        f.write('<table> ')
+        f.write('<tr><td> Accuracy: </td><td> %.2f </td></tr>' % evaluation.accuracy)
+        f.write('<tr><td> Precision: </td><td> %.2f </td></tr>' % evaluation.precision)
+        f.write('<tr><td> Recall: </td><td> %.2f </td></tr>' % evaluation.recall)
+        f.write('</table>')
+
+    def pd_confusionMatrix(self, f, pd_confusionMatrix):
+        f.write(' <h3> Confusion Matrix: </h3>')
+        f.write('<table><tr><td> </td><td>Predicted Labels</td></tr><tr><td> True Labels </td><td>')
+        confusionMatrix = pd_confusionMatrix.to_html()
+        f.write(confusionMatrix)
+        f.write('</table> <br> <br>')
+
+    def pd_DataFrame(self, f, dataframe):
+        pandas.set_option('display.max_colwidth', 500)
+        f.write('<div>')
+        f.write('%s' % dataframe.to_html(index=False, col_space=10))
+        f.write('</div>')
+
+    def classification(self, info, data, evaluation):
+        pagename = info['name'] + '.html'
+        f = open(pagename, 'w')
+        f.write(' <h3> Model: {} </h3>'.format(info['name']))
+        for key in info.keys():
+            f.write('<p> {}: {} </p>'.format(key, info[key]))
+        self.print_evaluation(f, evaluation)
+        self.pd_confusionMatrix(f, evaluation.confusionMatrix)
+        self.pd_DataFrame(f, data)
+        f.close()
+        webbrowser.open_new_tab(pagename)
+
     def use_classificationResults(self, name, evidences, data, encoding, we_model, threshold, evaluation, computation_time):
         pagename = name + '.html'
         f = open(pagename, 'w')
@@ -320,26 +354,15 @@ class Viewer:
         f.write('<p> Threshold: %s </p>' % str(threshold))
         f.write(' <h3> Computation Time: </h3>')
         f.write('<p> Time: %s </p>' % str(computation_time))
-        f.write(' <h3> Evaluation: </h3>')
-        f.write('<table> ')
-        f.write('<tr><td> Accuracy: </td><td> %.2f </td></tr>' % evaluation.accuracy)
-        f.write('<tr><td> Precision: </td><td> %.2f </td></tr>' % evaluation.precision)
-        f.write('<tr><td> Recall: </td><td> %.2f </td></tr>' % evaluation.recall)
-        f.write('</table>')
-        f.write(' <h3> Confusion Matrix: </h3>')
-        f.write('<table><tr><td> </td><td>Predicted Labels</td></tr><tr><td> True Labels </td><td>')
-        confusionMatrix = evaluation.confusionMatrix.to_html()
-        f.write(confusionMatrix)
-        f.write('</table> <br> <br>')
+        self.print_evaluation(f, evaluation)
+        self.pd_confusionMatrix(f, evaluation.confusionMatrix)
         f.write(' <h3> Similarity Distribution: </h3>')
         filepath = name + '_prediction.png'
         f.write("<div><img src=%s alt=%s></div>" % (filepath, name))
         f.write(' <h3> Similarity distribution with different tags: </h3>')
         filepath = name + '_tags.png'
         f.write("<div><img src=%s alt=%s></div>" % (filepath, name))
-        f.write('<div>')
-        f.write('%s' % data.to_html(index=False, col_space=10))
-        f.write('</div>')
+        self.pd_DataFrame(f, data)
         f.close()
         webbrowser.open_new_tab(pagename)
 
