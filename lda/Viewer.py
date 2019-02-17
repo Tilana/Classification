@@ -328,15 +328,23 @@ class Viewer:
     def pd_DataFrame(self, f, dataframe):
         pandas.set_option('display.max_colwidth', 500)
         f.write('<div>')
-        f.write('%s' % dataframe.to_html(index=False, col_space=10))
+        f.write('%s' % dataframe.to_html(index=False, col_space=10).replace('\\n', '<br>'))
         f.write('</div>')
 
     def classification(self, info, data, evaluation):
         pagename = info['name'] + '.html'
         f = open(pagename, 'w')
         f.write(' <h3> Model: {} </h3>'.format(info['name']))
-        for key in info.keys():
-            f.write('<p> {}: {} </p>'.format(key, info[key]))
+        for key, value in info.items():
+            if isinstance(value, dict):
+                f.write('<h4> {}: </h4>'.format(key))
+                f.write('<table> ')
+                for subkey, elem in value.items():
+                    f.write('<tr><td>{}</td><td>{}</td></tr>'.format(subkey, elem))
+                f.write('</table>')
+            else:
+                f.write('<p> {}: {} </p>'.format(key, value))
+
         self.print_evaluation(f, evaluation)
         self.pd_confusionMatrix(f, evaluation.confusionMatrix)
         self.pd_DataFrame(f, data)
